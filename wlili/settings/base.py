@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     "home",
     "produccion",
     "search",
+    "wagtail_link_block",
     "wagtail.contrib.forms",
     "wagtail.contrib.redirects",
     "wagtail.contrib.settings",
