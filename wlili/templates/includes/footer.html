@@ -1,3 +1,5 @@
+{% load navigation_tags %}
+
 <footer>
   <p>Powered by VamosViendo</p>
   {% with instagram_url=settings.base.NavigationSettings.instagram_url facebook_url=settings.base.NavigationSettings.facebook_url x_url=settings.base.NavigationSettings.x_url %}
@@ -9,4 +11,6 @@
       </p>
     {% endif %}
   {% endwith %}
+
+  {% get_footer_text %}
 </footer>
