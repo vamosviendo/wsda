@@ -1,0 +1,12 @@
+<footer>
+  <p>Powered by VamosViendo</p>
+  {% with instagram_url=settings.base.NavigationSettings.instagram_url facebook_url=settings.base.NavigationSettings.facebook_url x_url=settings.base.NavigationSettings.x_url %}
+    {% if instagram_url or facebook_url or x_url %}
+      <p>
+        {% if instagram_url %}<a href="{{ instagram_url }}">Instagram</a>{% endif %}
+        {% if facebook_url %}<a href="{{ facebook_url }}">Facebook</a>{% endif %}
+        {% if x_url %}<a href="{{ x_url }}">X</a>{% endif %}
+      </p>
+    {% endif %}
+  {% endwith %}
+</footer>
