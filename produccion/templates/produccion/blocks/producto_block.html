@@ -1,8 +1,10 @@
-{% load wagtailimages_tags %}
+{% load wagtailcore_tags wagtailimages_tags %}
 
 <div class="producto">
   <a href="{{ self.link.get_url }}">
     <h3>{{ self.nombre }}</h3>
+    {% if self.descripcion %}{% endif %}
+      <h4>{{ self.descripcion|richtext }}</h4>
     {% if self.imagen %}
       {% image self.imagen height-240 %}
     {% endif %}

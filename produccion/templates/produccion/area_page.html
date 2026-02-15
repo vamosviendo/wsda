@@ -7,9 +7,9 @@
 {% block extra_css %}{% endblock extra_css %}
 
 {% block content %}
-  <div id="titulo">{{ page.titulo }}</div>
+  <div id="titulo"><h2>{{ page.titulo }}</h2></div>
   {% if page.descripcion %}
-    <div id="descripcion">{{ page.descripcion|richtext }}</div>
+    <div id="descripcion"><h3>{{ page.descripcion|richtext }}</h3></div>
   {% endif %}
   {% for producto in page.productos %}
     {% include_block producto %}
