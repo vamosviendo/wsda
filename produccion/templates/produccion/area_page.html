@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load static %}
+{% load wagtailcore_tags %}
+
+{% block body-class %}template-areapage{% endblock %}
+
+{% block extra_css %}{% endblock extra_css %}
+
+{% block content %}
+  <div id="titulo">{{ page.titulo }}</div>
+  {% if page.descripcion %}
+    <div id="descripcion">{{ page.descripcion|richtext }}</div>
+  {% endif %}
+  {% for producto in page.productos %}
+    {% include_block producto %}
+  {% endfor %}
+{% endblock content %}
