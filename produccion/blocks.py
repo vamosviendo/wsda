@@ -15,3 +15,17 @@ class ProductoBlock(StructBlock):
 
 class ProduccionStreamBlock(StreamBlock):
     producto = ProductoBlock(group="Section")
+
+
+class ImagenBlock(StructBlock):
+    nombre = CharBlock(required=False)
+    imagen = ImageBlock()
+    link = LinkBlock()
+
+    class Meta:
+        template = "produccion/blocks/imagen_block.html"
+
+
+class ImagenStreamBlock(StreamBlock):
+    imagen = ImagenBlock(group="Section")
+
