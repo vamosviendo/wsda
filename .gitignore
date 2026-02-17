@@ -1,5 +1,6 @@
-db.sqlite3
+db*.sqlite3
 __pycache__
 media
 .idea
 .vwlili
+Dockerfile.backup
