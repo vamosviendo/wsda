@@ -15,6 +15,7 @@ RUN python -m venv /venv
 ENV PATH="/venv/bin:$PATH"
 
 # Install the project requirements.
+RUN pip install --upgrade pip
 COPY requirements.txt /
 RUN pip install -r /requirements.txt
 
@@ -24,7 +25,10 @@ WORKDIR /src
 # Copy the source code of the project into the container.
 COPY . /src
 
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8002"]
+ENV PYTHONUNBUFFERED=1 \
+    PORT=8001
+
+CMD ["gunicorn", "--bind", ":8002", "wlili.wsgi:application"]
 
 # docker build -t wlili . && docker run \
 #   -p 8002:8002 \
