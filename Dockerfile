@@ -25,12 +25,15 @@ WORKDIR /src
 # Copy the source code of the project into the container.
 COPY . /src
 
-ENV PYTHONUNBUFFERED=1 \
-    PORT=8001
+ENV DJANGO_SETTINGS_MODULE="wlili.settings.production"
+
+RUN DJANGO_SECRET_KEY=placeholder DJANGO_ALLOWED_HOST=localhost python manage.py collectstatic --noinput
 
 CMD ["gunicorn", "--bind", ":8002", "wlili.wsgi:application"]
 
 # docker build -t wlili . && docker run \
 #   -p 8002:8002 \
 #   --mount type=bind,source="$PWD/db.sqlite3",target=/src/db.sqlite3 \
+#   -e DJANGO_SECRET_KEY=placeholder \
+#   .e DJANGO_ALLOWED_HOST=localhost \
 #   -it wlili
