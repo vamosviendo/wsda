@@ -27,13 +27,17 @@ COPY . /src
 
 ENV DJANGO_SETTINGS_MODULE="wlili.settings.production"
 
-RUN DJANGO_SECRET_KEY=placeholder DJANGO_ALLOWED_HOST=localhost python manage.py collectstatic --noinput
+RUN DJANGO_SECRET_KEY=placeholder DJANGO_ALLOWED_HOST=localhost DJANGO_DB_PATH=/dev/null python manage.py collectstatic --noinput
+
+RUN adduser --uid 1234 nando
+USER nando
 
 CMD ["gunicorn", "--bind", ":8002", "wlili.wsgi:application"]
 
 # docker build -t wlili . && docker run \
 #   -p 8002:8002 \
-#   --mount type=bind,source="$PWD/db.sqlite3",target=/src/db.sqlite3 \
+#   --mount type=bind,source="$PWD/container.db.sqlite3",target=/home/nando/db.sqlite3 \
 #   -e DJANGO_SECRET_KEY=placeholder \
 #   .e DJANGO_ALLOWED_HOST=localhost \
+#   .e DJANGO_DB_PATH=/home/nando/db.sqlite3 \
 #   -it wlili

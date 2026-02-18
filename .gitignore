@@ -5,3 +5,4 @@ media
 .vwlili
 Dockerfile.backup
 static
+container.db.sqlite3

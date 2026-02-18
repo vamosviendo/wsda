@@ -40,3 +40,4 @@ wheels/
 *.egg
 Dockerfile.backup
 static
+container.db.sqlite3
