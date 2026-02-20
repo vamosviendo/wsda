@@ -18,10 +18,40 @@
     - name: Restablecer conexión ssh para permitir que los cambios a user/group tengan efecto
       ansible.builtin.meta: reset_connection
 
-    - name: Ejecutar container de prueba
-      community.docker.docker_container:
-        name: testcontainer
-        state: started
-        image: busybox
-        command: echo hello world
+    - name: Construir imagen container localmente
+      community.docker.docker_image:
+        name: wlili
+        source: build
+        state: present
+        build:
+          path: ..
+          platform: linux/amd64
+        force_source: true
+      delegate_to: 127.0.0.1
 
+    - name: Exportar imagen container localmente
+      community.docker.docker_image:
+        name: wlili
+        archive_path: /tmp/wlili-img.tar
+        source: local
+      delegate_to: 127.0.0.1
+
+    - name: Cargar imagen al server
+      ansible.builtin.copy:
+        src: /tmp/wlili-img.tar
+        dest: /tmp/wlili-img.tar
+
+    - name: Importar imagen container en el server
+      community.docker.docker_image:
+        name: wlili
+        load_path: /tmp/wlili-img.tar
+        source: load
+        force_source: true
+        state: present
+
+    - name: Ejecutar container
+      community.docker.docker_container:
+        name: wlili
+        image: wlili
+        state: started
+        recreate: true
