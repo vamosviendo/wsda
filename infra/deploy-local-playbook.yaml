@@ -1,0 +1,27 @@
+- hosts: all
+
+  tasks:
+    - name: Instalar docker
+      ansible.builtin.apt:
+        name: docker.io
+        state: latest
+        update_cache: true
+      become: true
+
+    - name: Agregar usuario al grupo docker para no tener que usar sudo/become
+      ansible.builtin.user:
+        name: '{{ ansible_user }}'
+        groups: docker
+        append: true    # No eliminar ningún grupo existente
+      become: true
+
+    - name: Restablecer conexión ssh para permitir que los cambios a user/group tengan efecto
+      ansible.builtin.meta: reset_connection
+
+    - name: Ejecutar container de prueba
+      community.docker.docker_container:
+        name: testcontainer
+        state: started
+        image: busybox
+        command: echo hello world
+
