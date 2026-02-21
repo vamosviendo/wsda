@@ -52,19 +52,19 @@
     - name: Verificar que exista .secret-key
       # La intención es que esto suceda solo una vez por server
       ansible.builtin.copy:
-        dest: ~/.secret-key
+        dest: ~/sites/wlili/.secret-key
         content: "{{ lookup('password', '/dev/null length=32 chars=ascii_letters') }}"
         mode: 0600
         force: false  # no recrear el archivo si ya existe
 
     - name: Lee secret key del archivo
       ansible.builtin.slurp:
-        src: ~/.secret-key
+        src: ~/sites/wlili/.secret-key
       register: secret_key
 
     - name: Verificar que db.sqlite3 existe fuera del container
       ansible.builtin.file:
-        path: "{{ ansible_env.HOME }}/db.sqlite3"
+        path: "{{ ansible_env.HOME }}/sites/wlili/db.sqlite3"
         state: touch
         owner: 1234
       become: true
@@ -82,7 +82,7 @@
           DJANGO_DB_PATH: "/home/nando/db.sqlite3"
         mounts:
           - type: bind
-            source: "{{ ansible_env.HOME }}/db.sqlite3"
+            source: "{{ ansible_env.HOME }}/sites/wlili/db.sqlite3"
             target: /home/nando/db.sqlite3
         ports: 80:8003
 
