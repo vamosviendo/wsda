@@ -62,10 +62,18 @@
         src: ~/sites/wlili/.secret-key
       register: secret_key
 
-    - name: Verificar que db.sqlite3 existe fuera del container
+    - name: Asegurar que db.sqlite3 existe fuera del container
       ansible.builtin.file:
         path: "{{ ansible_env.HOME }}/sites/wlili/db.sqlite3"
         state: touch
+        owner: 1234
+      become: true
+
+    - name: Asegurar que directorio media existe fuera del container
+      ansible.builtin.file:
+        path: "{{ ansible_env.HOME }}/sites/wlili/media"
+        state: directory
+        mode: '0755'
         owner: 1234
       become: true
 
@@ -84,6 +92,9 @@
           - type: bind
             source: "{{ ansible_env.HOME }}/sites/wlili/db.sqlite3"
             target: /home/nando/db.sqlite3
+          - type: bind
+            source: "{{ ansible_env.HOME }}/sites/wlili/media"
+            target: /src/media
         ports: 80:8003
 
     - name: Run migration inside container
