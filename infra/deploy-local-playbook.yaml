@@ -49,9 +49,44 @@
         force_source: true
         state: present
 
+    - name: Verificar que exista .secret-key
+      # La intención es que esto suceda solo una vez por server
+      ansible.builtin.copy:
+        dest: ~/.secret-key
+        content: "{{ lookup('password', '/dev/null length=32 chars=ascii_letters') }}"
+        mode: 0600
+        force: false  # no recrear el archivo si ya existe
+
+    - name: Lee secret key del archivo
+      ansible.builtin.slurp:
+        src: ~/.secret-key
+      register: secret_key
+
+    - name: Verificar que db.sqlite3 existe fuera del container
+      ansible.builtin.file:
+        path: "{{ ansible_env.HOME }}/db.sqlite3"
+        state: touch
+        owner: 1234
+      become: true
+
     - name: Ejecutar container
       community.docker.docker_container:
         name: wlili
         image: wlili
         state: started
         recreate: true
+        env:
+          DJANGO_SETTINGS_MODULE: "wlili.settings.production"
+          DJANGO_SECRET_KEY: "{{ secret_key.content | b64decode }}"
+          DJANGO_ALLOWED_HOST: "{{ inventory_hostname }}"
+          DJANGO_DB_PATH: "/home/nando/db.sqlite3"
+        mounts:
+          - type: bind
+            source: "{{ ansible_env.HOME }}/db.sqlite3"
+            target: /home/nando/db.sqlite3
+        ports: 80:8003
+
+    - name: Run migration inside container
+      community.docker.docker_container_exec:
+        container: wlili
+        command: ./manage.py migrate
