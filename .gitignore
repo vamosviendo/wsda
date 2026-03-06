@@ -6,3 +6,4 @@ media
 Dockerfile.backup
 static
 container.db.sqlite3
+tmp

@@ -19,6 +19,22 @@ from wagtail.snippets.models import register_snippet
 
 
 @register_setting
+class GeneralSettings(BaseGenericSetting):
+    site_title = models.CharField(
+        verbose_name="Título del sitio",
+        max_length=255,
+        blank=True,
+    )
+
+    panels = [
+        FieldPanel("site_title"),
+    ]
+
+    class Meta:
+        verbose_name = "configuración general"
+
+
+@register_setting
 class NavigationSettings(BaseGenericSetting):
     instagram_url = models.URLField(verbose_name="Instagram URL", blank=True)
     facebook_url = models.URLField(verbose_name="Facebook URL", blank=True)
@@ -34,6 +50,9 @@ class NavigationSettings(BaseGenericSetting):
             "Configuración de redes sociales",
         )
     ]
+
+    class Meta:
+        verbose_name = "configuración de redes sociales"
 
 
 @register_snippet

@@ -1,6 +1,14 @@
 {% load wagtailcore_tags navigation_tags %}
 
 <header>
+  {% with site_title=settings.base.GeneralSettings.site_title %}
+    {% if site_title %}
+      <div id="site-title">
+        <h1>{{ site_title }}</h1>
+      </div>
+    {% endif %}
+  {% endwith %}
+
   {% get_site_root as site_root %}
   <nav>
     <p>
