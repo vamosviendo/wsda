@@ -1,5 +1,7 @@
-{% load wagtailcore_tags wagtailimages_tags %}
+{% load wagtailimages_tags %}
 
 <div class="franja">
-  <a href="{{ self.url.get_url }}">{% image self.imagen width-480 %}</a>
+  <a href="{{ self.url.get_url }}">
+    {% image self.imagen width-1080 %}
+  </a>
 </div>

@@ -1,16 +1,19 @@
 {% load navigation_tags %}
 
 <footer>
-  <p>-- --</p>
-  {% with instagram_url=settings.base.NavigationSettings.instagram_url facebook_url=settings.base.NavigationSettings.facebook_url x_url=settings.base.NavigationSettings.x_url %}
-    {% if instagram_url or facebook_url or x_url %}
-      <p>
-        {% if instagram_url %}<a href="{{ instagram_url }}">Instagram</a>{% endif %}
-        {% if facebook_url %}<a href="{{ facebook_url }}">Facebook</a>{% endif %}
-        {% if x_url %}<a href="{{ x_url }}">X</a>{% endif %}
-      </p>
-    {% endif %}
-  {% endwith %}
+  <div class="footer-inner">
+    <div class="footer-social">
+      {% with instagram_url=settings.base.NavigationSettings.instagram_url facebook_url=settings.base.NavigationSettings.facebook_url x_url=settings.base.NavigationSettings.x_url %}
+        {% if instagram_url %}<a href="{{ instagram_url }}" target="_blank" rel="noopener">Instagram</a>{% endif %}
+        {% if facebook_url %}<a href="{{ facebook_url }}" target="_blank" rel="noopener">Facebook</a>{% endif %}
+        {% if x_url %}<a href="{{ x_url }}" target="_blank" rel="noopener">X</a>{% endif %}
+      {% endwith %}
+    </div>
 
-  {% get_footer_text %}
+    {% get_footer_text %}
+
+    <p class="footer-credit">
+      Diseño: <a href="mailto:htejedor@gmail.com?subject=Consulta diseño web">HT</a>
+    </p>
+  </div>
 </footer>

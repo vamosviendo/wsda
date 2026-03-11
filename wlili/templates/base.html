@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 {% load static wagtailcore_tags wagtailuserbar %}
 
-<html lang="en">
+<html lang="es">
     <head>
         <meta charset="utf-8" />
         <title>
@@ -10,7 +10,7 @@
             {% endblock %}
             {% block title_suffix %}
             {% wagtail_site as current_site %}
-            {% if current_site and current_site.site_name %}- {{ current_site.site_name }}{% endif %}
+            {% if current_site and current_site.site_name %} — {{ current_site.site_name }}{% endif %}
             {% endblock %}
         </title>
         {% if page.search_description %}
@@ -23,12 +23,11 @@
         <base target="_blank">
         {% endif %}
 
-        {# Global stylesheets #}
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link rel="stylesheet" type="text/css" href="{% static 'css/wlili.css' %}">
 
-        {% block extra_css %}
-        {# Override this in templates to add extra stylesheets #}
-        {% endblock %}
+        {% block extra_css %}{% endblock %}
     </head>
 
     <body class="{% block body_class %}{% endblock %}">
@@ -36,15 +35,13 @@
 
         {% include "includes/header.html" %}
 
-        {% block content %}{% endblock %}
+        <main>
+            {% block content %}{% endblock %}
+        </main>
 
         {% include "includes/footer.html" %}
 
-        {# Global javascript #}
         <script type="text/javascript" src="{% static 'js/wlili.js' %}"></script>
-
-        {% block extra_js %}
-        {# Override this in templates to add extra javascript #}
-        {% endblock %}
+        {% block extra_js %}{% endblock %}
     </body>
 </html>

@@ -1,19 +1,18 @@
 {% extends "base.html" %}
-{% load static %}
 {% load wagtailcore_tags %}
 
-{% block body-class %}template-productopage{% endblock %}
+{% block body_class %}template-productopage{% endblock %}
 
 {% block content %}
-  <div id="titulo"><h2>{{ page.titulo }}</h2></div>
+  <h2 class="producto-titulo">{{ page.titulo }}</h2>
+
   {% if page.descripcion %}
-    <div id="descripcion"><h3>{{ page.descripcion|richtext }}</h3></div>
+    <div class="producto-descripcion">{{ page.descripcion|richtext }}</div>
   {% endif %}
 
-<div class="imagenes">
-  {% for imagen in page.imagenes %}
-    {% include_block imagen %}
-  {% endfor %}
-</div>
-
+  <div class="imagenes-grid">
+    {% for imagen in page.imagenes %}
+      {% include_block imagen %}
+    {% endfor %}
+  </div>
 {% endblock %}

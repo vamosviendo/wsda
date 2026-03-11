@@ -1,17 +1,18 @@
 {% extends "base.html" %}
-{% load static %}
 {% load wagtailcore_tags %}
 
-{% block body-class %}template-areapage{% endblock %}
-
-{% block extra_css %}{% endblock extra_css %}
+{% block body_class %}template-areapage{% endblock %}
 
 {% block content %}
-  <div id="titulo"><h2>{{ page.titulo }}</h2></div>
+  <h2 class="area-titulo">{{ page.titulo }}</h2>
+
   {% if page.descripcion %}
-    <div id="descripcion"><h3>{{ page.descripcion|richtext }}</h3></div>
+    <div class="area-descripcion">{{ page.descripcion|richtext }}</div>
   {% endif %}
-  {% for producto in page.productos %}
-    {% include_block producto %}
-  {% endfor %}
-{% endblock content %}
+
+  <div class="productos-grid">
+    {% for producto in page.productos %}
+      {% include_block producto %}
+    {% endfor %}
+  </div>
+{% endblock %}

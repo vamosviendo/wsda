@@ -1,7 +1,7 @@
 {% load wagtailimages_tags %}
 
-<span class="imagen">
+<div class="imagen">
   <a href="{{ self.link.get_url }}" title="{{ self.nombre }}">
-    {% image self.imagen height-240 %}
+    {% image self.imagen fill-400x300 %}
   </a>
-</span>
+</div>

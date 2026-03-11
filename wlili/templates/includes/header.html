@@ -1,21 +1,30 @@
 {% load wagtailcore_tags navigation_tags %}
 
 <header>
-  {% with site_title=settings.base.GeneralSettings.site_title %}
-    {% if site_title %}
-      <div id="site-title">
-        <h1>{{ site_title }}</h1>
-      </div>
-    {% endif %}
-  {% endwith %}
-
-  {% get_site_root as site_root %}
-  <nav>
-    <p>
-      <a href="{% pageurl site_root %}">Home</a>
-      {% for menuitem in site_root.get_children.live.in_menu %}
-        <a href="{% pageurl menuitem %}">{{ menuitem.title }}</a>
-      {% endfor %}
+  <div class="header-inner">
+    <p class="site-title">
+      <a href="/">Liliana Medela</a>
     </p>
-  </nav>
+    {% get_site_root as site_root %}
+    <nav>
+      <ul>
+        <li><a href="{% pageurl site_root %}">Inicio</a></li>
+        {% for menuitem in site_root.get_children.live.in_menu %}
+          <li>
+            <a href="{% pageurl menuitem %}">{{ menuitem.title }}</a>
+            {% with children=menuitem.get_children.live.in_menu %}
+              {% if children %}
+                <ul>
+                  {% for child in children %}
+                    <li><a href="{% pageurl child %}">{{ child.title }}</a></li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+            {% endwith %}
+          </li>
+        {% endfor %}
+        <li><a href="https://lilianamedela.blogspot.com/" target="_blank" rel="noopener">Blog</a></li>
+      </ul>
+    </nav>
+  </div>
 </header>
