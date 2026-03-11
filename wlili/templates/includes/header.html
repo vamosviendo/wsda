@@ -2,8 +2,9 @@
 
 <header>
   <div class="header-inner">
+    {% get_site_name as site_name %}
     <p class="site-title">
-      <a href="/">Liliana Medela</a>
+      <a href="/">{{ site_name }}</a>
     </p>
     {% get_site_root as site_root %}
     <nav>

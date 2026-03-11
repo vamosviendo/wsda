@@ -21,3 +21,9 @@ def get_footer_text(context):
 @register.simple_tag(takes_context=True)
 def get_site_root(context):
     return Site.find_for_request(context["request"]).root_page
+
+
+@register.simple_tag(takes_context=True)
+def get_site_name(context):
+    site = Site.find_for_request(context["request"])
+    return site.site_name if site else ""
