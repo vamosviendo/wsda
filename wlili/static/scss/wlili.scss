@@ -1,0 +1,101 @@
+// ============================================================
+// wlili.scss — Estilos base
+// ============================================================
+
+// ── Variables ────────────────────────────────────────────────
+
+$color-fondo:      #f5f0e8;   // cremita claro (provisorio)
+$color-texto:      #231f20;
+$font-stack:       'Helvetica Neue', 'Segoe UI', Arial, sans-serif;
+
+$ancho-contenedor: 80%;
+$ancho-max:        1400px;    // límite para pantallas muy anchas
+
+
+// ── Reset mínimo ─────────────────────────────────────────────
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin:  0;
+  padding: 0;
+}
+
+
+// ── Página ───────────────────────────────────────────────────
+
+body {
+  min-height:  100vh;
+  background:  #ffffff;
+  color:       $color-texto;
+  font-family: $font-stack;
+  line-height: 1.5;
+}
+
+
+// ── Contenedor principal ──────────────────────────────────────
+//
+//  Ocupa el 80 % del ancho, centrado, con fondo cremita.
+//  Envuelve header, main y footer en base.html.
+
+#contenedor {
+  width:      80%;
+  max-width:  $ancho-max;
+  margin:     0 auto;
+  background: $color-fondo;
+}
+
+
+// ── Header ───────────────────────────────────────────────────
+
+header nav {
+  padding: 0.75rem 0;
+
+  p {
+    margin: 0;
+  }
+
+  a {
+    margin-right: 1rem;
+    text-decoration: none;
+    color: $color-texto;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+
+// ── Contenido principal ───────────────────────────────────────
+
+main,
+.content {
+  @include ancho-contenedor;
+  padding: 1.5rem 0;
+}
+
+
+// ── Footer ───────────────────────────────────────────────────
+
+footer > * {
+  @include ancho-contenedor;
+}
+
+
+// ── Responsivo ───────────────────────────────────────────────
+
+@media (max-width: 768px) {
+  header #site-title,
+  header nav,
+  main,
+  .content,
+  footer > * {
+    width: 95%;
+  }
+}

@@ -1,0 +1,2 @@
+Dividir wlili/static/css/wlili.css en archivos correspondientes a cada página
+Corregir diseño de template de producto. Asegurarse de que las imágenes se muestren completas.

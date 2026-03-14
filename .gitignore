@@ -4,6 +4,6 @@ media
 .idea
 .vwlili
 Dockerfile.backup
-static
+/static
 container.db.sqlite3
 tmp

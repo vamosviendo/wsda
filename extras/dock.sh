@@ -1,0 +1,1 @@
+docker build -t wlili . && docker run -p 8002:8002 --mount type=bind,source="$PWD/container.db.sqlite3",target=/home/nando/db.sqlite3 -e DJANGO_SECRET_KEY=sekrit -e DJANGO_ALLOWED_HOST=localhost -e DJANGO_DB_PATH=/home/nando/db.sqlite3 -it wlili
