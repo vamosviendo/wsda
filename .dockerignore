@@ -41,3 +41,4 @@ wheels/
 Dockerfile.backup
 static
 container.db.sqlite3
+extras
