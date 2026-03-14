@@ -2,14 +2,16 @@
 
 <div class="producto">
   <a href="{{ self.link.get_url }}">
+    <div class="producto-texto">
+      <h3>{{ self.nombre }}</h3>
+      {% if self.descripcion %}
+        <div class="producto-descripcion">{{ self.descripcion|richtext }}</div>
+      {% endif %}
+    </div>
     {% if self.imagen %}
       <div class="producto-imagen">
         {% image self.imagen fill-400x267 %}
       </div>
-    {% endif %}
-    <h3>{{ self.nombre }}</h3>
-    {% if self.descripcion %}
-      <h4>{{ self.descripcion|richtext }}</h4>
     {% endif %}
   </a>
 </div>
