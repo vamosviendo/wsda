@@ -1,0 +1,100 @@
+/* ============================================================
+   HEADER
+   ============================================================ */
+
+header {
+  width: 100%;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 1.5rem 2rem;
+  background-color: #d6d6d6;
+}
+
+.header-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+
+.site-title {
+  font-family: var(--font-display);
+  font-size: 2.8rem;
+  font-weight: 300;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.site-title a {
+  color: var(--color-text);
+}
+
+/* --- Navegación --- */
+nav ul {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 0.2rem 2rem;
+}
+
+nav ul li {
+  position: relative;
+}
+
+nav ul li a {
+  font-family: var(--font-body);
+  font-weight: 300;
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text);
+  padding: 0.3rem 0;
+  display: inline-block;
+  transition: color var(--transition);
+}
+
+nav ul li a:hover {
+  color: var(--color-muted);
+}
+
+/* Submenú dropdown */
+nav ul li ul {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  padding: 0.6rem 0;
+  min-width: 14rem;
+  z-index: 100;
+  flex-direction: column;
+  gap: 0;
+}
+
+nav ul li:hover ul {
+  display: flex;
+}
+
+nav ul li ul li a {
+  padding: 0.4rem 1.2rem;
+  display: block;
+  white-space: nowrap;
+}
+
+/* --- Responsivo --- */
+@media (max-width: 520px) {
+  .header-inner {
+    gap: 1rem;
+  }
+
+  .site-title {
+    font-size: 2rem;
+  }
+
+  nav ul {
+    gap: 0.2rem 1.2rem;
+  }
+}

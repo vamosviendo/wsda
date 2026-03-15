@@ -1,0 +1,104 @@
+/* ============================================================
+   ÁREA — grilla de productos y bloque producto individual
+   ============================================================ */
+
+.area-titulo {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  font-weight: 300;
+  font-style: normal;
+  letter-spacing: 0.04em;
+  padding: 2.5rem 0 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 2rem;
+}
+
+.area-descripcion {
+  font-size: 0.9rem;
+  color: var(--color-muted);
+  margin-bottom: 2rem;
+  max-width: 60ch;
+}
+
+.productos-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* --- Bloque producto individual --- */
+.producto a {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 2rem;
+  text-decoration: none;
+  color: inherit;
+  margin-top: 15px;
+  margin-bottom: 15px;
+}
+
+/* Filas impares: texto izquierda, imagen derecha */
+.producto:nth-child(odd) a {
+  flex-direction: row;
+}
+
+/* Filas pares: imagen izquierda, texto derecha */
+.producto:nth-child(even) a {
+  flex-direction: row-reverse;
+}
+
+.producto:nth-child(even) .producto-texto {
+  text-align: center;
+}
+
+.producto-texto {
+  flex: 1;
+  text-align: center;
+}
+
+.producto-imagen {
+  flex: 1;
+  overflow: hidden;
+  line-height: 0;
+}
+
+.producto-imagen img {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.producto:hover .producto-imagen img {
+  transform: scale(1.04);
+}
+
+.producto h3 {
+  font-family: var(--font-display);
+  font-size: 1.66rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+}
+
+/* Descripción corta dentro del bloque producto (subtitle) */
+.producto-descripcion {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 300;
+  color: var(--color-muted);
+  margin-top: 0.3rem;
+  line-height: 1.5;
+}
+
+/* --- Responsivo --- */
+@media (max-width: 800px) {
+  .producto a,
+  .producto:nth-child(odd) a,
+  .producto:nth-child(even) a {
+    flex-direction: column;
+  }
+
+  .producto-texto { order: 2; }
+  .producto-imagen { order: 1; }
+}

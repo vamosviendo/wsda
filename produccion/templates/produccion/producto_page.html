@@ -1,13 +1,17 @@
 {% extends "base.html" %}
-{% load wagtailcore_tags %}
+{% load static wagtailcore_tags %}
 
 {% block body_class %}template-productopage{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/producto_page.css' %}">
+{% endblock %}
 
 {% block content %}
   <h2 class="producto-titulo">{{ page.titulo }}</h2>
 
   {% if page.descripcion %}
-    <div class="producto-descripcion">{{ page.descripcion|richtext }}</div>
+    <div class="pagina-descripcion">{{ page.descripcion|richtext }}</div>
   {% endif %}
 
   <div class="imagenes-grid">

@@ -1,0 +1,43 @@
+/* ============================================================
+   HOME — FRANJAS
+   ============================================================ */
+
+.franjas {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0 -2rem;   /* sangrar hasta el borde del max-width */
+}
+
+.franja {
+  overflow: hidden;
+  line-height: 0;
+}
+
+.franja a {
+  display: block;
+}
+
+.franja img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  transition: transform 0.6s ease, filter 0.4s ease;
+  filter: grayscale(8%);
+}
+
+.franja:hover img {
+  transform: scale(1.02);
+  filter: grayscale(0%);
+}
+
+/* --- Responsivo --- */
+@media (max-width: 520px) {
+  .franja img {
+    height: 130px;
+  }
+
+  .franjas {
+    margin: 0 -1rem;
+  }
+}
