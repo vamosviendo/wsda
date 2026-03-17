@@ -24,7 +24,7 @@
 /* --- Reset base --- */
 *, *::before, *::after {
   box-sizing: border-box;
- producto_ margin: 0;
+  margin: 0;
   padding: 0;
 }
 
