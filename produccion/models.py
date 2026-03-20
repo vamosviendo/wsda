@@ -1,6 +1,6 @@
 from django.db import models
 import wagtail.blocks
-from wagtail.admin.panels import FieldPanel, MultiFieldPanel
+from wagtail.admin.panels import FieldPanel, HelpPanel, MultiFieldPanel
 from wagtail.fields import RichTextField, StreamField
 from wagtail.models import Page
 
@@ -33,6 +33,19 @@ class ProductoPage(Page):
     content_panels = Page.content_panels + [
         FieldPanel("titulo"),
         FieldPanel("descripcion"),
+        HelpPanel(
+            content=(
+                "<p><strong>Gestión de imágenes de la galería:</strong></p>"
+                "<ul>"
+                "<li><strong>Agregar una imagen:</strong> en el menú de tres puntos (...) "
+                "junto al título de esta página, seleccione <em>Añadir página hija</em>.</li>"
+                "<li><strong>Cambiar el orden:</strong> desde el mismo menú, "
+                "seleccione <em>Ordenar menú</em> y arrastre las imágenes al orden deseado.</li>"
+                "</ul>"
+                "<p><em>Nota: cada imagen tiene su propia página de detalle donde puede agregarse "
+                "agregar título, dimensiones, descripción y comentarios.</em></p>"
+            )
+        ),
     ]
 
     def get_context(self, request, *args, **kwargs):

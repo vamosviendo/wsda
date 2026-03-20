@@ -12,6 +12,54 @@ from produccion.models import AreaPage, ElementoPage, ProductoPage
 Image = get_image_model()
 
 
+class ProductoPageOrdenGaleriaTests(WagtailPageTestCase):
+
+    def setUp(self):
+        root_page = Page.get_first_root_node()
+        Site.objects.create(
+            hostname="testsite", root_page=root_page, is_default_site=True
+        )
+        area = AreaPage(title="Área test", titulo="Área test")
+        root_page.add_child(instance=area)
+
+        self.producto = ProductoPage(title="Producto test", titulo="Producto test")
+        area.add_child(instance=self.producto)
+
+        self.imagen = Image.objects.create(
+            title="Test image", file=get_test_image_file()
+        )
+
+        self.e1 = ElementoPage(title="Primero", slug="primero", imagen=self.imagen)
+        self.producto.add_child(instance=self.e1)
+
+        self.e2 = ElementoPage(title="Segundo", slug="segundo", imagen=self.imagen)
+        self.producto.add_child(instance=self.e2)
+
+        self.e3 = ElementoPage(title="Tercero", slug="tercero", imagen=self.imagen)
+        self.producto.add_child(instance=self.e3)
+
+    def test_galeria_respeta_orden_del_arbol(self):
+        """El orden de elementos en la galería refleja el orden del árbol de páginas."""
+        response = self.client.get(self.producto.url)
+        content = response.content.decode()
+        pos1 = content.index(self.e1.url)
+        pos2 = content.index(self.e2.url)
+        pos3 = content.index(self.e3.url)
+        self.assertLess(pos1, pos2)
+        self.assertLess(pos2, pos3)
+
+    def test_galeria_respeta_orden_modificado(self):
+        """Si se modifica el orden del árbol, la galería lo refleja."""
+        # Mover e3 antes de e1 usando la API de treebeard
+        self.e3.move(self.e1, pos="left")
+
+        response = self.client.get(self.producto.url)
+        content = response.content.decode()
+        pos3 = content.index(self.e3.url)
+        pos1 = content.index(self.e1.url)
+        self.assertLess(pos3, pos1)
+
+
 class ElementoPageTests(WagtailPageTestCase):
 
     def setUp(self):
