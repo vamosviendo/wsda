@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <div class="elemento-layout">
+    <div class="elemento-info">
+      <h2 class="elemento-titulo">
+        {% if page.titulo %}{{ page.titulo }}{% else %}Sin título{% endif %}
+      </h2>
+    </div>
+  </div>
+{% endblock %}

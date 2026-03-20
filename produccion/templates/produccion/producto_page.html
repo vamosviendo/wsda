@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static wagtailcore_tags %}
+{% load static wagtailcore_tags wagtailimages_tags %}
 
 {% block body_class %}template-productopage{% endblock %}
 
@@ -15,8 +15,14 @@
   {% endif %}
 
   <div class="imagenes-grid">
-    {% for imagen in page.imagenes %}
-      {% include_block imagen %}
+    {% for elemento in elementos %}
+      <div class="imagen">
+        <a href="{{ elemento.url }}">
+          {% if elemento.imagen %}
+            {% image elemento.imagen width-800 alt=elemento.alt_imagen %}
+          {% endif %}
+        </a>
+      </div>
     {% endfor %}
   </div>
 {% endblock %}
