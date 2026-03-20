@@ -1,11 +1,53 @@
 {% extends "base.html" %}
+{% load static wagtailcore_tags wagtailimages_tags %}
+
+{% block body_class %}template-elementopage{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/elemento_page.css' %}">
+{% endblock %}
 
 {% block content %}
   <div class="elemento-layout">
+
+    {% if page.imagen %}
+      <div class="elemento-imagen">
+        {% image page.imagen width-800 alt=page.alt_imagen %}
+      </div>
+    {% endif %}
+
     <div class="elemento-info">
+
       <h2 class="elemento-titulo">
         {% if page.titulo %}{{ page.titulo }}{% else %}Sin título{% endif %}
       </h2>
+
+      {% if page.alto or page.ancho %}
+        <p class="elemento-dimensiones">
+          {% if page.alto %}{{ page.alto }}{% endif %}
+          {% if page.alto and page.ancho %}&times;{% endif %}
+          {% if page.ancho %}{{ page.ancho }}{% endif %}
+          {% if page.profundidad %}&times;{{ page.profundidad }}{% endif %}
+          {% if page.unidad %}&nbsp;{{ page.unidad }}{% endif %}
+        </p>
+      {% endif %}
+
+      {% if page.peso %}
+        <p class="elemento-peso">{{ page.peso }}&nbsp;kg</p>
+      {% endif %}
+
+      {% if page.descripcion %}
+        <div class="elemento-descripcion">{{ page.descripcion|richtext }}</div>
+      {% endif %}
+
+      {% if page.comentarios %}
+        <div class="elemento-comentarios">
+          {% for bloque in page.comentarios %}
+            <div class="elemento-comentario">{% include_block bloque %}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
     </div>
   </div>
 {% endblock %}
