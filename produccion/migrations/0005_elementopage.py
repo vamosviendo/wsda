@@ -5,6 +5,39 @@ import wagtail.fields
 from django.db import migrations, models
 
 
+def crear_elemento_pages(apps, schema_editor):
+    print("Creando páginas elemento.......")
+    from produccion.models import ElementoPage, ProductoPage
+
+    for producto in ProductoPage.objects.all():
+
+        for i, bloque in enumerate(producto.imagenes):
+            if bloque.block_type != "imagen":
+                continue
+
+            valor = bloque.value
+            nombre = valor.get("nombre") or ""
+            imagen_struct = valor.get("imagen")
+
+            elemento = ElementoPage(
+                title=nombre or f"Elemento {i + 1}",
+                titulo=nombre,
+                slug=f"elemento-{i + 1}",
+            )
+
+            if imagen_struct:
+                elemento.imagen = imagen_struct
+                elemento.alt_imagen = nombre or ""
+
+            producto.add_child(instance=elemento)
+
+
+def eliminar_elemento_pages(apps, schema_editor):
+    print("Eliminando páginas elemento.......")
+    from produccion.models import ElementoPage
+    ElementoPage.objects.all().delete()
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -35,4 +68,5 @@ class Migration(migrations.Migration):
             },
             bases=('wagtailcore.page',),
         ),
+        migrations.RunPython(crear_elemento_pages, eliminar_elemento_pages),
     ]
