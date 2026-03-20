@@ -4,7 +4,7 @@ from wagtail.admin.panels import FieldPanel, MultiFieldPanel
 from wagtail.fields import RichTextField, StreamField
 from wagtail.models import Page
 
-from produccion.blocks import ProduccionStreamBlock, ImagenStreamBlock
+from produccion.blocks import ProduccionStreamBlock
 
 
 class AreaPage(Page):
@@ -27,19 +27,12 @@ class AreaPage(Page):
 class ProductoPage(Page):
     titulo = models.CharField(max_length=255)
     descripcion = RichTextField(blank=True)
-    imagenes = StreamField(
-        ImagenStreamBlock(),
-        blank=True,
-        use_json_field=True,
-        help_text="Agregue una imagen y opcionalmente un nombre"
-    )
 
     subpage_types = ["produccion.ElementoPage"]
 
     content_panels = Page.content_panels + [
         FieldPanel("titulo"),
         FieldPanel("descripcion"),
-        FieldPanel("imagenes"),
     ]
 
     def get_context(self, request, *args, **kwargs):
