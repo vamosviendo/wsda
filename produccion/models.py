@@ -93,7 +93,7 @@ class ElementoPage(Page):
     )
     peso = models.DecimalField(
         max_digits=8, decimal_places=2, null=True, blank=True,
-        verbose_name="Profundidad"
+        verbose_name="Peso"
     )
     UNIDAD_PESO_CHOICES = [
         ("g", "g"),
@@ -127,7 +127,13 @@ class ElementoPage(Page):
             ],
             heading="Dimensiones",
         ),
-        FieldPanel("peso"),
+        MultiFieldPanel(
+            [
+                FieldPanel("peso"),
+                FieldPanel("unidad_peso"),
+            ],
+            heading="Peso",
+        ),
         FieldPanel("descripcion"),
         FieldPanel("comentarios"),
     ]
