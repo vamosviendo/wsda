@@ -173,13 +173,13 @@ class HomePageFunctionalTests(FunctionalTestBase):
         self.assertNotIn("error", title.lower())
         self.assertNotIn("not found", title.lower())
 
-    def test_homepage_has_franjas_container(self):
+    def test_homepage_incluye_container_franjas(self):
         """El contenedor .franjas existe en el DOM (puede estar vacío)."""
         self.get("/")
         elementos = self.browser.find_elements(By.CSS_SELECTOR, ".franjas")
         self.assertGreater(len(elementos), 0, "No se encontró el contenedor .franjas")
 
-    def test_homepage_body_element_exists(self):
+    def test_elemento_body_existe_en_homepage(self):
         """El elemento <body> está presente (smoke test del DOM)."""
         self.get("/")
         body = self.browser.find_element(By.TAG_NAME, "body")
@@ -195,41 +195,41 @@ class HeaderFunctionalTests(FunctionalTestBase):
     Verifica el header: nombre del sitio, navegación.
     """
 
-    def test_site_name_is_visible(self):
+    def test_nombre_del_sitio_es_visible(self):
         """El nombre del sitio es visible (el CSS no lo está ocultando)."""
         self.get("/")
         site_title = self.wait_for(".site-title")
         self.assertTrue(site_title.is_displayed())
         self.assertIn(self.site_name.lower(), site_title.text.lower())
 
-    def test_site_name_is_a_link_to_root(self):
+    def test_nombre_del_sitio_es_un_link_a_home(self):
         """El nombre del sitio es un enlace a la raíz."""
         self.get("/")
         link = self.browser.find_element(By.CSS_SELECTOR, ".site-title a")
         href = link.get_attribute("href")
         self.assertTrue(href.endswith("/"))
 
-    def test_nav_is_visible(self):
+    def test_nav_es_visible(self):
         """El menú de navegación está visible."""
         self.get("/")
         nav = self.wait_for("nav")
         self.assertTrue(nav.is_displayed())
 
-    def test_inicio_link_is_in_nav(self):
+    def test_link_de_inicio_existe_en_nav(self):
         """El ítem 'Inicio' aparece en el menú y es visible."""
         self.get("/")
         links = self.browser.find_elements(By.CSS_SELECTOR, "nav a")
         link_texts = [a.text.lower() for a in links]
         self.assertIn("inicio", link_texts)
 
-    def test_blog_link_is_in_nav(self):
+    def test_link_blog_existe_en_nav(self):
         """El link al blog externo está en el menú y es visible."""
         self.get("/")
         links = self.browser.find_elements(By.CSS_SELECTOR, "nav a")
         hrefs = [a.get_attribute("href") for a in links]
         self.assertTrue(any("blogspot.com" in href for href in hrefs))
 
-    def test_area_page_appears_in_nav(self):
+    def test_una_pagina_de_area_aparece_in_nav(self):
         """Una AreaPage con show_in_menus=True aparece visible en el menú."""
         area = AreaPage(title="Pintura", titulo="Pintura", show_in_menus=True)
         self.homepage.add_child(instance=area)
@@ -238,7 +238,7 @@ class HeaderFunctionalTests(FunctionalTestBase):
         link_texts = [a.text.lower() for a in links]
         self.assertIn("pintura", link_texts)
 
-    def test_nav_link_navigates_correctly(self):
+    def test_link_de_nav_navega_correctamente(self):
         """Un clic en 'Inicio' en el menú lleva a la URL correcta."""
         area = AreaPage(title="Pintura", titulo="Pintura", show_in_menus=True)
         self.homepage.add_child(instance=area)
@@ -255,7 +255,7 @@ class HeaderFunctionalTests(FunctionalTestBase):
             f"{self.live_server_url}{self.homepage.url}"
         )
 
-    def test_header_css_is_applied(self):
+    def test_se_aplica_css_del_header(self):
         """
         El CSS del header fue cargado e interpretado por el browser.
         Verificamos una propiedad de .site-title que depende del CSS:
@@ -279,19 +279,19 @@ class FooterFunctionalTests(FunctionalTestBase):
     Verifica el footer: crédito, redes sociales, footer text.
     """
 
-    def test_footer_is_visible(self):
+    def test_footer_es_visible(self):
         """El footer es visible en la página."""
         self.get("/")
         footer = self.wait_for("footer")
         self.assertTrue(footer.is_displayed())
 
-    def test_footer_credit_is_visible(self):
+    def test_footer_credit_es_visible(self):
         """El crédito de diseño (HT) es visible en el footer."""
         self.get("/")
         footer = self.browser.find_element(By.CSS_SELECTOR, "footer")
         self.assertIn("HT", footer.text)
 
-    def test_instagram_link_is_visible_when_configured(self):
+    def test_instagram_link_es_visible_si_esta_configurado(self):
         """El link de Instagram es visible cuando está configurado."""
         NavigationSettings(instagram_url="https://instagram.com/lilianamedela").save()
         self.get("/")
@@ -299,7 +299,7 @@ class FooterFunctionalTests(FunctionalTestBase):
         link_texts = [a.text.lower() for a in links]
         self.assertIn("instagram", link_texts)
 
-    def test_instagram_link_navigates_to_correct_url(self):
+    def test_instagram_link_navega_a_url_correcta(self):
         """El link de Instagram apunta a la URL configurada."""
         NavigationSettings(instagram_url="https://instagram.com/lilianamedela").save()
         self.get("/")
@@ -314,14 +314,14 @@ class FooterFunctionalTests(FunctionalTestBase):
             "https://instagram.com/lilianamedela"
         )
 
-    def test_footer_text_is_visible_when_live(self):
+    def test_texto_del_footer_es_visible_si_esta_publicado(self):
         """El texto del footer (snippet publicado) es visible."""
         FooterText.objects.create(body="<p>Obra de Liliana Medela</p>", live=True)
         self.get("/")
         footer = self.browser.find_element(By.CSS_SELECTOR, "footer")
         self.assertIn("Obra de Liliana Medela", footer.text)
 
-    def test_footer_text_not_visible_when_draft(self):
+    def test_texto_del_footer_no_es_visible_si_esta_en_borrador(self):
         """El texto del footer en borrador no es visible."""
         FooterText.objects.create(body="<p>Texto en borrador</p>", live=False)
         self.get("/")
@@ -347,26 +347,26 @@ class AreaPageFunctionalTests(FunctionalTestBase):
         )
         self.homepage.add_child(instance=self.area_page)
 
-    def test_area_page_loads(self):
+    def test_area_page_carga(self):
         """La página de área carga sin errores."""
         self.get(self.area_page.url)
         self.assertNotIn("error", self.browser.title.lower())
 
-    def test_area_titulo_is_visible(self):
+    def test_area_titulo_es_visible(self):
         """El título del área es visible en la página."""
         self.get(self.area_page.url)
         titulo = self.wait_for(".area-titulo")
         self.assertTrue(titulo.is_displayed())
         self.assertIn("Pintura", titulo.text)
 
-    def test_area_descripcion_is_visible(self):
+    def test_area_descripcion_es_visible(self):
         """La descripción del área es visible."""
         self.get(self.area_page.url)
         desc = self.wait_for(".area-descripcion")
         self.assertTrue(desc.is_displayed())
         self.assertIn("Obras en técnica pictórica.", desc.text)
 
-    def test_productos_grid_is_visible(self):
+    def test_productos_grid_es_visible(self):
         """El contenedor de la grilla de productos existe en el DOM (puede estar vacío)."""
         self.get(self.area_page.url)
         elementos = self.browser.find_elements(By.CSS_SELECTOR, ".productos-grid")
@@ -375,7 +375,7 @@ class AreaPageFunctionalTests(FunctionalTestBase):
             "No se encontró el contenedor .productos-grid en el DOM"
         )
 
-    def test_area_css_is_applied(self):
+    def test_area_css_se_aplica(self):
         """
         El CSS del área fue aplicado correctamente.
         Verificamos que .area-titulo tiene el display esperado.
@@ -647,20 +647,20 @@ class ElementoPageFunctionalTests(FunctionalTestBase):
 
     # --- Contenido ---
 
-    def test_elemento_page_loads(self):
+    def test_elemento_page_carga(self):
         """La página del elemento carga sin errores."""
         self.get(self.elemento.url)
         self.assertNotIn("error", self.browser.title.lower())
         self.assertNotIn("not found", self.browser.title.lower())
 
-    def test_elemento_titulo_is_visible(self):
+    def test_elemento_titulo_es_visible(self):
         """El título de la obra es visible."""
         self.get(self.elemento.url)
         titulo = self.wait_for(".elemento-titulo")
         self.assertTrue(titulo.is_displayed())
         self.assertIn("retrato de mujer", titulo.text.lower())
 
-    def test_elemento_dimensiones_are_visible(self):
+    def test_elemento_dimensiones_son_visibles(self):
         """Las dimensiones (alto × ancho, unidad) son visibles."""
         self.get(self.elemento.url)
         dims = self.wait_for(".elemento-dimensiones")
@@ -670,14 +670,14 @@ class ElementoPageFunctionalTests(FunctionalTestBase):
         self.assertIn("60", text)
         self.assertIn("cm", text)
 
-    def test_elemento_descripcion_is_visible(self):
+    def test_elemento_descripcion_es_visible(self):
         """La descripción de la obra es visible."""
         self.get(self.elemento.url)
         desc = self.wait_for(".elemento-descripcion")
         self.assertTrue(desc.is_displayed())
         self.assertIn("Descripción de la obra.", desc.text)
 
-    def test_elemento_imagen_loads_in_browser(self):
+    def test_elemento_imagen_carga_en_el_browser(self):
         """
         La imagen de la obra fue descargada correctamente por el browser.
         naturalWidth === 0 significa que el archivo no se sirvió.
@@ -693,15 +693,17 @@ class ElementoPageFunctionalTests(FunctionalTestBase):
             f"La imagen de la obra no cargó (naturalWidth=0). src='{src}'"
         )
 
-    def test_elemento_imagen_src_points_to_media(self):
+    def test_elemento_imagen_src_apunta_a_media(self):
         """El src de la imagen apunta a /media/."""
         self.get(self.elemento.url)
         img = self.wait_for(".elemento-img-preview")
         src = img.get_attribute("src")
-        self.assertIn("/media/", src,
-                      f"El src no contiene '/media/': '{src}'")
+        self.assertIn(
+            "/media/", src,
+            f"El src no contiene '/media/': '{src}'"
+        )
 
-    def test_elemento_css_is_applied(self):
+    def test_elemento_css_se_aplica(self):
         """
         El CSS del elemento fue cargado. Verificamos el layout de dos columnas:
         .elemento-layout debe tener display: flex.
@@ -709,8 +711,11 @@ class ElementoPageFunctionalTests(FunctionalTestBase):
         self.get(self.elemento.url)
         layout = self.wait_for(".elemento-layout")
         display = self.get_computed_style(layout, "display")
-        self.assertEqual(display, "flex",
-                         f".elemento-layout tiene display='{display}' en lugar de 'flex'")
+        self.assertEqual(
+            display, "flex",
+            f".elemento-layout tiene display='{display}' "
+            f"en lugar de 'flex'"
+        )
 
     # --- Visor de imagen JS ---
 
@@ -733,8 +738,11 @@ class ElementoPageFunctionalTests(FunctionalTestBase):
         self.get(self.elemento.url)
         preview = self.wait_for(".elemento-img-preview")
         cursor = self.get_computed_style(preview, "cursor")
-        self.assertEqual(cursor, "zoom-in",
-                         f"El cursor de la imagen preview es '{cursor}' en lugar de 'zoom-in'")
+        self.assertEqual(
+            cursor, "zoom-in",
+            f"El cursor de la imagen preview es '{cursor}' "
+            f"en lugar de 'zoom-in'"
+        )
 
     def test_clic_en_preview_abre_overlay(self):
         """Al cliquear la imagen preview, el overlay aparece."""
@@ -742,8 +750,10 @@ class ElementoPageFunctionalTests(FunctionalTestBase):
         overlay = self.browser.find_element(
             By.CSS_SELECTOR, ".elemento-img-overlay.activo"
         )
-        self.assertTrue(overlay.is_displayed(),
-                        "El overlay no es visible después de cliquear la imagen")
+        self.assertTrue(
+            overlay.is_displayed(),
+            "El overlay no es visible después de cliquear la imagen"
+        )
 
     def test_overlay_estado_1_imagen_ajustada_a_pantalla(self):
         """
@@ -756,10 +766,16 @@ class ElementoPageFunctionalTests(FunctionalTestBase):
         )
         max_width = self.get_computed_style(overlay_img, "maxWidth")
         max_height = self.get_computed_style(overlay_img, "maxHeight")
-        self.assertNotEqual(max_width, "none",
-                            "En estado 1, maxWidth debería estar definido (ajuste a pantalla)")
-        self.assertNotEqual(max_height, "none",
-                            "En estado 1, maxHeight debería estar definido (ajuste a pantalla)")
+        self.assertNotEqual(
+            max_width, "none",
+            "En estado 1, maxWidth debería estar definido "
+            "(ajuste a pantalla)"
+        )
+        self.assertNotEqual(
+            max_height, "none",
+            "En estado 1, maxHeight debería estar definido "
+            "(ajuste a pantalla)"
+        )
 
     def test_clic_en_overlay_pasa_a_estado_2_tamanio_real(self):
         """
@@ -778,9 +794,11 @@ class ElementoPageFunctionalTests(FunctionalTestBase):
             By.CSS_SELECTOR, ".elemento-img-overlay img"
         )
         max_width = self.get_computed_style(overlay_img, "maxWidth")
-        self.assertEqual(max_width, "none",
-                         f"En estado 2, maxWidth debería ser 'none' (tamaño real). "
-                         f"Valor actual: '{max_width}'")
+        self.assertEqual(
+            max_width, "none",
+            f"En estado 2, maxWidth debería ser 'none' (tamaño real). "
+            f"Valor actual: '{max_width}'"
+        )
 
     def test_clic_en_overlay_estado_2_vuelve_a_estado_1(self):
         """
@@ -800,9 +818,11 @@ class ElementoPageFunctionalTests(FunctionalTestBase):
             By.CSS_SELECTOR, ".elemento-img-overlay img"
         )
         max_width = self.get_computed_style(overlay_img, "maxWidth")
-        self.assertNotEqual(max_width, "none",
-                            f"Al volver al estado 1, maxWidth debería estar definido. "
-                            f"Valor actual: '{max_width}'")
+        self.assertNotEqual(
+            max_width, "none",
+            f"Al volver al estado 1, maxWidth debería estar definido. "
+            f"Valor actual: '{max_width}'"
+        )
 
     def test_boton_cerrar_cierra_overlay(self):
         """Al cliquear el botón X, el overlay desaparece."""
@@ -816,8 +836,10 @@ class ElementoPageFunctionalTests(FunctionalTestBase):
         overlays_activos = self.browser.find_elements(
             By.CSS_SELECTOR, ".elemento-img-overlay.activo"
         )
-        self.assertEqual(len(overlays_activos), 0,
-                         "El overlay sigue visible después de cliquear el botón de cierre")
+        self.assertEqual(
+            len(overlays_activos), 0,
+            "El overlay sigue visible después de cliquear el botón de cierre"
+        )
 
     def test_escape_cierra_overlay(self):
         """Al presionar Escape, el overlay desaparece."""
@@ -828,5 +850,7 @@ class ElementoPageFunctionalTests(FunctionalTestBase):
         overlays_activos = self.browser.find_elements(
             By.CSS_SELECTOR, ".elemento-img-overlay.activo"
         )
-        self.assertEqual(len(overlays_activos), 0,
-                         "El overlay sigue visible después de presionar Escape")
+        self.assertEqual(
+            len(overlays_activos), 0,
+            "El overlay sigue visible después de presionar Escape"
+        )
