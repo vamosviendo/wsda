@@ -8,3 +8,4 @@ Dockerfile.backup
 container.db.sqlite3
 tmp
 extras
+node_modules
