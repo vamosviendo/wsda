@@ -101,7 +101,7 @@ class FunctionalTestBase(StaticLiveServerTestCase):
         self.homepage = HomePage(title="Home", slug="home")
         root_page.add_child(instance=self.homepage)
 
-        self.site_name = "Liliana Medela"
+        self.site_name = "Rogelio Roldán"
         self.site = Site.objects.create(
             # El Site apunta a homepage, no a root_page.
             # Wagtail sirve la página que es root_page del Site;
