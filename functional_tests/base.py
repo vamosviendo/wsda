@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -91,6 +92,13 @@ class FunctionalTestBase(StaticLiveServerTestCase):
             EC.presence_of_element_located((By.CSS_SELECTOR, css_selector))
         )
 
+    def wait_for_text(self, css_selector, text, timeout=5):
+        return WebDriverWait(self.browser, timeout).until(
+            EC.text_to_be_present_in_element(
+                (By.CSS_SELECTOR, css_selector), text
+            )
+        )
+
     def image_loaded(self, img_element):
         """
         Devuelve True si la imagen fue descargada y renderizada correctamente.
@@ -114,3 +122,30 @@ class FunctionalTestBase(StaticLiveServerTestCase):
         return self.browser.execute_script(
             f"return window.getComputedStyle(arguments[0]).{prop}", element
         )
+
+    def screenshot(self, nombre="debug"):
+        path = f"./tmp/selenium_{nombre}.png"
+        self.browser.save_screenshot(path)
+        print(f"Screenshot guardado: {path}")
+
+    # ── Helpers de administración ────────────────────────────────────
+
+    def crear_admin(self, username="admin", password="adminpass"):
+        """Crea un superusuario para los tests que interactúan con el admin."""
+        return User.objects.create_superuser(
+            username=username,
+            password=password,
+            email="admin@test.com",
+        )
+
+    def login_admin(self, username="admin", password="adminpass"):
+        """Abre el panel de Wagtail e inicia sesión."""
+        self.browser.get(f"{self.live_server_url}/admin/")
+        self.wait_for("#id_username").send_keys(username)
+        self.browser.find_element(By.ID, "id_password").send_keys(password)
+        self.browser.find_element(By.CSS_SELECTOR, "[type=submit]").click()
+        # Espera a que se cargue el dashboard
+        self.wait_for(".sidebar")
+
+    def logout_admin(self):
+        self.browser.get(f"{self.live_server_url}/admin/logout/")

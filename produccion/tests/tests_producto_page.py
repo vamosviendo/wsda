@@ -4,7 +4,7 @@ from wagtail.models import Page, Site
 from wagtail.test.utils import WagtailPageTestCase
 
 from produccion.models import AreaPage, ElementoPage, ProductoPage
-from produccion.tests.utils import crear_estructura_basica
+from utils.test_utils import crear_estructura_basica
 
 
 Image = get_image_model()

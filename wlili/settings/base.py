@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     "base",
     "home",
     "produccion",
+    "paginas",
     "search",
     "wagtail_link_block",
     "wagtail.contrib.forms",

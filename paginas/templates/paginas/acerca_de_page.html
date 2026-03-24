@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% load wagtailcore_tags %}
+
+{% block body_class %}template-acercade{% endblock %}
+
+{% block content %}
+  <h2 class="page-titulo">{{ page.titulo }}</h2>
+  <div class="page-body">
+    {{ page.body|richtext }}
+  </div>
+{% endblock %}
