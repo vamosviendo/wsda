@@ -1,0 +1,31 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "ollama": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Ollama (local)",
+      "options": {
+        "baseURL": "http://localhost:11434/v1"
+      },
+      "models": {
+        "qwen3:8b": { "name": "Qwen3 8B (local)" }
+      }
+    },
+    "gemini": {
+      "npm": "@ai-sdk/google",
+      "name": "Google Gemini (gratuito)",
+      "options": {
+        "apiKey": "AIzaSyDZTCefnn_h25eUeiaLxnQUOW_Wj4eNAvI"
+      },
+      "models": {
+        "gemini-3-flash": { "name":  "Gemini 3 Flash"}
+      }
+    }
+  },
+  "model": "ollama/gemini-3-flash-preview",  "permission": {
+    "edit": "ask",
+    "write": "ask",
+    "bash": "ask",
+    "read": "allow"
+  }
+}
