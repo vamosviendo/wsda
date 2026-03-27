@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load static wagtailcore_tags %}
+
+{% block body_class %}template-curriculumpage{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/curriculum_page.css' %}">
+{% endblock %}
+
+{% block content %}
+  <h2 class="page-titulo">Muestras, premios y salones</h2>
+
+  <div class="curriculum-entradas">
+    {% for bloque in page.entradas %}
+      {% with e=bloque.value %}
+      <div class="curriculum-entrada">
+        <span class="curriculum-anio">{{ e.anio }}</span>
+        <div class="curriculum-detalle">
+          <p class="curriculum-titulo">{{ e.titulo }}</p>
+          {% if e.lugar %}
+            <p class="curriculum-lugar">{{ e.lugar }}</p>
+          {% endif %}
+          {% if e.nota %}
+            <div class="curriculum-nota">{{ e.nota }}</div>
+          {% endif %}
+        </div>
+      </div>
+      {% endwith %}
+    {% endfor %}
+  </div>
+{% endblock %}
