@@ -1,3 +1,4 @@
+from django.core.validators import RegexValidator
 from django.db.models import CharField
 from wagtail.admin.panels import FieldPanel
 from wagtail.blocks import CharBlock, RichTextBlock, StreamBlock, StructBlock
@@ -15,8 +16,14 @@ class AcercaDePage(Page):
     ]
 
 
+anio_validator = RegexValidator(
+    regex=r'^\d{4}$',
+    message="El año debe tener exactamente cuatro dígitos"
+)
+
+
 class EntradaCurriculumBlock(StructBlock):
-    anio = CharBlock(label="Año", max_length=4)
+    anio = CharBlock(label="Año", max_length=4, validators=[anio_validator])
     titulo = CharBlock(label="Título", max_length=255)
     lugar = CharBlock(
         label="Lugar / Institución",

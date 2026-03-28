@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError
+import pytest
 from wagtail.admin.panels import get_edit_handler
 from wagtail.blocks import StreamValue
 from wagtail.models import Page, Site
@@ -169,3 +170,24 @@ class EntradaCurriculumBlockUnitTests(CurriculumPageBase):
         self.assertEqual(primera_entrada["titulo"], "Exposición anual")
         self.assertEqual(primera_entrada["lugar"], "Museo de Arte")
         self.assertIn("Participación", primera_entrada["nota"].source)
+
+    def test_anio_field_validates_year_format(self):
+        for anio_invalido in ["23", "20234", "abcd", "1a2b"]:
+            print(f"Testeando {anio_invalido}")
+
+            stream_block = self.curriculum.entradas.stream_block
+            stream_value = StreamValue(
+                stream_block,
+                [(
+                    "entrada",
+                    {
+                        "anio": anio_invalido,
+                        "titulo": "Test",
+                        "lugar": "",
+                        "nota": ""}
+                )],
+                is_lazy=False,
+            )
+
+            with self.assertRaises(ValidationError):
+                stream_block.clean(stream_value)
