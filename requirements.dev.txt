@@ -2,3 +2,4 @@ ansible==13.3.0
 ansible-core==2.20.2
 docker==7.1.0
 selenium==4.41.0
+django-migrations-ci==0.13
