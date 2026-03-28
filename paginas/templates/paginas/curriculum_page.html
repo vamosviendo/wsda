@@ -11,7 +11,7 @@
   <h2 class="page-titulo">Muestras, premios y salones</h2>
 
   <div class="curriculum-entradas">
-    {% for bloque in page.entradas %}
+    {% for bloque in entradas_ordenadas %}
       {% with e=bloque.value %}
       <div class="curriculum-entrada">
         <span class="curriculum-anio">{{ e.anio }}</span>

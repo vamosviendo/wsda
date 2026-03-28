@@ -1,5 +1,4 @@
 from django.core.exceptions import ValidationError
-import pytest
 from wagtail.admin.panels import get_edit_handler
 from wagtail.blocks import StreamValue
 from wagtail.models import Page, Site
@@ -83,6 +82,31 @@ class CurriculumPageFunctionalTests(CurriculumPageBase):
 
         # Verificar que el campo 'entradas' está en el HTML
         self.assertContains(response, 'id="entradas"')
+
+    def test_entradas_se_muestran_ordenadas_por_anio(self):
+        """Las entradas deben mostrarse ordenadas por año (más reciente primero)"""
+        # Crear entradas en orden no cronológico
+        stream_value = StreamValue(
+            self.curriculum.entradas.stream_block,
+            [
+                ("entrada", {"anio": "2020", "titulo": "Primera", "lugar": "", "nota": ""}),
+                ("entrada", {"anio": "2023", "titulo": "Tercera", "lugar": "", "nota": ""}),
+                ("entrada", {"anio": "2021", "titulo": "Segunda", "lugar": "", "nota": ""}),
+            ],
+            is_lazy=False,
+        )
+        self.curriculum.entradas = stream_value
+        self.curriculum.save()
+
+        response = self.client.get(self.curriculum.url)
+
+        # Verificar orden: 2023, 2021, 2020
+        content = response.content.decode()
+        pos_2023 = content.find("2023")
+        pos_2021 = content.find("2021")
+        pos_2020 = content.find("2020")
+
+        self.assertTrue(pos_2023 < pos_2021 < pos_2020)
 
 
 class CurriculumPageUnitTests(CurriculumPageBase):
@@ -172,7 +196,7 @@ class EntradaCurriculumBlockUnitTests(CurriculumPageBase):
         self.assertIn("Participación", primera_entrada["nota"].source)
 
     def test_anio_field_validates_year_format(self):
-        for anio_invalido in ["23", "20234", "abcd", "1a2b"]:
+        for anio_invalido in ["23", "20234", "1a2b", "1899", "2100"]:
             print(f"Testeando {anio_invalido}")
 
             stream_block = self.curriculum.entradas.stream_block

@@ -1,7 +1,7 @@
 from django.core.validators import RegexValidator
 from django.db.models import CharField
 from wagtail.admin.panels import FieldPanel
-from wagtail.blocks import CharBlock, RichTextBlock, StreamBlock, StructBlock
+from wagtail.blocks import CharBlock, RichTextBlock, StructBlock
 from wagtail.fields import RichTextField, StreamField
 from wagtail.models import Page
 
@@ -17,8 +17,8 @@ class AcercaDePage(Page):
 
 
 anio_validator = RegexValidator(
-    regex=r'^\d{4}$',
-    message="El año debe tener exactamente cuatro dígitos"
+    regex=r'^(19|20)\d{2}$',
+    message="El año debe estar entre 1900 y 2099"
 )
 
 
@@ -48,6 +48,18 @@ class CurriculumPage(Page):
     content_panels = Page.content_panels + [
         FieldPanel("entradas"),
     ]
+
+    def get_context(self, request, *args, **kwargs):
+        context = super().get_context(request, *args, **kwargs)
+
+        context["entradas_ordenadas"] = sorted(
+            self.entradas,
+            key=lambda x: x.value.get("anio", ""),
+            reverse=True,
+        )
+
+        return context
+
 
     class Meta:
         verbose_name = "Página de currículum"
