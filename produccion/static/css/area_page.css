@@ -14,8 +14,7 @@
 }
 
 .area-descripcion {
-  font-size: 0.9rem;
-  color: var(--color-muted);
+  font-size: 1.2rem;
   margin-bottom: 2rem;
   max-width: 60ch;
 }

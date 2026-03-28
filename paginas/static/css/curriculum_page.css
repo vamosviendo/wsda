@@ -1,0 +1,76 @@
+/* ============================================================
+    CURRICULUM — entradas con año y datos
+    ============================================================ */
+
+.curriculum-entradas {
+    display: grid;
+    grid-template-columns: auto 1fr;
+        gap: 1rem;
+    margin-top: 1rem;
+}
+
+.curriculum-entrada {
+    display: contents;
+}
+
+.curriculum-anio {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 400;
+    color: var(--color-text);
+    padding-top: 0.1rem;
+    min-width: 3.5rem;
+}
+
+.curriculum-detalle {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-bottom: 2rem;
+}
+
+.curriculum-titulo {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    font-weight: 400;
+    letter-spacing: 0.03em;
+    margin: 0;
+}
+
+.curriculum-lugar {
+    font-size: 1rem;
+    color: var(--color-muted);
+    margin: 0;
+}
+
+.curriculum-nota {
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.curriculum-nota p {
+    margin: 0;
+}
+
+@media (max-width: 600px) {
+    .curriculum-entradas {
+        display: flex;
+        flex-direction: column;
+    gap: 1rem;
+    }
+
+    .curriculum-entrada {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+    }
+
+    .curriculum-anio {
+        min-width: auto;
+        padding-bottom: 0;
+    }
+
+    .curriculum-detalle {
+        padding-bottom: 0;
+    }
+}
