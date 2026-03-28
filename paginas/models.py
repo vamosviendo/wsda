@@ -32,12 +32,22 @@ class EntradaCurriculumBlock(StructBlock):
     )
     nota = RichTextBlock(label="Otros datos", required=False)
 
+    class Meta:
+        label = "Entrada"
+        icon = "date"
+
 
 class CurriculumPage(Page):
-    entradas = StreamField([
-        ("entrada", EntradaCurriculumBlock()),
-    ])
+    entradas = StreamField(
+        [("entrada", EntradaCurriculumBlock()),],
+        blank=True,
+        use_json_field=True,
+        verbose_name="Entradas",
+    )
 
     content_panels = Page.content_panels + [
         FieldPanel("entradas"),
     ]
+
+    class Meta:
+        verbose_name = "Página de currículum"
