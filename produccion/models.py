@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import Self
+
 from django.db import models
 import wagtail.blocks
 from wagtail.admin.panels import FieldPanel, HelpPanel, MultiFieldPanel
@@ -58,6 +62,14 @@ class ProductoPage(Page):
             .order_by("path")
         )
         return context
+
+    def get_producto_anterior(self) -> Self | None:
+        prev = self.get_prev_sibling()
+        return prev.specific if prev else None
+
+    def get_producto_siguiente(self) -> Self | None:
+        next = self.get_next_sibling()
+        return next.specific if next else None
 
 
 class ElementoPage(Page):

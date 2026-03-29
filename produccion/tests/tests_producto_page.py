@@ -184,3 +184,34 @@ class ProductoPageOrdenGaleriaTests(WagtailPageTestCase):
         pos3 = content.index(self.e3.url)
         pos1 = content.index(self.e1.url)
         self.assertLess(pos3, pos1)
+
+
+class ProductoPageMetAnteriorSiguiente(WagtailPageTestCase):
+    def setUp(self):
+        root_page = Page.get_first_root_node()
+        Site.objects.create(
+            hostname="testsite", root_page=root_page, is_default_site=True
+        )
+        area = AreaPage(title="Área test", titulo="Área test")
+        root_page.add_child(instance=area)
+
+        self.producto1 = ProductoPage(title="Producto 1", titulo="Producto uno")
+        area.add_child(instance=self.producto1)
+
+        self.producto2 = ProductoPage(title="Producto 2", titulo="Producto dos")
+        area.add_child(instance=self.producto2)
+
+        self.producto3 = ProductoPage(title="Producto 3", titulo="Producto tres")
+        area.add_child(instance=self.producto3)
+
+    def test_get_producto_anterior_devuelve_pagina_de_producto_anterior(self):
+        self.assertEqual(self.producto2.get_producto_anterior(), self.producto1)
+
+    def test_get_producto_anterior_devuelve_None_si_no_hay_producto_anterior(self):
+        self.assertIsNone(self.producto1.get_producto_anterior())
+
+    def test_get_producto_siguiente_devuelve_pagina_de_producto_siguiente(self):
+        self.assertEqual(self.producto2.get_producto_siguiente(), self.producto3)
+
+    def test_get_producto_siguiente_devuelve_None_si_no_hay_producto_siguiente(self):
+        self.assertIsNone(self.producto3.get_producto_siguiente())
