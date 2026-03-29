@@ -214,3 +214,39 @@ class ProductoPageFunctionalTests(FunctionalTestBase):
             f"Se esperaban 3 imágenes en la galería, "
             f"se encontraron {len(imgs)}"
         )
+
+    def test_producto_anterior_o_siguiente_del_area(self):
+        # Dado un producto entre otros
+        self.producto_page_2 = ProductoPage(
+            title="Óleos",
+            titulo="Óleos sobre tela",
+            descripcion="Serie 2024.",
+        )
+        self.area_page.add_child(instance=self.producto_page_2)
+        self.get(self.producto_page_2.url)
+
+        # Hay un enlace con el nombre del producto anterior
+        producto_anterior = self.wait_for("#producto-anterior")
+        self.assertIn("Acrílicos sobre tela", producto_anterior.text)
+
+        # Si cliqueo en el enlace producto-anterior, voy al producto anterior
+        # del área.
+        producto_anterior.click()
+        self.assert_current_url(self.producto_page.url, timeout=3)
+
+        # También hay un enlace con el nombre del producto siguiente
+        producto_siguiente = self.wait_for("#producto-siguiente")
+        self.assertIn("Óleos sobre tela", producto_siguiente.text)
+        # Si cliqueo en el enlace producto-siguiente, voy al producto siguiente
+        # del área.
+        producto_siguiente.click()
+        self.assert_current_url(self.producto_page_2.url, timeout=3)
+
+        # Si el producto es el último del área, no aparece el enlace
+        # producto-siguiente.
+        self.assert_element_not_present("#producto-siguiente", timeout=3)
+
+        # Si el producto es el primero del área, no aparece el enlace
+        # producto-anterior.
+        self.get(self.producto_page.url)
+        self.assert_element_not_present("#producto-anterior", timeout=3)

@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from selenium import webdriver
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support import expected_conditions as EC
@@ -88,9 +89,24 @@ class FunctionalTestBase(StaticLiveServerTestCase):
 
     def wait_for(self, css_selector, timeout=5):
         """Espera hasta que un selector CSS esté presente en el DOM."""
-        return WebDriverWait(self.browser, timeout).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, css_selector))
-        )
+        try:
+            return WebDriverWait(self.browser, timeout).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, css_selector))
+            )
+        except TimeoutException:
+            raise TimeoutException(f"Elemento '{css_selector}' no encontrado") from None
+
+    def wait_for_element_not_present(self, css_selector, timeout=5):
+        """Espera hasta que un selector CSS NO esté presente en el DOM."""
+        try:
+            WebDriverWait(self.browser, timeout).until(
+                EC.invisibility_of_element_located(
+                    (By.CSS_SELECTOR, css_selector)
+                )
+            )
+            return True
+        except Exception:
+            return False
 
     def wait_for_text(self, css_selector, text, timeout=5):
         return WebDriverWait(self.browser, timeout).until(
@@ -98,6 +114,12 @@ class FunctionalTestBase(StaticLiveServerTestCase):
                 (By.CSS_SELECTOR, css_selector), text
             )
         )
+
+    def wait_for_url_contains(self, path, timeout=5):
+        def url_contains(driver):
+            return path in driver.current_url
+
+        WebDriverWait(self.browser, timeout).until(url_contains)
 
     def image_loaded(self, img_element):
         """
@@ -121,6 +143,17 @@ class FunctionalTestBase(StaticLiveServerTestCase):
         """Devuelve el valor de una propiedad CSS computada (interpretada por el browser)."""
         return self.browser.execute_script(
             f"return window.getComputedStyle(arguments[0]).{prop}", element
+        )
+
+    def assert_current_url(self, path, timeout=5):
+        self.wait_for_url_contains(path, timeout)
+        expected = f"{self.live_server_url}{path}"
+        self.assertURLEqual(self.browser.current_url, expected)
+
+    def assert_element_not_present(self, css_selector, timeout=5):
+        self.assertTrue(
+            self.wait_for_element_not_present(css_selector, timeout),
+            f"Elemento '{css_selector}' presente cuando no debería estarlo."
         )
 
     def screenshot(self, nombre="debug"):

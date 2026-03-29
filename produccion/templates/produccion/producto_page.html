@@ -25,4 +25,18 @@
       </div>
     {% endfor %}
   </div>
+  <nav class="navegacion-productos">
+    {% with producto_anterior=page.get_producto_anterior producto_siguiente=page.get_producto_siguiente %}
+      {% if producto_anterior %}
+        <a href="{{ producto_anterior.url }}" id="producto-anterior" class="producto-anterior">
+          ← {{ producto_anterior.titulo }}
+        </a>
+      {% endif %}
+      {% if producto_siguiente %}
+        <a href="{{ producto_siguiente.url }}" id="producto-siguiente" class="producto-siguiente">
+          {{ producto_siguiente.titulo }} →
+        </a>
+      {% endif %}
+    {% endwith %}
+  </nav>
 {% endblock %}
