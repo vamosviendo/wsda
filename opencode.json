@@ -10,16 +10,6 @@
       "models": {
         "qwen3:8b": { "name": "Qwen3 8B (local)" }
       }
-    },
-    "gemini": {
-      "npm": "@ai-sdk/google",
-      "name": "Google Gemini (gratuito)",
-      "options": {
-        "apiKey": "AIzaSyDZTCefnn_h25eUeiaLxnQUOW_Wj4eNAvI"
-      },
-      "models": {
-        "gemini-3-flash": { "name":  "Gemini 3 Flash"}
-      }
     }
   },
   "model": "ollama/gemini-3-flash-preview",  "permission": {
