@@ -10,9 +10,13 @@
       "models": {
         "qwen3:8b": { "name": "Qwen3 8B (local)" }
       }
+    },
+    "opencode": {
+      "models": {
+      }
     }
   },
-  "model": "ollama/gemini-3-flash-preview",  "permission": {
+  "model": "",  "permission": {
     "edit": "ask",
     "write": "ask",
     "bash": "ask",
