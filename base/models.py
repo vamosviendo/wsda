@@ -55,6 +55,18 @@ class NavigationSettings(BaseGenericSetting):
         verbose_name = "configuración de redes sociales"
 
 
+@register_setting
+class ContactSettings(BaseGenericSetting):
+    email = models.EmailField(verbose_name="Email de contacto")
+
+    panels = [
+        FieldPanel("email"),
+    ]
+
+    class Meta:
+        verbose_name = "configuración de contacto"
+
+
 @register_snippet
 class FooterText(
     DraftStateMixin,
