@@ -10,13 +10,10 @@
       "models": {
         "qwen3:8b": { "name": "Qwen3 8B (local)" }
       }
-    },
-    "opencode": {
-      "models": {
-      }
     }
   },
-  "model": "",  "permission": {
+  "model": "ollama:qwen3:8b",
+  "permission": {
     "edit": "ask",
     "write": "ask",
     "bash": "ask",
