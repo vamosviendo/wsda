@@ -21,7 +21,7 @@ class FunctionalTestBase(StaticLiveServerTestCase):
     def setUpClass(cls):
         super().setUpClass()
         options = Options()
-        # options.add_argument("--headless")        # sin ventana visible en CI/CD
+        options.add_argument("--headless")        # sin ventana visible en CI/CD
         options.add_argument("--width=1280")
         options.add_argument("--height=900")
         cls.browser = webdriver.Firefox(options=options)
@@ -182,3 +182,24 @@ class FunctionalTestBase(StaticLiveServerTestCase):
 
     def logout_admin(self):
         self.browser.get(f"{self.live_server_url}/admin/logout/")
+
+    def publicar(self):
+        # La flecha junto a "Guardar borrador" está dentro de .actions--primary
+        toggle = WebDriverWait(self.browser, 5).until(
+            EC.element_to_be_clickable(
+                (By.CSS_SELECTOR,
+                 ".actions--primary [data-w-dropdown-target='toggle']")
+            )
+        )
+        toggle.click()
+
+        # "Publicar" aparece en el tippy content — puede estar hidden en el DOM
+        # así que usamos JS para hacer el click directamente
+        boton_publicar = WebDriverWait(self.browser, 5).until(
+            EC.presence_of_element_located(
+                (By.CSS_SELECTOR, "button[name='action-publish']")
+            )
+        )
+        self.browser.execute_script("arguments[0].click()", boton_publicar)
+
+        self.wait_for_text("body", "publicad", timeout=8)

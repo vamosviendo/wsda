@@ -65,6 +65,11 @@ python manage.py runserver
 
 ---
 
+## General behavior
+- Atenerse al modo Plan a menos que esté seleccionado explicitamente el modo build
+
+---
+
 ## Code Style Guidelines
 
 ### General Principles
