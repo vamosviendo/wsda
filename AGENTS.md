@@ -67,6 +67,7 @@ python manage.py runserver
 
 ## General behavior
 - Atenerse al modo Plan a menos que esté seleccionado explicitamente el modo build
+- No aplicar directamente cambios al código, sino presentarlos en pantalla para su revisión. Indicar con un comentario los lugares específicos del código en los que se han hecho cambios.
 
 ---
 
@@ -161,6 +162,7 @@ class MyFunctionalTests(WagtailPageTestCase):
 
     def setUp(self):
         # Create minimal site structure
+        ...
 
     def test_user_sees_expected_content(self):
         response = self.client.get(self.homepage.url)
@@ -182,6 +184,39 @@ class MyModelTests(WagtailPageTestCase):
 - Use explicit waits (`wait_for`, `wait_for_text`)
 - Take screenshots on failure
 - Clean up in `tearDownClass`
+
+### Unit tests:
+- Principalmente testean funciones o métodos.
+- Los test para un método deben cumplir: 
+  - qué valor debe devolver 
+  - qué efectos colaterales debe tener
+  - en qué casos debe lanzar una excepción
+- Deben organizarse en clases o archivos según el método que estén testeando.
+
+Ejemplo trivial:
+```python
+estado = {"valor": 0}
+
+def funcion(arg):
+    estado["valor"] = 2
+    if arg < 0:
+        raise ValueError("No se acepta valor negativo")
+    return arg * estado["valor"]
+
+class TestFuncion(TestCase):
+    def test_devuelve_arg_por_2(self):
+        self.assertEqual(funcion(2), 4)
+    
+    def test_asigna_2_a_estado(self):
+        estado["valor"] = 1
+        funcion(3)
+        self.assertEqual(estado["valor"], 2)
+    
+    def test_no_acepta_valor_negativo(self):
+        with self.assertRaises(ValueError):
+            funcion(-2)
+
+```
 
 ---
 
