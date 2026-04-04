@@ -23,19 +23,28 @@ class AcercaDePage(Page):
 
 class ContactPage(Page):
     intro = RichTextField(blank=True, verbose_name="Presentación")
-    thank_you_text = RichTextField(blank=True, verbose_name="Texto de agradecimiento")
+    thank_you_text = RichTextField(
+        blank=True,
+        verbose_name="Texto de agradecimiento"
+    )
+    to_address = models.EmailField(
+        blank=True,
+        verbose_name="Dirección de destino",
+        help_text="Si se deja vacío se usará la dirección de ContactSettings",
+    )
+
 
     content_panels = Page.content_panels + [
         FieldPanel('intro'),
         FieldPanel('thank_you_text'),
+        FieldPanel('to_address'),
     ]
 
-    def serve(self, request):
+    def serve(self, request, *args, **kwargs):
         if request.method == 'POST':
             form = ContactForm(request.POST)
             if form.is_valid():
                 self.send_mail(form)
-                # return redirect(self.url + 'landing/')
                 context = self.get_context(request)
                 context["form"] = None
                 return TemplateResponse(
@@ -55,8 +64,13 @@ class ContactPage(Page):
         )
 
     def send_mail(self, form):
-        contact_settings = ContactSettings.objects.first()
-        if not contact_settings or not contact_settings.email:
+        recipient = self.to_address
+        if not recipient:
+            contact_settings = ContactSettings.objects.first()
+            if contact_settings and contact_settings.email:
+                recipient = contact_settings.email
+
+        if not recipient:
             return
 
         nombre = form.cleaned_data.get("nombre", "")
@@ -70,7 +84,7 @@ class ContactPage(Page):
             subject=f"[web] {asunto}",
             message=body,
             from_email=email,
-            recipient_list=[contact_settings.email],
+            recipient_list=[recipient],
             fail_silently=False,
         )
 

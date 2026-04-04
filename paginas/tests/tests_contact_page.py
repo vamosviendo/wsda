@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 from django.conf import settings as django_settings
+from django.contrib.auth import get_user_model
 from wagtail.models import Locale, Page, Site
 from wagtail.test.utils import WagtailPageTestCase
 
@@ -90,7 +91,6 @@ class ContactPageFormularioFijoTests(ContactPageBase):
 
     def test_contact_page_admin_no_tiene_campos_dinamicos(self):
         """El admin de ContactPage no muestra campos dinámicos de formulario."""
-        from django.contrib.auth import get_user_model
         User = get_user_model()
         if not User.objects.filter(username="admin").exists():
             User.objects.create_superuser(
@@ -105,9 +105,8 @@ class ContactPageFormularioFijoTests(ContactPageBase):
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, "form_fields")
 
-    def test_contact_page_admin_no_tiene_to_address(self):
-        """El admin de ContactPage no muestra campo to_address."""
-        from django.contrib.auth import get_user_model
+    def test_contact_page_admin_tiene_to_address(self):
+        """El admin de ContactPage muestra campo to_address."""
         User = get_user_model()
         if not User.objects.filter(username="admin").exists():
             User.objects.create_superuser(
@@ -120,11 +119,10 @@ class ContactPageFormularioFijoTests(ContactPageBase):
             f"/admin/pages/add/paginas/contactpage/{self.homepage.pk}/"
         )
         self.assertEqual(response.status_code, 200)
-        self.assertNotContains(response, 'name="to_address"')
+        self.assertContains(response, 'name="to_address"')
 
     def test_contact_page_post_envia_email(self):
         """Al hacer POST se envía el email correctamente."""
-        from base.models import ContactSettings
         ContactSettings.objects.create(email="destino@wlili.com")
 
         contacto = ContactPage(title="Contacto", slug="contacto")
@@ -150,7 +148,6 @@ class ContactPageFormularioFijoTests(ContactPageBase):
 
     def test_contact_page_post_muestra_landing(self):
         """Al hacer POST se redirige a la página de agradecimiento."""
-        from base.models import ContactSettings
         ContactSettings.objects.create(email="destino@wlili.com")
 
         contacto = ContactPage(
@@ -217,12 +214,10 @@ class ContactSettingsTests(ContactPageBase):
 
     def test_contact_settings_exists(self):
         """ContactSettings está registrado como setting."""
-        from base.models import ContactSettings
         self.assertTrue(ContactSettings is not None)
 
     def test_contact_settings_has_email_field(self):
         """ContactSettings tiene campo email."""
-        from base.models import ContactSettings
         self.assertTrue(hasattr(ContactSettings, "_meta"))
         field_names = [f.name for f in ContactSettings._meta.get_fields()]
         self.assertIn("email", field_names)
@@ -256,7 +251,28 @@ class ContactPageEnvioEmailTests(ContactPageBase):
         self.homepage.add_child(instance=self.contacto)
 
     @patch("paginas.models.send_mail")
-    def test_send_mail_to_configured_address(self, mock_send_mail):
+    def test_send_mail_usa_to_address_de_pagina(self, mock_send_mail):
+        """ El email se envía a to_address de la página si está definido."""
+        ContactSettings.objects.create(email="settings@wlili.com")
+
+        self.contacto.to_address = "pagina@wlili.com"
+        self.contacto.save()
+
+        class MockForm:
+            cleaned_data = {
+                "nombre": "Juan Pérez",
+                "email": "juan@test.com",
+                "asunto": "Consulta",
+                "mensaje": "Hola",
+            }
+
+        self.contacto.send_mail(MockForm())
+
+        mock_send_mail.assert_called_once()
+        self.assertEqual(mock_send_mail.call_args.kwargs["recipient_list"], ["pagina@wlili.com"])
+
+    @patch("paginas.models.send_mail")
+    def test_if_page_to_address_is_none_send_mail_uses_configured_address(self, mock_send_mail):
         """El email se envía a la dirección configurada en ContactSettings."""
         from base.models import ContactSettings
         ContactSettings.objects.create(email="destino@wlili.com")
