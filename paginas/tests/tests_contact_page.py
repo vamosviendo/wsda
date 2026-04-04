@@ -1,22 +1,12 @@
 from unittest.mock import patch
 
-from django.conf import settings
 from django.conf import settings as django_settings
 from wagtail.models import Locale, Page, Site
 from wagtail.test.utils import WagtailPageTestCase
 
 from base.models import ContactSettings
 from home.models import HomePage
-from paginas.models import ContactPage, FormField
-
-
-def crear_sitio(homepage):
-    Site.objects.create(
-        hostname="testsite",
-        root_page=homepage,
-        is_default_site=True,
-        site_name="Liliana Medela",
-    )
+from paginas.models import ContactPage
 
 
 class ContactPageBase(WagtailPageTestCase):
@@ -25,6 +15,8 @@ class ContactPageBase(WagtailPageTestCase):
         Locale.objects.get_or_create(language_code=django_settings.LANGUAGE_CODE)
 
         root_page = Page.get_first_root_node()
+        if not root_page:
+            root_page = Page.add_root(title="Root", slug="root")
 
         self.homepage = HomePage.objects.filter(slug="home").first()
         if not self.homepage:
@@ -40,64 +32,179 @@ class ContactPageBase(WagtailPageTestCase):
             )
 
 
+class ContactPageFormularioFijoTests(ContactPageBase):
+    """Tests que verifican que ContactPage tiene un formulario fijo con campos predefinidos."""
+
+    def test_contact_page_renders_with_form(self):
+        """ContactPage se renderiza con el formulario de contacto."""
+        contacto = ContactPage(title="Contacto", slug="contacto")
+        self.homepage.add_child(instance=contacto)
+
+        response = self.client.get(contacto.url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_contact_page_form_has_nombre(self):
+        """El formulario tiene campo nombre."""
+        contacto = ContactPage(title="Contacto", slug="contacto")
+        self.homepage.add_child(instance=contacto)
+
+        response = self.client.get(contacto.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="nombre"')
+
+    def test_contact_page_form_has_email(self):
+        """El formulario tiene campo email."""
+        contacto = ContactPage(title="Contacto", slug="contacto")
+        self.homepage.add_child(instance=contacto)
+
+        response = self.client.get(contacto.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="email"')
+
+    def test_contact_page_form_has_asunto(self):
+        """El formulario tiene campo asunto."""
+        contacto = ContactPage(title="Contacto", slug="contacto")
+        self.homepage.add_child(instance=contacto)
+
+        response = self.client.get(contacto.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="asunto"')
+
+    def test_contact_page_form_has_mensaje(self):
+        """El formulario tiene campo mensaje."""
+        contacto = ContactPage(title="Contacto", slug="contacto")
+        self.homepage.add_child(instance=contacto)
+
+        response = self.client.get(contacto.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="mensaje"')
+
+    def test_contact_page_form_has_submit(self):
+        """El formulario tiene botón de enviar."""
+        contacto = ContactPage(title="Contacto", slug="contacto")
+        self.homepage.add_child(instance=contacto)
+
+        response = self.client.get(contacto.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Enviar")
+
+    def test_contact_page_admin_no_tiene_campos_dinamicos(self):
+        """El admin de ContactPage no muestra campos dinámicos de formulario."""
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        if not User.objects.filter(username="admin").exists():
+            User.objects.create_superuser(
+                username="admin",
+                email="admin@test.com",
+                password="adminpass",
+            )
+        self.client.login(username="admin", password="adminpass")
+        response = self.client.get(
+            f"/admin/pages/add/paginas/contactpage/{self.homepage.pk}/"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "form_fields")
+
+    def test_contact_page_admin_no_tiene_to_address(self):
+        """El admin de ContactPage no muestra campo to_address."""
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        if not User.objects.filter(username="admin").exists():
+            User.objects.create_superuser(
+                username="admin",
+                email="admin@test.com",
+                password="adminpass",
+            )
+        self.client.login(username="admin", password="adminpass")
+        response = self.client.get(
+            f"/admin/pages/add/paginas/contactpage/{self.homepage.pk}/"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'name="to_address"')
+
+    def test_contact_page_post_envia_email(self):
+        """Al hacer POST se envía el email correctamente."""
+        from base.models import ContactSettings
+        ContactSettings.objects.create(email="destino@wlili.com")
+
+        contacto = ContactPage(title="Contacto", slug="contacto")
+        self.homepage.add_child(instance=contacto)
+
+        with patch("paginas.models.send_mail") as mock_send_mail:
+            response = self.client.post(contacto.url, {
+                "nombre": "Juan Perez",
+                "email": "juan@test.com",
+                "asunto": "Consulta",
+                "mensaje": "Hola, quiero información",
+            })
+            self.assertEqual(response.status_code, 200 )
+
+            mock_send_mail.assert_called_once()
+            mock_send_mail.assert_called_once_with(
+                subject="[web] Consulta",
+                message="De: Juan Perez <juan@test.com>\nAsunto: Consulta\n\nHola, quiero información",
+                from_email="juan@test.com",
+                recipient_list=["destino@wlili.com"],
+                fail_silently=False,
+            )
+
+    def test_contact_page_post_muestra_landing(self):
+        """Al hacer POST se redirige a la página de agradecimiento."""
+        from base.models import ContactSettings
+        ContactSettings.objects.create(email="destino@wlili.com")
+
+        contacto = ContactPage(
+            title="Contacto",
+            slug="contacto",
+            thank_you_text="<p>Gracias por contactar.</p>",
+        )
+        self.homepage.add_child(instance=contacto)
+
+        with patch("paginas.models.send_mail"):
+            response = self.client.post(contacto.url, {
+                "nombre": "Juan Perez",
+                "email": "juan@test.com",
+                "asunto": "Consulta",
+                "mensaje": "Hola",
+            })
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, "Gracias por contactar")
+            # self.assertIn("landing", response.url)
+
+    def test_contact_page_post_valida_campos_requeridos(self):
+        """El POST valida que los campos requeridos estén presentes."""
+        contacto = ContactPage(title="Contacto", slug="contacto")
+        self.homepage.add_child(instance=contacto)
+
+        response = self.client.post(contacto.url, {})
+        self.assertEqual(response.status_code, 200)
+
+    def test_contact_page_post_valida_email_invalido(self):
+        """El POST valida que el email tenga formato correcto."""
+        contacto = ContactPage(title="Contacto", slug="contacto")
+        self.homepage.add_child(instance=contacto)
+
+        response = self.client.post(contacto.url, {
+            "nombre": "Juan",
+            "email": "no-es-email",
+            "asunto": "Consulta",
+            "mensaje": "Hola",
+        })
+        self.assertEqual(response.status_code, 200)
+
+
 class ContactPageModelTests(ContactPageBase):
     """Tests unitarios para el modelo ContactPage."""
 
-    def setUp(self):
-        super().setUp()
-        self.contacto = ContactPage(title="Contacto", slug="contacto")
-        self.homepage.add_child(instance=self.contacto)
-
-        # Crear campos del formulario
-        for name, field_type, label in [
-            ("nombre", "singleline", "Nombre"),
-            ("email", "email", "Email"),
-            ("asunto", "singleline", "Asunto"),
-            ("mensaje", "multiline", "Mensaje"),
-        ]:
-            FormField.objects.create(
-                page=self.contacto,
-                field_type=field_type,
-                label=label,
-                required=True,
-            )
-
     def test_contact_page_can_be_created(self):
         """ContactPage puede ser creado como hijo de HomePage."""
-        from paginas.models import ContactPage
-
         contacto = ContactPage(title="Contacto Test", slug="contacto-test")
         self.homepage.add_child(instance=contacto)
         self.assertTrue(ContactPage.objects.filter(title="Contacto Test").exists())
 
     def test_contact_page_exists_in_models(self):
         """El modelo ContactPage existe."""
-        from paginas.models import ContactPage
         self.assertTrue(ContactPage is not None)
-
-    def test_contact_page_form_has_email_field(self):
-        """El formulario público tiene campo email."""
-        response = self.client.get(self.contacto.url)
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'name="email"')
-
-    def test_contact_page_form_has_nombre_field(self):
-        """El formulario público tiene campo nombre."""
-        response = self.client.get(self.contacto.url)
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'name="nombre"')
-
-    def test_contact_page_form_has_asunto_field(self):
-        """El formulario público tiene campo asunto."""
-        response = self.client.get(self.contacto.url)
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'name="asunto"')
-
-    def test_contact_page_form_has_mensaje_field(self):
-        """El formulario público tiene campo mensaje."""
-        response = self.client.get(self.contacto.url)
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'name="mensaje"')
 
 
 class ContactSettingsTests(ContactPageBase):
@@ -105,7 +212,6 @@ class ContactSettingsTests(ContactPageBase):
 
     def setUp(self):
         super().setUp()
-        from paginas.models import ContactPage
         self.contacto = ContactPage(title="Contacto", slug="contacto")
         self.homepage.add_child(instance=self.contacto)
 
@@ -137,23 +243,6 @@ class ContactSettingsTests(ContactPageBase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'name="email"')
 
-    def test_contact_page_edit_form_has_to_address(self):
-        """El formulario de ContactPage en admin tiene campo to_address."""
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
-        if not User.objects.filter(username="admin").exists():
-            User.objects.create_superuser(
-                username="admin",
-                email="admin@test.com",
-                password="adminpass",
-            )
-        self.client.login(username="admin", password="adminpass")
-        response = self.client.get(
-            f"/admin/pages/add/paginas/contactpage/{self.homepage.pk}/"
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'name="to_address"')
-
 
 class ContactPageEnvioEmailTests(ContactPageBase):
     """Tests para verificar el envío de emails."""
@@ -163,22 +252,8 @@ class ContactPageEnvioEmailTests(ContactPageBase):
         self.contacto = ContactPage(
             title="Contacto",
             slug="contacto",
-            to_address="destino@test.com",
         )
         self.homepage.add_child(instance=self.contacto)
-        # Crear campos del formulario
-        for name, field_type, label in [
-            ("nombre", "singleline", "Nombre"),
-            ("email", "email", "Email"),
-            ("asunto", "singleline", "Asunto"),
-            ("mensaje", "multiline", "Mensaje"),
-        ]:
-            FormField.objects.create(
-                page=self.contacto,
-                field_type=field_type,
-                label=label,
-                required=True,
-            )
 
     @patch("paginas.models.send_mail")
     def test_send_mail_to_configured_address(self, mock_send_mail):

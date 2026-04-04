@@ -1,6 +1,7 @@
 from selenium.webdriver.common.by import By
 
 from functional_tests.base import FunctionalTestBase
+from paginas.models import ContactPage
 
 
 class ContactoPageFunctionalTests(FunctionalTestBase):
@@ -10,30 +11,13 @@ class ContactoPageFunctionalTests(FunctionalTestBase):
 
     def setUp(self):
         super().setUp()
-        from paginas.models import ContactPage, FormField
 
         self.contacto = ContactPage(
             title="Contacto",
             slug="contacto",
-            to_address="destino@test.com",
             thank_you_text="<p>Gracias por contactar. Su mensaje ha sido enviado.</p>",
         )
         self.homepage.add_child(instance=self.contacto)
-
-        # Crear campos del formulario
-        campos = [
-            ("nombre", "singleline", "Nombre"),
-            ("email", "email", "Email"),
-            ("asunto", "singleline", "Asunto"),
-            ("mensaje", "multiline", "Mensaje"),
-        ]
-        for name, field_type, label in campos:
-            FormField.objects.create(
-                page=self.contacto,
-                label=label,
-                field_type=field_type,
-                required=True,
-            )
 
     # === Tests de carga ===
 

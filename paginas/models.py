@@ -1,14 +1,14 @@
 from django.core.mail import send_mail
-from django.core.validators import RegexValidator
+from django.template.response import TemplateResponse
 from django.db import models
-from modelcluster.fields import ParentalKey
-from wagtail.admin.panels import FieldPanel, InlinePanel
+from django.core.validators import RegexValidator
+from wagtail.admin.panels import FieldPanel
 from wagtail.blocks import CharBlock, RichTextBlock, StructBlock
-from wagtail.contrib.forms.models import AbstractEmailForm, AbstractFormField
 from wagtail.fields import RichTextField, StreamField
 from wagtail.models import Page
 
 from base.models import ContactSettings
+from paginas.forms import ContactForm
 
 
 class AcercaDePage(Page):
@@ -21,25 +21,38 @@ class AcercaDePage(Page):
     ]
 
 
-anio_validator = RegexValidator(
-    regex=r'^(19|20)\d{2}$',
-    message="El año debe estar entre 1900 y 2099"
-)
-
-class FormField(AbstractFormField):
-    page = ParentalKey('ContactPage', on_delete=models.CASCADE, related_name='form_fields')
-
-
-class ContactPage(AbstractEmailForm):
+class ContactPage(Page):
     intro = RichTextField(blank=True, verbose_name="Presentación")
     thank_you_text = RichTextField(blank=True, verbose_name="Texto de agradecimiento")
 
-    content_panels = AbstractEmailForm.content_panels + [
+    content_panels = Page.content_panels + [
         FieldPanel('intro'),
-        InlinePanel('form_fields', label='campos del formulario'),
         FieldPanel('thank_you_text'),
-        FieldPanel('to_address'),
     ]
+
+    def serve(self, request):
+        if request.method == 'POST':
+            form = ContactForm(request.POST)
+            if form.is_valid():
+                self.send_mail(form)
+                # return redirect(self.url + 'landing/')
+                context = self.get_context(request)
+                context["form"] = None
+                return TemplateResponse(
+                    request,
+                    'paginas/contact_page_landing.html',
+                    context,
+                )
+        else:
+            form = ContactForm()
+
+        context = self.get_context(request)
+        context['form'] = form
+        return TemplateResponse(
+            request,
+            self.get_template(request),
+            context,
+        )
 
     def send_mail(self, form):
         contact_settings = ContactSettings.objects.first()
@@ -60,6 +73,12 @@ class ContactPage(AbstractEmailForm):
             recipient_list=[contact_settings.email],
             fail_silently=False,
         )
+
+
+anio_validator = RegexValidator(
+    regex=r'^(19|20)\d{2}$',
+    message="El año debe estar entre 1900 y 2099"
+)
 
 
 class EntradaCurriculumBlock(StructBlock):
