@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.urls import reverse
 from wagtail.test.utils import WagtailPageTestCase
 from wagtail.test.utils.form_data import rich_text, nested_form_data
@@ -63,11 +64,17 @@ class AcercaDePageAdminTests(WagtailPageTestCase):
 
     def setUp(self):
         _, self.homepage = crear_estructura_basica(self)
-        self.user = self.create_superuser(
+        User = get_user_model()
+        user, created = User.objects.get_or_create(
             username="admin",
-            password="password",
-            email="admin@test.com",
+            defaults={
+                "email": "admin@test.com",
+                "is_superuser": True,
+                "is_staff": True,
+            },
         )
+        user.set_password("password")
+        user.save()
         self.client.login(username="admin", password="password")
 
     def _url_creacion(self):

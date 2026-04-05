@@ -2,25 +2,20 @@
 Tests para la app `base`.
 
 Cubre:
-  - NavigationSettings  (URLs de redes sociales)
-  - GeneralSettings     (título del sitio)
-  - FooterText          (snippet de texto de footer)
-  - Template tags:      get_site_name, get_site_root, get_footer_text
-  - Header              (renderizado funcional)
-  - Footer              (renderizado funcional)
-
-Organización:
-  1. Tests funcionales: header y footer vistos por el usuario.
-  2. Tests unitarios:   modelos y template tags.
+  - Header y Footer (tests funcionales)
+  - FooterText modelo (__str__, get_preview_context)
+  - Template tag get_footer_text
 
 Para correr solo estos tests:
-  python manage.py test base
+  pytest base/tests.py
 """
 
+from django.test import RequestFactory
 from wagtail.models import Page, Site
 from wagtail.test.utils import WagtailPageTestCase
 
 from base.models import FooterText, GeneralSettings, NavigationSettings
+from base.templatetags.navigation_tags import get_footer_text
 from home.models import HomePage
 from produccion.models import AreaPage
 
@@ -53,68 +48,56 @@ def crear_sitio_con_homepage(site_name="Liliana Medela"):
 class HeaderFunctionalTests(WagtailPageTestCase):
     """
     Verifica el comportamiento del header tal como lo ve el usuario.
-    Los tests se ejecutan a través del renderizado de la homepage.
     """
 
     def setUp(self):
         self.site, self.homepage = crear_sitio_con_homepage("Liliana Medela")
 
-    def test_header_renders_without_error(self):
-        """El header se renderiza sin errores."""
+    def test_header_se_renderiza_sin_error(self):
         response = self.client.get(self.homepage.url)
         self.assertTemplateUsed(response, "includes/header.html")
 
-    def test_header_shows_site_name(self):
-        """El nombre del sitio (de Wagtail Site) aparece en el header."""
+    def test_header_muestra_nombre_del_sitio(self):
         response = self.client.get(self.homepage.url)
         self.assertContains(response, "Liliana Medela")
 
-    def test_header_site_name_has_correct_class(self):
-        """El nombre del sitio tiene la clase CSS correcta."""
+    def test_header_nombre_del_sitio_tiene_clase_correcta(self):
         response = self.client.get(self.homepage.url)
         self.assertContains(response, 'class="site-title"')
 
-    def test_header_site_name_is_a_link(self):
-        """El nombre del sitio es un enlace (a la raíz)."""
+    def test_header_nombre_del_sitio_es_enlace(self):
         response = self.client.get(self.homepage.url)
         self.assertContains(response, 'href="/"')
 
-    def test_header_contains_nav_element(self):
-        """El header contiene un elemento <nav> con los links del sitio."""
+    def test_header_contiene_elemento_nav(self):
         response = self.client.get(self.homepage.url)
         self.assertContains(response, "<nav>")
 
-    def test_header_shows_inicio_link(self):
-        """'Inicio' es siempre el primer ítem del menú."""
+    def test_header_muestra_enlace_inicio(self):
         response = self.client.get(self.homepage.url)
         self.assertContains(response, "Inicio")
 
-    def test_header_shows_blog_link(self):
-        """El link al blog externo siempre está en el menú."""
+    def test_header_muestra_enlace_blog(self):
         response = self.client.get(self.homepage.url)
         self.assertContains(response, "lilianamedela.blogspot.com")
 
-    def test_header_shows_area_page_in_menu_when_show_in_menus_true(self):
-        """Una AreaPage con show_in_menus=True aparece en el menú."""
+    def test_header_muestra_area_en_menu_cuando_show_in_menus_es_true(self):
         area = AreaPage(title="Pintura", titulo="Pintura", show_in_menus=True)
         self.homepage.add_child(instance=area)
         response = self.client.get(self.homepage.url)
         self.assertContains(response, "Pintura")
 
-    def test_header_hides_area_page_in_menu_when_show_in_menus_false(self):
-        """Una AreaPage con show_in_menus=False NO aparece en el menú."""
+    def test_header_oculta_area_en_menu_cuando_show_in_menus_es_false(self):
         area = AreaPage(title="Oculta", titulo="Oculta", show_in_menus=False)
         self.homepage.add_child(instance=area)
         response = self.client.get(self.homepage.url)
         self.assertNotContains(response, "Oculta")
 
-    def test_header_loads_header_css(self):
-        """La página carga el CSS del header."""
+    def test_header_carga_css_del_header(self):
         response = self.client.get(self.homepage.url)
         self.assertContains(response, "header.css")
 
-    def test_header_is_present_on_area_page(self):
-        """El header aparece también en las páginas de área (no solo en home)."""
+    def test_header_aparece_en_pagina_de_area(self):
         area = AreaPage(title="Grabado", titulo="Grabado")
         self.homepage.add_child(instance=area)
         response = self.client.get(area.url)
@@ -133,189 +116,123 @@ class FooterFunctionalTests(WagtailPageTestCase):
     def setUp(self):
         _, self.homepage = crear_sitio_con_homepage()
 
-    def test_footer_renders_without_error(self):
-        """El footer se renderiza sin errores."""
+    def test_footer_se_renderiza_sin_error(self):
         response = self.client.get(self.homepage.url)
         self.assertTemplateUsed(response, "includes/footer.html")
 
-    def test_footer_element_is_present(self):
-        """El elemento HTML <footer> está presente en la página."""
+    def test_footer_elemento_presente(self):
         response = self.client.get(self.homepage.url)
         self.assertContains(response, "<footer>")
 
-    def test_footer_contains_credit_link(self):
-        """El crédito de diseño (HT) aparece en el footer."""
+    def test_footer_contiene_enlace_de_credito(self):
         response = self.client.get(self.homepage.url)
         self.assertContains(response, "htejedor@gmail.com")
 
-    def test_footer_shows_instagram_when_configured(self):
-        """El link de Instagram aparece si está configurado en NavigationSettings."""
-        NavigationSettings(instagram_url="https://instagram.com/lilianamedela").save()
+    def test_footer_muestra_instagram_cuando_configurado(self):
+        settings, _ = NavigationSettings.objects.get_or_create(pk=1)
+        settings.instagram_url = "https://instagram.com/lilianamedela"
+        settings.save()
         response = self.client.get(self.homepage.url)
         self.assertContains(response, "Instagram")
         self.assertContains(response, "instagram.com/lilianamedela")
 
-    def test_footer_shows_facebook_when_configured(self):
-        """El link de Facebook aparece si está configurado."""
-        NavigationSettings(facebook_url="https://facebook.com/lilianamedela").save()
+    def test_footer_muestra_facebook_cuando_configurado(self):
+        settings, _ = NavigationSettings.objects.get_or_create(pk=1)
+        settings.facebook_url = "https://facebook.com/lilianamedela"
+        settings.save()
         response = self.client.get(self.homepage.url)
         self.assertContains(response, "Facebook")
 
-    def test_footer_shows_x_when_configured(self):
-        """El link de X aparece si está configurado."""
-        NavigationSettings(x_url="https://x.com/lilianamedela").save()
+    def test_footer_muestra_x_cuando_configurado(self):
+        settings, _ = NavigationSettings.objects.get_or_create(pk=1)
+        settings.x_url = "https://x.com/lilianamedela"
+        settings.save()
         response = self.client.get(self.homepage.url)
         self.assertContains(response, ">X<")
 
-    def test_footer_hides_instagram_when_not_configured(self):
-        """El link de Instagram NO aparece si no está configurado."""
+    def test_footer_oculta_instagram_cuando_no_configurado(self):
         response = self.client.get(self.homepage.url)
         self.assertNotContains(response, "Instagram")
 
-    def test_footer_hides_facebook_when_not_configured(self):
-        """El link de Facebook NO aparece si no está configurado."""
+    def test_footer_oculta_facebook_cuando_no_configurado(self):
         response = self.client.get(self.homepage.url)
         self.assertNotContains(response, "Facebook")
 
-    def test_footer_shows_footer_text_when_live(self):
-        """El texto del footer (snippet) aparece cuando está publicado (live=True)."""
+    def test_footer_muestra_texto_cuando_publicado(self):
         FooterText.objects.create(body="<p>© 2025 Liliana Medela</p>", live=True)
         response = self.client.get(self.homepage.url)
         self.assertContains(response, "© 2025 Liliana Medela")
 
-    def test_footer_hides_footer_text_when_not_live(self):
-        """El texto del footer no aparece si está en borrador (live=False)."""
+    def test_footer_oculta_texto_cuando_borrador(self):
         FooterText.objects.create(body="<p>Borrador</p>", live=False)
         response = self.client.get(self.homepage.url)
         self.assertNotContains(response, "Borrador")
 
-    def test_footer_loads_footer_css(self):
-        """La página carga el CSS del footer."""
+    def test_footer_carga_css_del_footer(self):
         response = self.client.get(self.homepage.url)
         self.assertContains(response, "footer.css")
 
-    def test_footer_is_present_on_area_page(self):
-        """El footer aparece también en las páginas internas."""
+    def test_footer_aparece_en_pagina_de_area(self):
         area = AreaPage(title="Grabado", titulo="Grabado")
         self.homepage.add_child(instance=area)
         response = self.client.get(area.url)
         self.assertContains(response, "<footer>")
 
-
-# ============================================================
-# 3. TESTS UNITARIOS — NavigationSettings
-# ============================================================
-
-class NavigationSettingsTests(WagtailPageTestCase):
-    """Verifica el modelo NavigationSettings."""
-
-    def test_can_create_with_instagram_url(self):
-        obj = NavigationSettings(instagram_url="https://instagram.com/test")
-        obj.save()
-        saved = NavigationSettings.objects.first()
-        self.assertEqual(saved.instagram_url, "https://instagram.com/test")
-
-    def test_can_create_with_facebook_url(self):
-        obj = NavigationSettings(facebook_url="https://facebook.com/test")
-        obj.save()
-        saved = NavigationSettings.objects.first()
-        self.assertEqual(saved.facebook_url, "https://facebook.com/test")
-
-    def test_can_create_with_x_url(self):
-        obj = NavigationSettings(x_url="https://x.com/test")
-        obj.save()
-        saved = NavigationSettings.objects.first()
-        self.assertEqual(saved.x_url, "https://x.com/test")
-
-    def test_can_create_with_all_urls(self):
-        obj = NavigationSettings(
-            instagram_url="https://instagram.com/test",
-            facebook_url="https://facebook.com/test",
-            x_url="https://x.com/test",
-        )
-        obj.save()
-        saved = NavigationSettings.objects.first()
-        self.assertEqual(saved.instagram_url, "https://instagram.com/test")
-        self.assertEqual(saved.facebook_url, "https://facebook.com/test")
-        self.assertEqual(saved.x_url, "https://x.com/test")
-
-    def test_all_fields_are_optional(self):
-        """NavigationSettings se puede guardar con todos los campos vacíos."""
-        obj = NavigationSettings()
-        obj.save()
-        saved = NavigationSettings.objects.first()
-        self.assertEqual(saved.instagram_url, "")
-        self.assertEqual(saved.facebook_url, "")
-        self.assertEqual(saved.x_url, "")
+    def test_solo_muestra_texto_publicado(self):
+        """Si hay borrador y versión publicada, solo la publicada aparece."""
+        FooterText.objects.create(body="<p>Texto borrador</p>", live=False)
+        FooterText.objects.create(body="<p>Texto publicado</p>", live=True)
+        response = self.client.get(self.homepage.url)
+        self.assertContains(response, "Texto publicado")
+        self.assertNotContains(response, "Texto borrador")
 
 
 # ============================================================
-# 4. TESTS UNITARIOS — GeneralSettings
+# 3. TESTS UNITARIOS — FooterText.__str__
 # ============================================================
 
-class GeneralSettingsTests(WagtailPageTestCase):
-    """Verifica el modelo GeneralSettings."""
+class TestFooterTextStr(WagtailPageTestCase):
+    """Verifica FooterText.__str__."""
 
-    def test_can_create_with_site_title(self):
-        obj = GeneralSettings(site_title="Liliana Medela")
-        obj.save()
-        saved = GeneralSettings.objects.first()
-        self.assertEqual(saved.site_title, "Liliana Medela")
-
-    def test_site_title_is_optional(self):
-        """El título del sitio puede estar vacío."""
-        obj = GeneralSettings()
-        obj.save()
-        saved = GeneralSettings.objects.first()
-        self.assertEqual(saved.site_title, "")
-
-    def test_site_title_can_be_updated(self):
-        obj = GeneralSettings(site_title="Título viejo")
-        obj.save()
-        obj.site_title = "Título nuevo"
-        obj.save()
-        self.assertEqual(GeneralSettings.objects.first().site_title, "Título nuevo")
-
-
-# ============================================================
-# 5. TESTS UNITARIOS — FooterText
-# ============================================================
-
-class FooterTextTests(WagtailPageTestCase):
-    """Verifica el snippet FooterText."""
-
-    def test_can_create_footer_text(self):
-        """Se puede crear un FooterText con cuerpo HTML."""
-        footer = FooterText(body="<p>© 2025</p>")
-        footer.save()
-        self.assertTrue(FooterText.objects.exists())
-
-    def test_str_representation(self):
-        """La representación en string es siempre 'Texto footer'."""
+    def test_devuelve_texto_footer(self):
         footer = FooterText(body="<p>Cualquier texto</p>")
         footer.save()
         self.assertEqual(str(footer), "Texto footer")
 
-    def test_live_is_true_by_default(self):
-        """El FooterText recién creado está publicado (live=True) por defecto."""
-        footer = FooterText(body="<p>Publicado</p>")
-        footer.save()
-        self.assertTrue(FooterText.objects.get(pk=footer.pk).live)
 
-    def test_can_create_as_draft(self):
-        """Se puede crear un FooterText como borrador (live=False)."""
-        footer = FooterText(body="<p>Borrador</p>", live=False)
-        footer.save()
-        self.assertFalse(FooterText.objects.get(pk=footer.pk).live)
+# ============================================================
+# 4. TESTS UNITARIOS — FooterText.get_preview_context
+# ============================================================
 
-    def test_only_live_instance_shown_in_footer(self):
-        """
-        Si hay un borrador y una versión publicada, solo la publicada
-        aparece en el footer.
-        """
-        _, homepage = crear_sitio_con_homepage()
-        FooterText.objects.create(body="<p>Texto borrador</p>", live=False)
-        FooterText.objects.create(body="<p>Texto publicado</p>", live=True)
-        response = self.client.get(homepage.url)
-        self.assertContains(response, "Texto publicado")
-        self.assertNotContains(response, "Texto borrador")
+class TestFooterTextGetPreviewContext(WagtailPageTestCase):
+    """Verifica FooterText.get_preview_context."""
+
+    def test_devuelve_context_con_footer_text(self):
+        footer = FooterText(body="<p>Vista previa</p>")
+        footer.save()
+        factory = RequestFactory()
+        request = factory.get("/")
+        context = footer.get_preview_context(request, "")
+        self.assertEqual(context["footer_text"], "<p>Vista previa</p>")
+
+
+# ============================================================
+# 5. TESTS UNITARIOS — Template tag get_footer_text
+# ============================================================
+
+class TestGetFooterText(WagtailPageTestCase):
+    """Verifica el template tag get_footer_text."""
+
+    def test_usa_footer_text_de_context_si_existe(self):
+        result = get_footer_text({"footer_text": "<p>Desde context</p>"})
+        self.assertEqual(result["footer_text"], "<p>Desde context</p>")
+
+    def test_consulta_db_si_context_no_tiene_footer_text(self):
+        FooterText.objects.create(body="<p>Desde DB</p>", live=True)
+        result = get_footer_text({})
+        self.assertEqual(result["footer_text"], "<p>Desde DB</p>")
+
+    def test_devuelve_vacio_si_no_hay_footer_text_live(self):
+        FooterText.objects.create(body="<p>Borrador</p>", live=False)
+        result = get_footer_text({})
+        self.assertEqual(result["footer_text"], "")

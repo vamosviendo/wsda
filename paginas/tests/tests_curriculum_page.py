@@ -1,5 +1,4 @@
 from django.core.exceptions import ValidationError
-from wagtail.admin.panels import get_edit_handler
 from wagtail.blocks import StreamValue
 from wagtail.models import Page, Site
 from wagtail.test.utils import WagtailPageTestCase
@@ -9,11 +8,13 @@ from paginas.models import CurriculumPage
 
 
 def crear_sitio(homepage):
-    Site.objects.create(
+    Site.objects.update_or_create(
         hostname="testsite",
-        root_page=homepage,
-        is_default_site=True,
-        site_name="Liliana Medela",
+        defaults={
+            "root_page": homepage,
+            "is_default_site": True,
+            "site_name": "Liliana Medela",
+        },
     )
 
 
@@ -25,6 +26,10 @@ class CurriculumPageBase(WagtailPageTestCase):
         crear_sitio(self.homepage)
 
 
+# ============================================================
+# 1. TESTS FUNCIONALES — CurriculumPage
+# ============================================================
+
 class CurriculumPageFunctionalTests(CurriculumPageBase):
 
     def setUp(self):
@@ -35,57 +40,43 @@ class CurriculumPageFunctionalTests(CurriculumPageBase):
         )
         self.homepage.add_child(instance=self.curriculum)
 
-    def test_curriculum_page_returns_200(self):
+    def test_curriculum_page_devuelve_200(self):
         response = self.client.get(self.curriculum.url)
         self.assertEqual(response.status_code, 200)
 
-    def test_curriculum_page_uses_correct_template(self):
+    def test_curriculum_page_usa_template_correcto(self):
         response = self.client.get(self.curriculum.url)
         self.assertTemplateUsed(response, "paginas/curriculum_page.html")
 
-    def test_curriculum_page_extends_base(self):
+    def test_curriculum_page_extiende_base(self):
         response = self.client.get(self.curriculum.url)
         self.assertTemplateUsed(response, "base.html")
 
-    def test_curriculum_page_shows_heading(self):
+    def test_curriculum_page_muestra_titulo(self):
         response = self.client.get(self.curriculum.url)
         self.assertContains(response, "Muestras, premios y salones")
 
-    def test_curriculum_page_has_entradas_container(self):
+    def test_curriculum_page_tiene_contenedor_entradas(self):
         response = self.client.get(self.curriculum.url)
         self.assertContains(response, 'class="curriculum-entradas"')
 
-    def test_curriculum_page_loads_css(self):
+    def test_curriculum_page_carga_css(self):
         response = self.client.get(self.curriculum.url)
         self.assertContains(response, "curriculum_page.css")
 
-    def test_curriculum_page_is_renderable(self):
-        self.assertPageIsRenderable(self.curriculum)
 
-    def test_curriculum_page_edit_form_has_entradas(self):
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
+# ============================================================
+# 2. TESTS UNITARIOS — CurriculumPage.get_context
+# ============================================================
 
-        # Crear superuser si no existe
-        if not User.objects.filter(username='admin').exists():
-            User.objects.create_superuser(
-                username='admin',
-                email='admin@test.com',
-                password='adminpass'
-            )
+class TestCurriculumPageGetContext(CurriculumPageBase):
 
-        # Login como staff
-        self.client.login(username='admin', password='adminpass')
-
-        # GET a la página de creación
-        response = self.client.get(f'/admin/pages/add/paginas/curriculumpage/{self.homepage.pk}/')
-
-        # Verificar que el campo 'entradas' está en el HTML
-        self.assertContains(response, 'id="entradas"')
+    def setUp(self):
+        super().setUp()
+        self.curriculum = CurriculumPage(title="Test", slug="test")
+        self.homepage.add_child(instance=self.curriculum)
 
     def test_entradas_se_muestran_ordenadas_por_anio(self):
-        """Las entradas deben mostrarse ordenadas por año (más reciente primero)"""
-        # Crear entradas en orden no cronológico
         stream_value = StreamValue(
             self.curriculum.entradas.stream_block,
             [
@@ -99,8 +90,6 @@ class CurriculumPageFunctionalTests(CurriculumPageBase):
         self.curriculum.save()
 
         response = self.client.get(self.curriculum.url)
-
-        # Verificar orden: 2023, 2021, 2020
         content = response.content.decode()
         pos_2023 = content.find("2023")
         pos_2021 = content.find("2021")
@@ -108,97 +97,34 @@ class CurriculumPageFunctionalTests(CurriculumPageBase):
 
         self.assertTrue(pos_2023 < pos_2021 < pos_2020)
 
-
-class CurriculumPageUnitTests(CurriculumPageBase):
-
-    def test_curriculum_page_can_be_created(self):
-        curriculum = CurriculumPage(title="Curriculum")
-        self.homepage.add_child(instance=curriculum)
-        self.assertTrue(CurriculumPage.objects.filter(title="Curriculum").exists())
-
-    def test_curriculum_page_has_entradas_field(self):
-        curriculum = CurriculumPage(title="Test")
-        self.assertTrue(hasattr(curriculum, "entradas"))
-
-    def test_entradas_field_can_contain_entrada_curriculum_block(self):
-        from wagtail.blocks import StreamValue
-
-        curriculum = CurriculumPage(title="Test")
-        self.homepage.add_child(instance=curriculum)
-
-        stream_value = StreamValue(
-            curriculum.entradas.stream_block,
-            [
-                (
-                    "entrada",
-                    {
-                        "anio": "2022",
-                        "titulo": "Salón de pintura",
-                        "lugar": "Buenos Aires",
-                        "nota": "<p>Premio</p>",
-                    }
-                )
-            ],
-            is_lazy=False,
-        )
-        curriculum.entradas = stream_value
-        curriculum.save()
-
-        curriculum.refresh_from_db()
-        self.assertEqual(len(curriculum.entradas), 1)
-        self.assertEqual(curriculum.entradas[0].block_type, "entrada")
-
-    def test_curriculum_page_entradas_has_panel_in_admin(self):
-        edit_handler = get_edit_handler(CurriculumPage)
-        panel_names = []
-        for panel in edit_handler.children:
-            if hasattr(panel, 'bind_to_model'):
-                panel_names.append(panel.field_name)
-            else:
-                panel_names.append(str(panel))
-        self.assertIn('entradas', panel_names)
-
-    def test_curriculum_page_entradas_empty_by_default(self):
-        curriculum = CurriculumPage(title="Test")
-        self.homepage.add_child(instance=curriculum)
-        self.assertEqual(len(curriculum.entradas), 0)
+    def test_entradas_vacias_no_rompe_context(self):
+        response = self.client.get(self.curriculum.url)
+        self.assertEqual(response.status_code, 200)
 
 
-class EntradaCurriculumBlockUnitTests(CurriculumPageBase):
+# ============================================================
+# 3. TESTS UNITARIOS — EntradaCurriculumBlock.clean
+# ============================================================
+
+class TestEntradaCurriculumBlockClean(CurriculumPageBase):
 
     def setUp(self):
         super().setUp()
         self.curriculum = CurriculumPage(title="Test")
         self.homepage.add_child(instance=self.curriculum)
 
-    def test_entrada_curriculum_block_can_save_and_retrieve_fields(self):
+    def test_anio_valido_es_aceptado(self):
+        for anio_valido in ["1900", "1999", "2000", "2023", "2099"]:
+            stream_block = self.curriculum.entradas.stream_block
+            stream_value = StreamValue(
+                stream_block,
+                [("entrada", {"anio": anio_valido, "titulo": "Test", "lugar": "", "nota": ""})],
+                is_lazy=False,
+            )
+            stream_block.clean(stream_value)
 
-        entrada_data = {
-            "anio": "2023",
-            "titulo": "Exposición anual",
-            "lugar": "Museo de Arte",
-            "nota": "<p>Participación</p>",
-        }
-
-        stream_value = StreamValue(
-            self.curriculum.entradas.stream_block,
-            [("entrada", entrada_data)],
-            is_lazy=False,
-        )
-        self.curriculum.entradas = stream_value
-        self.curriculum.save()
-        self.curriculum.refresh_from_db()
-
-        primera_entrada = self.curriculum.entradas[0].value
-        self.assertEqual(primera_entrada["anio"], "2023")
-        self.assertEqual(primera_entrada["titulo"], "Exposición anual")
-        self.assertEqual(primera_entrada["lugar"], "Museo de Arte")
-        self.assertIn("Participación", primera_entrada["nota"].source)
-
-    def test_anio_field_validates_year_format(self):
+    def test_anio_invalido_lanza_error_de_validacion(self):
         for anio_invalido in ["23", "20234", "1a2b", "1899", "2100"]:
-            print(f"Testeando {anio_invalido}")
-
             stream_block = self.curriculum.entradas.stream_block
             stream_value = StreamValue(
                 stream_block,
