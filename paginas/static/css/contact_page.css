@@ -1,0 +1,94 @@
+/* ============================================================
+    CONTACTO — página de formulario de contacto
+    ============================================================ */
+
+.contacto-formulario {
+    max-width: 60ch;
+    margin-top: 2rem;
+}
+
+.contacto-formulario label {
+    display: block;
+    font-family: var(--font-display);
+    margin-bottom: 0.5rem;
+    font-weight: 300;
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg);
+    font-family: var(--font-body);
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 2px;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+}
+
+textarea.form-input {
+    min-height: 150px;
+    resize: vertical;
+}
+
+.contacto-formulario button {
+    background: var(--color-accent);
+    color: var(--color-bg);
+    border: none;
+    padding: 0.75rem 2rem;
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: opacity var(--transition);
+    border-radius: 2px;
+}
+
+.contacto-formulario button:hover {
+    opacity: 0.85;
+}
+
+.contacto-formulario .success {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.volver-link {
+    display: inline-block;
+    font-family: var(--font-display);
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 2px;
+    transition: border-color var(--transition);
+}
+
+.volver-link:hover {
+    border-color: var(--color-accent);
+}
+
+.contacto-formulario .error-list {
+    list-style: none;
+    color: #b00;
+    margin-bottom: 1rem;
+}
+
+.contacto-formulario .error-list li {
+    margin-bottom: 0.5rem;
+}
+
+@media (max-width: 520px) {
+    .contacto-formulario {
+        max-width: 100%;
+    }
+
+    .contacto-formulario input,
+    .contacto-formulario textarea {
+        font-size: 1rem;
+        padding: 0.6rem;
+    }
+}

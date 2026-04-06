@@ -1,11 +1,18 @@
 {% extends 'base.html' %}
-{% load wagtailcore_tags %}
+{% load static wagtailcore_tags %}
+
+{% block extra_css %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/paginas.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'css/contact_page.css' %}">
+{% endblock %}
 
 {% block content %}
-<h1>{{ page.title }}</h1>
+<h2 class="page-titulo">{{ page.title }}</h2>
 
 {% if page.intro %}
-    {{ page.intro|richtext }}
+    <div class="page-intro">
+        {{ page.intro|richtext }}
+    </div>
 {% endif %}
 
 {% if messages %}
@@ -16,7 +23,7 @@
     </div>
 {% endif %}
 
-<form action="{% pageurl page %}" method="POST">
+<form class="contacto-formulario" action="{% pageurl page %}" method="POST">
     {% csrf_token %}
     {{ form.as_p }}
     <button type="submit">Enviar</button>

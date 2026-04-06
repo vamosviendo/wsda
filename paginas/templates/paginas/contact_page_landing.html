@@ -1,11 +1,17 @@
 {% extends 'base.html' %}
-{% load wagtailcore_tags %}
+{% load static wagtailcore_tags %}
+
+{% block extra_css %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/paginas.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'css/contact_page.css' %}">
+{% endblock %}
 
 {% block content %}
+<h2 class="page-titulo">{{ page.title }}</h2>
+
 <div class="success">
-  <h1>{{ page.title }}</h1>
-  {{ page.thank_you_text|richtext }}
+    {{ page.thank_you_text|richtext }}
 </div>
 
-<a href="{% pageurl page %}">Volver al formulario</a>
+<p><a class="volver-link" href="{% pageurl page %}">Volver al formulario</a></p>
 {% endblock %}
