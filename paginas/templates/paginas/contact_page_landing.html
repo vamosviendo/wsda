@@ -7,11 +7,13 @@
 {% endblock %}
 
 {% block content %}
-<h2 class="page-titulo">{{ page.title }}</h2>
+<div class="contacto-landing">
+    <h2 class="page-titulo">{{ page.title }}</h2>
 
-<div class="success">
-    {{ page.thank_you_text|richtext }}
+    <div class="success">
+        {{ page.thank_you_text|richtext }}
+    </div>
+
+    <p><a class="volver-link" href="{% pageurl page %}">Volver al formulario</a></p>
 </div>
-
-<p><a class="volver-link" href="{% pageurl page %}">Volver al formulario</a></p>
 {% endblock %}

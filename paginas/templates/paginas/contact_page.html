@@ -7,25 +7,31 @@
 {% endblock %}
 
 {% block content %}
-<h2 class="page-titulo">{{ page.title }}</h2>
+<div class="contacto-layout">
+    <div class="contacto-info">
+        <h2 class="page-titulo">{{ page.title }}</h2>
 
-{% if page.intro %}
-    <div class="page-intro">
-        {{ page.intro|richtext }}
+        {% if page.intro %}
+            <div class="page-intro">
+                {{ page.intro|richtext }}
+            </div>
+        {% endif %}
     </div>
-{% endif %}
 
-{% if messages %}
-    <div class="success">
-        {% for message in messages %}
-            <p>{{ message }}</p>
-        {% endfor %}
+    <div class="contacto-form-wrapper">
+        {% if messages %}
+            <div class="success">
+                {% for message in messages %}
+                    <p>{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form class="contacto-formulario" action="{% pageurl page %}" method="POST">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Enviar</button>
+        </form>
     </div>
-{% endif %}
-
-<form class="contacto-formulario" action="{% pageurl page %}" method="POST">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Enviar</button>
-</form>
+</div>
 {% endblock %}

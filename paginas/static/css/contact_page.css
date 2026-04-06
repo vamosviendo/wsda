@@ -2,26 +2,49 @@
     CONTACTO — página de formulario de contacto
     ============================================================ */
 
+.contacto-layout {
+    display: flex;
+    flex-direction: row;
+    gap: 3rem;
+    align-items: flex-start;
+    padding-top: 1.2rem;
+}
+
+.contacto-info {
+    flex: 0 0 35%;
+    max-width: 35%;
+}
+
+.contacto-info .page-titulo {
+    padding-top: 0;
+    margin-top: 0;
+}
+
+.contacto-form-wrapper {
+    flex: 1;
+    min-width: 0;
+}
+
 .contacto-formulario {
-    max-width: 60ch;
-    margin-top: 2rem;
+    margin-top: 0;
 }
 
 .contacto-formulario label {
     display: block;
     font-family: var(--font-display);
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
     font-weight: 300;
+    font-size: 0.9rem;
 }
 
 .form-input {
     width: 100%;
-    padding: 0.75rem;
+    padding: 0.5rem 0.6rem;
     border: 1px solid var(--color-border);
     background: var(--color-bg);
     font-family: var(--font-body);
-    font-size: 1.1rem;
-    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+    margin-bottom: 0.8rem;
     border-radius: 2px;
 }
 
@@ -31,7 +54,7 @@
 }
 
 textarea.form-input {
-    min-height: 150px;
+    min-height: 80px;
     resize: vertical;
 }
 
@@ -39,23 +62,32 @@ textarea.form-input {
     background: var(--color-accent);
     color: var(--color-bg);
     border: none;
-    padding: 0.75rem 2rem;
+    padding: 0.6rem 1.5rem;
     font-family: var(--font-display);
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     letter-spacing: 0.08em;
     cursor: pointer;
     transition: opacity var(--transition);
     border-radius: 2px;
+    margin-top: 0.3rem;
 }
 
 .contacto-formulario button:hover {
     opacity: 0.85;
 }
 
-.contacto-formulario .success {
+.contacto-formulario .success,
+.contacto-form-wrapper .success {
     background: var(--color-bg);
     border: 1px solid var(--color-border);
-    padding: 1.5rem;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.contacto-landing .success {
+    background: none;
+    border: none;
+    padding: 0;
     margin-bottom: 2rem;
 }
 
@@ -74,21 +106,26 @@ textarea.form-input {
 .contacto-formulario .error-list {
     list-style: none;
     color: #b00;
-    margin-bottom: 1rem;
-}
-
-.contacto-formulario .error-list li {
     margin-bottom: 0.5rem;
 }
 
-@media (max-width: 520px) {
-    .contacto-formulario {
+.contacto-formulario .error-list li {
+    margin-bottom: 0.3rem;
+}
+
+@media (max-width: 720px) {
+    .contacto-layout {
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    .contacto-info,
+    .contacto-form-wrapper {
+        flex: unset;
         max-width: 100%;
     }
 
-    .contacto-formulario input,
-    .contacto-formulario textarea {
-        font-size: 1rem;
-        padding: 0.6rem;
+    .contacto-info .page-titulo {
+        padding-top: 1.2rem;
     }
 }
