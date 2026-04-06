@@ -7,25 +7,29 @@
       <a href="/">{{ site_name }}</a>
     </p>
     {% get_site_root as site_root %}
-    <nav>
-      <ul>
-        <li><a href="{% pageurl site_root %}">Inicio</a></li>
-        {% for menuitem in site_root.get_children.live.in_menu %}
-          <li>
-            <a href="{% pageurl menuitem %}">{{ menuitem.title }}</a>
-            {% with children=menuitem.get_children.live.in_menu %}
-              {% if children %}
-                <ul>
-                  {% for child in children %}
-                    <li><a href="{% pageurl child %}">{{ child.title }}</a></li>
-                  {% endfor %}
-                </ul>
-              {% endif %}
-            {% endwith %}
-          </li>
-        {% endfor %}
-        <li><a href="https://lilianamedela.blogspot.com/" target="_blank" rel="noopener">Blog</a></li>
-      </ul>
-    </nav>
+    <div class="nav-container">
+      <nav>
+        <ul class="nav-row nav-row-1">
+          <li><a href="{% pageurl site_root %}">Inicio</a></li>
+          {% for menuitem in site_root.get_children.live.in_menu %}
+            <li>
+              <a href="{% pageurl menuitem %}">{{ menuitem.title }}</a>
+              {% with children=menuitem.get_children.live.in_menu %}
+                {% if children %}
+                  <ul>
+                    {% for child in children %}
+                      <li><a href="{% pageurl child %}">{{ child.title }}</a></li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              {% endwith %}
+            </li>
+          {% endfor %}
+          <li><a href="https://lilianamedela.blogspot.com/" target="_blank" rel="noopener">Blog</a></li>
+        </ul>
+        <ul class="nav-row nav-row-2"></ul>
+      </nav>
+    </div>
   </div>
 </header>
+

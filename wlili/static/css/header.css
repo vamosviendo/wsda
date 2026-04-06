@@ -30,14 +30,32 @@ header {
 }
 
 /* --- Navegación --- */
-nav ul {
+.nav-container {
+  width: 100%;
+}
+
+.nav-container nav ul {
   list-style: none;
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   justify-content: flex-start;
   gap: 0.2rem 0.8rem;
-  overflow-x: auto;
   padding-bottom: 0.3rem;
+}
+
+/* Segunda fila oculta por defecto */
+.nav-row-2 {
+  display: none;
+}
+
+/* Cuando el menú está dividido, mostrar ambas filas */
+.nav-container.nav-split .nav-row-2 {
+  display: flex;
+}
+
+.nav-container.nav-split .nav-row-1,
+.nav-container.nav-split .nav-row-2 {
+  gap: 0.2rem 0.8em;
 }
 
 nav ul li {
@@ -99,9 +117,8 @@ nav ul li ul li a {
     font-size: 2rem;
   }
 
-  nav ul {
+  .nav-container nav ul {
     flex-wrap: wrap;
-    overflow-x: visible;
     gap: 0.2rem 1.2rem;
   }
 }

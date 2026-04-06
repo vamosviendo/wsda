@@ -52,7 +52,7 @@ class ContactPage(Page):
                     'paginas/contact_page_landing.html',
                     context,
                 )
-        else:
+        else:       # request.method == "GET"
             form = ContactForm()
 
         context = self.get_context(request)
