@@ -161,6 +161,13 @@ class TestContactPageSendMail(ContactPageBase):
         self.contacto.send_mail(self.MockForm())
         mock_send_mail.assert_not_called()
 
+    def test_send_mail_envia_el_mail(self):
+        ContactSettings.objects.create(email="htejedor@gmail.com")
+        self.assertEqual(
+            self.contacto.send_mail(self.MockForm()),
+            1
+        )
+
 
 # ============================================================
 # 3. TESTS UNITARIOS — ContactSettings (admin)

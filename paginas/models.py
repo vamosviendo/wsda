@@ -71,7 +71,7 @@ class ContactPage(Page):
                 recipient = contact_settings.email
 
         if not recipient:
-            return
+            return 0
 
         nombre = form.cleaned_data.get("nombre", "")
         email = form.cleaned_data.get("email", "")
@@ -80,7 +80,7 @@ class ContactPage(Page):
 
         body = f"De: {nombre} <{email}>\nAsunto: {asunto}\n\n{mensaje}"
 
-        send_mail(
+        return send_mail(
             subject=f"[web] {asunto}",
             message=body,
             from_email=email,
