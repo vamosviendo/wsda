@@ -16,6 +16,7 @@
 
   <div class="imagenes-grid">
     {% for elemento in elementos %}
+      {% if elemento %}
       <div class="imagen">
         <a href="{{ elemento.url }}">
           {% if elemento.imagen %}
@@ -23,6 +24,7 @@
           {% endif %}
         </a>
       </div>
+      {% endif %}
     {% endfor %}
   </div>
   <nav class="navegacion-productos">
