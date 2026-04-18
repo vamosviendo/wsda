@@ -203,17 +203,6 @@ class ProductoPage(Page):
             else:
                 elementos.append(None)
 
-        elementos_hijos = (
-            self.get_children()
-            .type(ElementoPage)
-            .live()
-            .specific()
-            .order_by("path")
-        )
-        for elem in elementos_hijos:
-            if not elem.block_id:
-                elementos.append(elem)
-
         context["elementos"] = elementos
         return context
 

@@ -100,34 +100,52 @@ class TestProductoPageGetContext(WagtailPageTestCase):
             title="Test image", file=get_test_image_file()
         )
 
-        self.e1 = ElementoPage(title="Primero", slug="primero", imagen=self.imagen)
-        self.producto.add_child(instance=self.e1)
-
-        self.e2 = ElementoPage(title="Segundo", slug="segundo", imagen=self.imagen)
-        self.producto.add_child(instance=self.e2)
-
-        self.e3 = ElementoPage(title="Tercero", slug="tercero", imagen=self.imagen)
-        self.producto.add_child(instance=self.e3)
+        stream_data = [
+            ("elemento", {"imagen": self.imagen, "alt_imagen": "Primero", "titulo": "Primero"}),
+            ("elemento", {"imagen": self.imagen, "alt_imagen": "Segundo", "titulo": "Segundo"}),
+            ("elemento", {"imagen": self.imagen, "alt_imagen": "Tercero", "titulo": "Tercero"}),
+        ]
+        self.producto.elementos = StreamValue(
+            self.producto.elementos.stream_block,
+            stream_data,
+            is_lazy=False
+        )
+        self.producto.save()
 
     def test_galeria_incluye_elementos_hijos(self):
+        e1 = self.producto.get_children().specific().first()
         response = self.client.get(self.producto.url)
-        self.assertContains(response, self.e1.url)
+        self.assertContains(response, e1.url)
 
-    def test_galeria_respeta_orden_del_arbol(self):
+    def test_galeria_respeta_orden_del_streamfield(self):
         response = self.client.get(self.producto.url)
         content = response.content.decode()
-        pos1 = content.index(self.e1.url)
-        pos2 = content.index(self.e2.url)
-        pos3 = content.index(self.e3.url)
+        pos1 = content.index("Primero")
+        pos2 = content.index("Segundo")
+        pos3 = content.index("Tercero")
         self.assertLess(pos1, pos2)
         self.assertLess(pos2, pos3)
 
     def test_galeria_respeta_orden_modificado(self):
-        self.e3.move(self.e1, pos="left")
+        blocks = list(self.producto.elementos)
+        block_ids = [str(b.value.get('block_id')) for b in blocks]
+
+        stream_data_invertido = [
+            ("elemento", {"imagen": self.imagen, "alt_imagen": "Tercero", "titulo": "Tercero", "block_id": block_ids[2]}),
+            ("elemento", {"imagen": self.imagen, "alt_imagen": "Segundo", "titulo": "Segundo", "block_id": block_ids[1]}),
+            ("elemento", {"imagen": self.imagen, "alt_imagen": "Primero", "titulo": "Primero", "block_id": block_ids[0]}),
+        ]
+        self.producto.elementos = StreamValue(
+            self.producto.elementos.stream_block,
+            stream_data_invertido,
+            is_lazy=False
+        )
+        self.producto.save()
+
         response = self.client.get(self.producto.url)
         content = response.content.decode()
-        pos3 = content.index(self.e3.url)
-        pos1 = content.index(self.e1.url)
+        pos3 = content.index("Tercero")
+        pos1 = content.index("Primero")
         self.assertLess(pos3, pos1)
 
 
@@ -557,12 +575,28 @@ class TestProductoPageElementosStreamFieldEdgeCases(WagtailPageTestCase):
 
         self.producto.delete()
 
-    def test_elementos_sin_imagen_en_block(self):
-        """Un block sin imagen se sincroniza correctamente (imagen=None en ElementoPage)."""
-        stream_data = [
-            ("elemento", {"imagen": None, "alt_imagen": "Sin imagen", "titulo": "Sin imagen"})
-        ]
 
+class TestElementosSinBlockIdNoSeMuestran(WagtailPageTestCase):
+    """Tests para verificar que elementos sin block_id no se muestran."""
+
+    def setUp(self):
+        _, self.homepage = crear_estructura_basica(self)
+        self.area = AreaPage(title="Área test", titulo="Área test")
+        self.homepage.add_child(instance=self.area)
+
+        self.producto = ProductoPage(title="Producto test", titulo="Producto test")
+        self.area.add_child(instance=self.producto)
+
+        self.imagen = Image.objects.create(
+            title="Imagen test", file=get_test_image_file()
+        )
+        self.factory = RequestFactory()
+
+    def test_elementos_sin_block_id_no_se_muestran(self):
+        """Los elementos creados directamente (sin block_id) no deben mostrarse."""
+        stream_data = [
+            ("elemento", {"imagen": self.imagen, "alt_imagen": "Con block", "titulo": "Elemento con block"}),
+        ]
         self.producto.elementos = StreamValue(
             self.producto.elementos.stream_block,
             stream_data,
@@ -570,21 +604,33 @@ class TestProductoPageElementosStreamFieldEdgeCases(WagtailPageTestCase):
         )
         self.producto.save()
 
-        hijos = self.producto.get_children().specific()
-        self.assertEqual(len(hijos), 1)
-        self.assertIsNone(hijos[0].imagen)
+        elemento_legacy = ElementoPage(
+            title="Legacy sin block",
+            slug="legacy-sin-block",
+            imagen=self.imagen,
+            titulo="Legacy sin block"
+        )
+        self.producto.add_child(instance=elemento_legacy)
 
-    def test_eliminar_producto_no_rompe(self):
-        """Al eliminar un producto, no falla la sincronización."""
-        stream_data = [
-            ("elemento", {"imagen": self.imagen, "alt_imagen": "Obra", "titulo": "Obra"})
+        self.assertIsNone(elemento_legacy.block_id)
+
+        request = self.factory.get("/")
+        context = self.producto.get_context(request)
+
+        titulos_en_contexto = [
+            e.titulo for e in context["elementos"] if e
         ]
 
-        self.producto.elementos = StreamValue(
-            self.producto.elementos.stream_block,
-            stream_data,
-            is_lazy=False
-        )
-        self.producto.save()
+        self.assertIn("Elemento con block", titulos_en_contexto)
+        self.assertNotIn("Legacy sin block", titulos_en_contexto)
 
-        self.producto.delete()
+    def test_block_id_no_aparece_en_formulario_element_block(self):
+        """El campo block_id no debe aparecer visible en el formulario del ElementoBlock."""
+        from produccion.blocks import ElementoBlock
+        block = ElementoBlock()
+        block_id_block = block.child_blocks['block_id']
+        self.assertEqual(
+            block_id_block.meta.group,
+            'hidden-input',
+            "block_id debe tener group='hidden-input' para ocultarse del formulario"
+        )
