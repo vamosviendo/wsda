@@ -7,10 +7,11 @@ class ElementoBlock(StructBlock):
     imagen = ImageBlock(required=False)
     alt_imagen = CharBlock(required=False, max_length=255)
     titulo = CharBlock(required=False, max_length=255)
-    block_id = CharBlock(required=False, max_length=36, group="hidden-input")
+    block_id = CharBlock(required=False, max_length=36)
 
     class Meta:
         template = "produccion/blocks/elemento_block.html"
+        form_template = "produccion/blocks/elemento_block_form.html"
         icon = "image"
 
 

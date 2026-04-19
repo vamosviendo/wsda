@@ -624,13 +624,40 @@ class TestElementosSinBlockIdNoSeMuestran(WagtailPageTestCase):
         self.assertIn("Elemento con block", titulos_en_contexto)
         self.assertNotIn("Legacy sin block", titulos_en_contexto)
 
-    def test_block_id_no_aparece_en_formulario_element_block(self):
-        """El campo block_id no debe aparecer visible en el formulario del ElementoBlock."""
-        from produccion.blocks import ElementoBlock
-        block = ElementoBlock()
-        block_id_block = block.child_blocks['block_id']
-        self.assertEqual(
-            block_id_block.meta.group,
-            'hidden-input',
-            "block_id debe tener group='hidden-input' para ocultarse del formulario"
+    def test_bloque_agregado_en_streamfield_se_muestra_en_pagina(self):
+        """Al agregar un bloque en el StreamField, debe aparecer en la página de producto."""
+        stream_data = [
+            ("elemento", {"imagen": self.imagen, "alt_imagen": "Obra 1", "titulo": "Obra número uno"}),
+        ]
+
+        self.producto.elementos = StreamValue(
+            self.producto.elementos.stream_block,
+            stream_data,
+            is_lazy=False
         )
+        self.producto.save()
+
+        # Debe existir un hijo ElementoPage
+        self.assertEqual(self.producto.get_children().count(), 1)
+        hijo = self.producto.get_children().specific().first()
+        self.assertEqual(hijo.titulo, "Obra número uno")
+
+    def test_block_id_del_bloque_coincide_con_block_id_de_la_pagina(self):
+        """El block_id del bloque debe coincidir con el block_id de la ElementoPage hija."""
+        stream_data = [
+            ("elemento", {"imagen": self.imagen, "alt_imagen": "Obra 1", "titulo": "Obra número uno"}),
+        ]
+
+        self.producto.elementos = StreamValue(
+            self.producto.elementos.stream_block,
+            stream_data,
+            is_lazy=False
+        )
+        self.producto.save()
+
+        bloque = self.producto.elementos[0]
+        hijo = self.producto.get_children().specific().first()
+
+        self.assertIsNotNone(bloque.value.get('block_id'))
+        self.assertIsNotNone(hijo.block_id)
+        self.assertEqual(str(hijo.block_id), bloque.value.get('block_id'))
