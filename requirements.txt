@@ -1,5 +1,6 @@
 Django>=6,<6.1
 django-sass==1.1.0
+django-migrations-ci==0.13
 wagtail==7.3
 wagtail-link-block>=1.1.7
 gunicorn==25.1.0
