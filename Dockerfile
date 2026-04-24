@@ -28,7 +28,7 @@ COPY . /src
 
 RUN DJANGO_SECRET_KEY=placeholder DJANGO_ALLOWED_HOST=localhost DJANGO_DB_PATH=/dev/null python manage.py collectstatic --noinput
 
-RUN adduser --uid 1234 nandock
-USER nandock
+RUN adduser --uid 1234 vv
+USER vv
 
 CMD ["gunicorn", "--bind", ":8003", "wlili.wsgi:application"]
