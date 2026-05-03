@@ -92,13 +92,19 @@ class ProductoPage(Page):
                         block_id = str(elemento_existente.block_id)
                         block_value['block_id'] = block_id
                         self._actualizar_elemento_si_necesario(elemento_existente, block_value)
+                    else:
+                        block_id = str(uuid.uuid4())
+                        block_value['block_id'] = block_id
+                        elemento_existente._syncing_from_block = True
+                        elemento_existente.block_id = block_id
+                        elemento_existente.save()
+                        self._actualizar_elemento_si_necesario(elemento_existente, block_value)
                 else:
                     block_id = str(uuid.uuid4())
                     block_value['block_id'] = block_id
                     self._crear_elemento(block_value)
-            elif str(block_id) not in elementos_db:
-                block_id = str(uuid.uuid4())
                 block_value['block_id'] = block_id
+            elif str(block_id) not in elementos_db:
                 self._crear_elemento(block_value)
             else:
                 elemento = elementos_db[str(block_id)]
@@ -187,21 +193,20 @@ class ProductoPage(Page):
     def get_context(self, request, *args, **kwargs):
         context = super().get_context(request, *args, **kwargs)
 
-        elementos = []
+        hijos = self.get_children().specific().order_by('path')
+        block_ids_en_streamfield = {
+            block.value.get('block_id'): block
+            for block in self.elementos
+            if block.value.get('block_id')
+        }
 
-        for block in self.elementos:
-            block_id = block.value.get('block_id')
-            if block_id:
-                try:
-                    elemento = ElementoPage.objects.get(
-                        block_id=block_id,
-                        path__startswith=self.path
-                    ).specific
-                    elementos.append(elemento)
-                except ElementoPage.DoesNotExist:
-                    elementos.append(None)
-            else:
-                elementos.append(None)
+        elementos = []
+        for hijo in hijos:
+            # No se muestran elementos sin block_id en el streamfield
+            # o con block_id_no_reconocido
+            if isinstance(hijo, ElementoPage) and \
+                    str(hijo.block_id) in block_ids_en_streamfield:
+                elementos.append(hijo)
 
         context["elementos"] = elementos
         return context
