@@ -3,12 +3,12 @@
 <header>
   <div class="header-inner">
     {% get_site_name as site_name %}
-    <p class="site-title">
+    <p id="site-title" class="site-title">
       <a href="/">{{ site_name }}</a>
     </p>
     {% get_site_root as site_root %}
-    <div class="nav-container">
-      <nav>
+    <div id="nav-container" class="nav-container">
+      <nav id="nav-menu">
         <ul class="nav-row nav-row-1">
           <li><a href="{% pageurl site_root %}">Inicio</a></li>
           {% for menuitem in site_root.get_children.live.in_menu %}

@@ -93,6 +93,8 @@ class TestProductoPageGetContext(WagtailPageTestCase):
         self.area = AreaPage(title="Área test", titulo="Área test")
         self.homepage.add_child(instance=self.area)
 
+
+
         self.producto = ProductoPage(title="Producto test", titulo="Producto test")
         self.area.add_child(instance=self.producto)
 

@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.html import strip_tags
 from wagtail.admin.panels import (
     FieldPanel,
     MultiFieldPanel,
@@ -83,7 +84,7 @@ class FooterText(
     ]
 
     def __str__(self):
-        return "Texto footer"
+        return strip_tags(self.body)
 
     def get_preview_template(self, request, mode_name):
         return "base.html"

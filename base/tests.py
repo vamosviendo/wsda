@@ -197,7 +197,7 @@ class TestFooterTextStr(WagtailPageTestCase):
     def test_devuelve_texto_footer(self):
         footer = FooterText(body="<p>Cualquier texto</p>")
         footer.save()
-        self.assertEqual(str(footer), "Texto footer")
+        self.assertEqual(str(footer), "Cualquier texto")
 
 
 # ============================================================

@@ -38,9 +38,8 @@ class AcercaDeTest(FunctionalTestBase):
 
     def test_admin_publica_y_visitante_lee(self):
 
-        # El administrador se loguea, abre el panel de Wagtail,
-        # navega a la página "Acerca de la artista", escribe
-        # una biografía en el campo de texto enriquecido y la publica.
+        # El administrador escribe una biografía en el campo de texto
+        # enriquecido "body" de la página "Acerca de la artista" y la publica.
 
         self.acerca_page.body = f'<p>{self.TEXTO}</p>'
         revision = self.acerca_page.save_revision()
@@ -50,13 +49,8 @@ class AcercaDeTest(FunctionalTestBase):
         # navegación, hace clic y lee la biografía completa.
         self.get("/")
         nav = self.wait_for("nav")
-        enlace = None
-        for link in nav.find_elements(By.TAG_NAME, "a"):
-            if "acerca" in link.text.lower():
-                enlace = link
-                break
-        # enlaces = nav.find_elements(By.TAG_NAME, "a")
-        # enlace = next(x for x in enlaces if "acerca" in enlace.text.lower())
+        enlaces = nav.find_elements(By.TAG_NAME, "a")
+        enlace = next(x for x in enlaces if "acerca" in x.text.lower())
 
         self.assertIsNotNone(
             enlace,
@@ -64,7 +58,7 @@ class AcercaDeTest(FunctionalTestBase):
         )
 
         enlace.click()
-        self.screenshot("visitante_en_acerca_de")
+        # self.screenshot("visitante_en_acerca_de")
         body_text = self.wait_for("body").text
         self.assertIn(
             self.TEXTO, body_text,
