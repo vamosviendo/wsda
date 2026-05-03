@@ -1,14 +1,19 @@
+from __future__ import annotations
+
 import os
+import uuid
 
 import pytest
 from django.conf import settings
 from django.contrib.auth.models import User
+from wagtail.blocks import StreamValue
 from wagtail.images import get_image_model
 from wagtail.images.tests.utils import get_test_image_file
 from wagtail.models import Collection, Locale, Page, Site
 
 from home.models import HomePage
 from produccion.models import AreaPage, ElementoPage, ProductoPage
+from utils.test_utils import get_elemento_por_block_id
 
 
 def pytest_collection_modifyitems(items):
@@ -122,6 +127,40 @@ def test_page(db, site):
 
 
 @pytest.fixture
+def elemento_factory(db, site):
+    def _factory(producto, imagen=None, alt_imagen="Imagen", titulo="Elemento", page_data=None):
+        block_id = uuid.uuid4()
+        stream_data = [
+            ("elemento", {
+                "imagen": imagen,
+                "alt_imagen": alt_imagen,
+                "titulo": titulo,
+                "block_id": block_id,
+            }),
+        ]
+        producto.elementos += StreamValue(
+            producto.elementos.stream_block,
+            stream_data,
+            is_lazy=False,
+        )
+        producto.save()
+
+        page = get_elemento_por_block_id(producto, block_id)
+
+        if page_data:
+            print("PAGE DATA:", page_data)
+            for key, value in page_data.items():
+                print(f"{key}: {value}")
+                if key != "imagen":
+                    setattr(page, key, value)
+            page.save()
+
+        return page
+
+    return _factory
+
+
+@pytest.fixture
 def area_page(test_page):
     return test_page(
         page_type=AreaPage,
@@ -144,25 +183,32 @@ def producto_page(test_page, area_page):
 
 
 @pytest.fixture
-def elemento(objeto_imagen, test_page, producto_page):
-    return test_page(
-        parent=producto_page,
-        page_type=ElementoPage,
-        title="ElementoPage",
-        slug="elemento_page",
+def elemento(elemento_factory, objeto_imagen, producto_page):
+    return elemento_factory(
+        producto=producto_page,
         imagen=objeto_imagen,
         alt_imagen="Imagen de elemento",
-        titulo="Título de elemento",
-        alto=100,
-        ancho=50,
-        unidad="cm",
-        peso=2,
-        unidad_peso="kg",
-        descripcion="<p>Descripción de elemento</p>",
-        comentarios=[
-            ("comentario", "<p>Este es un comentario de prueba</p>"),
-            ("comentario", "<p>Este es <em>otro</em> comentario de prueba</p>")
-        ],
+        titulo="Elemento"
+    )
+
+
+@pytest.fixture
+def elemento_2(elemento_factory, objeto_imagen, producto_page):
+    return elemento_factory(
+        producto=producto_page,
+        imagen=objeto_imagen,
+        alt_imagen="Imagen de segundo elemento",
+        titulo="Segundo elemento"
+    )
+
+
+@pytest.fixture
+def elemento_3(elemento_factory, producto_page, objeto_imagen):
+    return elemento_factory(
+        producto=producto_page,
+        imagen=objeto_imagen,
+        alt_imagen="Imagen de tercer elemento",
+        titulo="Tercer elemento"
     )
 
 

@@ -17,18 +17,10 @@ def area_page_con_productos(area_page, producto_page, objeto_imagen):
 
 
 def test_producto_page(
-        browser, area_page_con_productos, producto_page, elemento,
-        test_page, objeto_imagen):
+        browser, area_page_con_productos, producto_page,
+        elemento, elemento_2, elemento_3):
     # Dada una página de producto con varios elementos
     # incluida en una página de área:
-    for index in ["2", "3"]:
-        test_page(
-            parent=producto_page,
-            page_type=ElementoPage,
-            title=f"ElementoPage {index}",
-            slug=f"elemento_page_{index}",
-            imagen=objeto_imagen,
-        )
 
     # Si desde la página de área cliqueamos
     # en el producto vamos a la página del producto.

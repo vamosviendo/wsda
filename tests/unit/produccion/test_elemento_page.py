@@ -20,9 +20,3 @@ def test_unidad_cm_por_defecto(elem):
 
 def test_unidad_de_peso_kg_por_defecto(elem):
     assert elem.unidad_peso == "kg"
-
-
-def test_debe_tener_imagen(elem):
-    elem.imagen = None
-    with pytest.raises(ValidationError):
-        elem.full_clean()

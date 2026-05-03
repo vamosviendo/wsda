@@ -1,3 +1,5 @@
+import pytest
+
 from django.utils.html import strip_tags
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -5,10 +7,40 @@ from selenium.webdriver.common.keys import Keys
 from tests.functional.helpers import float_format
 
 
-def test_elemento_page(browser, producto_page, elemento):
-    # Dado un elemento incluida en una página de producto
+@pytest.fixture
+def elemento_con_datos(elemento_factory, producto_page, objeto_imagen):
+    data = {
+        "title": "ElementoPage",
+        "slug": "elemento_page",
+        "imagen": objeto_imagen,
+        "alt_imagen": "Imagen de elemento",
+        "titulo": "Elemento con datos",
+        "alto": 100,
+        "ancho": 50,
+        "unidad": "cm",
+        "peso": 2,
+        "unidad_peso": "kg",
+        "descripcion": "<p>Descripción de elemento</p>",
+        "comentarios": [
+            ("comentario", "<p>Este es un comentario de prueba</p>"),
+            ("comentario", "<p>Este es <em>otro</em> comentario de prueba</p>")
+        ],
+    }
+
+    return elemento_factory(
+        producto=producto_page,
+        imagen=objeto_imagen,
+        alt_imagen="Imagen de elemento con datos",
+        titulo="Elemento con datos",
+        page_data=data,
+    )
+
+
+def test_elemento_page(browser, producto_page, elemento_con_datos):
+    # Dado un elemento incluido en una página de producto
     # si desde la página de producto cliqueamos en el elemento vamos a la
     # página del elemento.
+    elemento = elemento_con_datos
     browser.get_page(producto_page.url)
     links_elemento = browser.wait_fors(".imagen a")
     links_elemento[0].click()
