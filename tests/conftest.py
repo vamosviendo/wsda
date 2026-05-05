@@ -12,8 +12,11 @@ from wagtail.images.tests.utils import get_test_image_file
 from wagtail.models import Collection, Locale, Page, Site
 
 from home.models import HomePage
-from produccion.models import AreaPage, ElementoPage, ProductoPage
-from utils.test_utils import get_elemento_por_block_id
+from produccion.models import AreaPage, ProductoPage
+from utils.test_utils import get_elemento_page_from_block_id
+
+
+Image = get_image_model()
 
 
 def pytest_collection_modifyitems(items):
@@ -135,7 +138,7 @@ def elemento_factory(db, site):
                 "imagen": imagen,
                 "alt_imagen": alt_imagen,
                 "titulo": titulo,
-                "block_id": block_id,
+                "block_id": str(block_id),
             }),
         ]
         producto.elementos += StreamValue(
@@ -145,7 +148,7 @@ def elemento_factory(db, site):
         )
         producto.save()
 
-        page = get_elemento_por_block_id(producto, block_id)
+        page = get_elemento_page_from_block_id(producto, block_id)
 
         if page_data:
             print("PAGE DATA:", page_data)
@@ -214,7 +217,6 @@ def elemento_3(elemento_factory, producto_page, objeto_imagen):
 
 @pytest.fixture
 def objeto_imagen(root_collection):
-    Image = get_image_model()
     image = Image(title="imagen de prueba")
     image.file = get_test_image_file()
     image.save()

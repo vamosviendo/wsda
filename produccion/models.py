@@ -6,7 +6,7 @@ from typing import Self
 from django.db import models
 from django.utils.text import slugify
 import wagtail.blocks
-from wagtail.admin.panels import FieldPanel, HelpPanel, MultiFieldPanel
+from wagtail.admin.panels import FieldPanel, MultiFieldPanel
 from wagtail.fields import RichTextField, StreamField
 from wagtail.models import Page
 from wagtail.blocks import StreamValue

@@ -1,7 +1,6 @@
 from wagtail.models import Page, Site
 
 from home.models import HomePage
-from produccion.models import ElementoPage
 
 
 # ============================================================
@@ -29,8 +28,15 @@ def crear_estructura_basica(test_case):
     )
     return root_page, homepage
 
-
-def get_elemento_por_block_id(producto_page, block_id):
+def get_elemento_page_from_block_id(producto, block_id):
     return next(
-        e for e in producto_page.get_children().specific() if str(e.block_id) == str(block_id)
+        e for e in producto.get_children().specific()
+        if str(e.block_id) == str(block_id)
+    )
+
+
+def get_elemento_block_from_block_id(producto, block_id):
+    return next(
+        e.value for e in producto.elementos
+        if e.value.get("block_id") == str(block_id)
     )
