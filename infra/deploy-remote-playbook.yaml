@@ -1,0 +1,103 @@
+- hosts: all
+
+  tasks:
+    - name: Instalar docker
+      ansible.builtin.apt:
+        name: docker.io
+        state: latest
+        update_cache: true
+      become: true
+
+    - name: Agregar usuario al grupo docker para no tener que usar sudo/become
+      ansible.builtin.user:
+        name: '{{ ansible_user }}'
+        groups: docker
+        append: true    # No eliminar ningún grupo existente
+      become: true
+
+    - name: Restablecer conexión ssh para permitir que los cambios a user/group tengan efecto
+      ansible.builtin.meta: reset_connection
+
+    - name: Construir imagen container localmente
+      community.docker.docker_image:
+        name: wlili
+        source: build
+        state: present
+        build:
+          path: ..
+          platform: linux/amd64
+        force_source: true
+      delegate_to: 127.0.0.1
+
+    - name: Exportar imagen container localmente
+      community.docker.docker_image:
+        name: wlili
+        archive_path: /tmp/wlili-img.tar
+        source: local
+      delegate_to: 127.0.0.1
+
+    - name: Cargar imagen al server
+      ansible.builtin.copy:
+        src: /tmp/wlili-img.tar
+        dest: /tmp/wlili-img.tar
+
+    - name: Importar imagen container en el server
+      community.docker.docker_image:
+        name: wlili
+        load_path: /tmp/wlili-img.tar
+        source: load
+        force_source: true
+        state: present
+
+    - name: Verificar que exista .secret-key
+      # La intención es que esto suceda solo una vez por server
+      ansible.builtin.copy:
+        dest: ~/sites/wlili/.secret-key
+        content: "{{ lookup('password', '/dev/null length=32 chars=ascii_letters') }}"
+        mode: 0600
+        force: false  # no recrear el archivo si ya existe
+
+    - name: Lee secret key del archivo
+      ansible.builtin.slurp:
+        src: ~/sites/wlili/.secret-key
+      register: secret_key
+
+    - name: Asegurar que db.sqlite3 existe fuera del container
+      ansible.builtin.file:
+        path: "{{ ansible_env.HOME }}/sites/wlili/db.sqlite3"
+        state: touch
+        owner: 1234
+      become: true
+
+    - name: Asegurar que directorio media existe fuera del container
+      ansible.builtin.file:
+        path: "{{ ansible_env.HOME }}/sites/wlili/media"
+        state: directory
+        mode: '0755'
+        owner: 1234
+      become: true
+
+    - name: Ejecutar container
+      community.docker.docker_container:
+        name: wlili
+        image: wlili
+        state: started
+        recreate: true
+        env:
+          DJANGO_SETTINGS_MODULE: "wlili.settings.production"
+          DJANGO_SECRET_KEY: "{{ secret_key.content | b64decode }}"
+          DJANGO_ALLOWED_HOST: "{{ inventory_hostname }},www.{{ inventory_hostname }}"
+          DJANGO_DB_PATH: "/home/vv/db.sqlite3"
+        mounts:
+          - type: bind
+            source: "{{ ansible_env.HOME }}/sites/wlili/db.sqlite3"
+            target: /home/vv/db.sqlite3
+          - type: bind
+            source: "{{ ansible_env.HOME }}/sites/wlili/media"
+            target: /src/media
+        ports: 80:8888
+
+    - name: Run migration inside container
+      community.docker.docker_container_exec:
+        container: wlili
+        command: ./manage.py migrate
