@@ -77,6 +77,50 @@
         owner: 1234
       become: true
 
+    - name: Verificar si existe swapfile
+      ansible.builtin.stat:
+        path: /swapfile
+      register: swapfile_exists
+
+    - name: Crear swapfile de 1GB
+      ansible.builtin.command:
+        cmd:  fallocate -l 1G /swapfile
+        creates: /swapfile
+      become: true
+      when: not swapfile_exists.stat.exists
+
+    - name: Configurar permisos swapfile
+      ansible.builtin.command:
+        cmd:  chmod 600 /swapfile
+      become: true
+      when: not swapfile_exists.stat.exists
+
+    - name: Formatear y activar swap
+      ansible.builtin.command:
+        cmd:  mkswap /swapfile && swapon /swapfile
+      become: true
+      when:
+        - not swapfile_exists.stat.exists
+        - ansible_facts.swaptotal_mb == 0
+
+    - name: Asegurar que el swapfile está activo
+      ansible.builtin.command:
+        cmd:  swapon /swapfile
+      become: true
+      when: ansible_facts.swaptotal_mb == 0
+      register: swap_activate_result
+      failed_when: swapon_activate_result.rc != 0 and 'already active' not in swap_activate_result.stderr
+
+    - name: Agregar swap a /etc/fstab
+      ansible.builtin.lineinfile:
+        path: /etc/fstab
+        line: "/swapfile none swap sw 0 0"
+        state: present
+        create: true
+        mode: '0644'
+      become: true
+      when: not swapfile_exists.stat.exists
+
     - name: Ejecutar container
       community.docker.docker_container:
         name: wlili
