@@ -4,7 +4,7 @@ from .base import *
 
 DEBUG = False
 SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
-ALLOWED_HOSTS = [os.environ["DJANGO_ALLOWED_HOST"]]
+ALLOWED_HOSTS = os.environ["DJANGO_ALLOWED_HOST"].split(",")
 DATABASES["default"]["NAME"] = os.environ["DJANGO_DB_PATH"]
 
 # ManifestStaticFilesStorage is recommended in production, to prevent
