@@ -139,8 +139,42 @@
           - type: bind
             source: "{{ ansible_env.HOME }}/sites/wlili/media"
             target: /src/media
-        ports: 80:8888
+        ports: 8888:8888
         restart_policy: always
+
+    - name: Asegurar que el directorio sites/wlili existe
+      ansible.builtin.file:
+        path: "{{ ansible_env.HOME }}/sites/wlili"
+        state: directory
+        mode: '0755'
+
+    - name: Crear caddyfile temporal en el server
+      ansible.builtin.copy:
+        dest: "{{ ansible_env.HOME }}/sites/wlili/Caddyfile"
+        content: |
+          {{ inventory_hostname }} {
+            reverse_proxy localhost:8888
+          }
+          www.{{ inventory_hostname }} {
+            reverse_proxy localhost:8888
+          }
+        mode: '0644'
+
+    - name: Copiar Caddyfile a /etc/caddy/
+      ansible.builtin.copy:
+        src: "{{ ansible_env.HOME }}/sites/wlili/Caddyfile"
+        dest: /etc/caddy/Caddyfile
+        mode: '0644'
+        owner: root
+        remote_src: true
+      become: true
+
+    - name: Recargar Caddy
+      ansible.builtin.systemd:
+        name: caddy
+        state: reloaded
+        enabled: true
+      become: true
 
     - name: Run migration inside container
       community.docker.docker_container_exec:
