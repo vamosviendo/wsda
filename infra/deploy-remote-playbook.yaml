@@ -18,6 +18,27 @@
     - name: Restablecer conexión ssh para permitir que los cambios a user/group tengan efecto
       ansible.builtin.meta: reset_connection
 
+    - name: Detener y deshabilitar caddy del sistema
+      ansible.builtin.systemd:
+        name: caddy
+        state: stopped
+        enabled: false
+      become: true
+      failed_when: false
+
+    - name: Limpiar containers antiguos
+      community.docker.docker_container:
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - wlili
+        - caddy
+
+    - name: Crear docker network wlili-net
+      community.docker.docker_network:
+        name: wlili-net
+        driver: bridge
+
     - name: Construir imagen container localmente
       community.docker.docker_image:
         name: wlili
@@ -132,14 +153,11 @@
           DJANGO_SECRET_KEY: "{{ secret_key.content | b64decode }}"
           DJANGO_ALLOWED_HOST: "{{ inventory_hostname }},www.{{ inventory_hostname }}"
           DJANGO_DB_PATH: "/home/vv/db.sqlite3"
-        mounts:
-          - type: bind
-            source: "{{ ansible_env.HOME }}/sites/wlili/db.sqlite3"
-            target: /home/vv/db.sqlite3
-          - type: bind
-            source: "{{ ansible_env.HOME }}/sites/wlili/media"
-            target: /src/media
-        ports: 8888:8888
+        volumes:
+          - "{{ ansible_env.HOME }}/sites/wlili/db.sqlite3:/home/vv/db.sqlite3:rw"
+          - "{{ ansible_env.HOME }}/sites/wlili/media:/src/media:rw"
+        networks:
+          - name: wlili-net
         restart_policy: always
 
     - name: Asegurar que el directorio sites/wlili existe
@@ -148,33 +166,40 @@
         state: directory
         mode: '0755'
 
-    - name: Crear caddyfile temporal en el server
+    - name: Asegurar que el directorio caddy-data existe
+      ansible.builtin.file:
+        path: "{{ ansible_env.HOME }}/sites/wlili/caddy-data"
+        state: directory
+        mode: '0755'
+      become: true
+
+    - name: Crear caddyfile
       ansible.builtin.copy:
         dest: "{{ ansible_env.HOME }}/sites/wlili/Caddyfile"
         content: |
           {{ inventory_hostname }} {
-            reverse_proxy localhost:8888
+            reverse_proxy wlili:8888
           }
           www.{{ inventory_hostname }} {
-            reverse_proxy localhost:8888
+            reverse_proxy wlili:8888
           }
         mode: '0644'
 
-    - name: Copiar Caddyfile a /etc/caddy/
-      ansible.builtin.copy:
-        src: "{{ ansible_env.HOME }}/sites/wlili/Caddyfile"
-        dest: /etc/caddy/Caddyfile
-        mode: '0644'
-        owner: root
-        remote_src: true
-      become: true
-
-    - name: Recargar Caddy
-      ansible.builtin.systemd:
+    - name: Asegurar que Caddy está corriendo
+      community.docker.docker_container:
         name: caddy
-        state: reloaded
-        enabled: true
-      become: true
+        image: caddy:latest
+        state: started
+        recreate: true
+        ports:
+          - 80:80
+          - 443:443
+        volumes:
+          - "{{ ansible_env.HOME }}/sites/wlili/Caddyfile:/etc/caddy/Caddyfile:ro"
+          - "{{ ansible_env.HOME }}/sites/wlili/caddy-data:/data"
+        networks:
+          - name: wlili-net
+        restart_policy: always
 
     - name: Run migration inside container
       community.docker.docker_container_exec:
