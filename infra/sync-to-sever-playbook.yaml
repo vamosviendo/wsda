@@ -1,0 +1,111 @@
+---
+- name: Sincronizar DB y media local -> server
+  hosts: all
+  gather_facts: true
+  vars:
+    local_db_path: "{{ playbook_dir }}/../db.sqlite3"
+    local_media_path: "{{ playbook_dir }}/../media"
+    remote_site_path: "{{ ansible_env.HOME }}/sites/wlili"
+
+  tasks:
+    - name: Verificar que DB local existe
+      ansible.builtin.stat:
+        path: "{{ local_db_path }}"
+      register: local_db
+      delegate_to: 127.0.0.1
+      run_once: true
+      tags: [always, db]
+
+    - name: Verificar que media local existe
+      ansible.builtin.stat:
+        path: "{{ local_media_path }}"
+      register: local_media
+      delegate_to: 127.0.0.1
+      run_once: true
+      tags: [always, media]
+
+    - name: Fallar si no existe DB local
+      ansible.builtin.fail:
+        msg: "DB local no encontrada en {{ local_db_path }}"
+      when: not local_db.stat.exists
+      delegate_to: 127.0.0.1
+      run_once: true
+      tags: [db]
+
+    - name: Informar si no existe media local
+      ansible.builtin.debug:
+        msg: "ADVERTENCIA: Directorio media no encontrado, omitiendo sync de media"
+      when: not local_media.stat.exists
+      delegate_to: 127.0.0.1
+      run_once: true
+      tags: [media]
+
+    # --- Sincronización de DB -----------------------------------------------
+    - name: Detener container wlili para garantizar consistencia de DB
+      community.docker.docker_container:
+        name: wlili
+        state: stopped
+      become: true
+      tags: [db]
+
+    - name: Sincronizar DB local -> server
+      ansible.builtin.synchronize:
+        src: "{{ local_db_path }}"
+        dest: "{{ remote_site_path }}/db.sqlite3"
+        delete: true  # Elimina archivos en dest que no están en src
+        compress: true
+        owner: false
+        group: false
+        perms: false
+      delegate_to: 127.0.0.1
+      tags: [db]
+
+    - name: Asegurar permisos correctos de DB en server
+      ansible.builtin.file:
+        path: "{{ remote_site_path }}/db.sqlite3"
+        mode: '0644'
+        owner: "1234"
+      become: true
+      tags: [db]
+
+    - name: Iniciar container wlili
+      community.docker.docker_container:
+        name: wlili
+        state: started
+      become: true
+      tags: [db]
+
+    # --- Sincronización de media --------------------------------------------
+    - name: Cambiar owner de media a uid 1000 para poder sincronizar
+      ansible.builtin.file:
+        path: "{{ remote_site_path }}/media"
+        owner: "1000"
+        recurse: true
+      become: true
+      tags: [media]
+
+    - name: Sincronizar media local -> server
+      ansible.builtin.synchronize:
+        src: "{{ local_media_path }}/"
+        dest: "{{ remote_site_path }}/media"
+        delete: false  # No borrar archivos remotos no presentes localmente
+        compress: true
+        owner: false
+        group: false
+        # Descomentar última línea del comentario para solo transferir
+        # archivos modificados en las últimas 2 horas
+        # (evita re-transferir todo si se corre por error frecuentemente)
+        # timeargs: -mtime 0  # Descomentar si se quiere solo archivos nuevos
+      delegate_to: 127.0.0.1
+      when: local_media.stat.exists
+      tags: [media]
+
+    - name: Asegurar permisos correctos para media en server
+      ansible.builtin.file:
+        path: "{{ remote_site_path }}/media"
+        mode: "0755"
+        owner: "1234"
+        recurse: true
+      become: true
+      when: local_media.stat.exists
+      tags: [media]
