@@ -1,0 +1,36 @@
+---
+- name: Hacer copia de seguridad de la base de datos
+  hosts: all
+  gather_facts: true
+  vars:
+    local_backup_path: "{{ lookup('env', 'HOME') }}/tmp/backup/wlili"
+    remote_site_path: "{{ ansible_env.HOME }}/sites/wlili"
+
+  tasks:
+    - name: Asegurar que directorios de backup existan
+      ansible.builtin.file:
+        path: "{{ local_backup_path }}/media"
+        state: directory
+      delegate_to: 127.0.0.1
+
+    - name: Sincronizar DB remota -> backup
+      ansible.builtin.synchronize:
+        src: "{{ remote_site_path }}/db.sqlite3"
+        dest: "{{ local_backup_path }}/db.sqlite3"
+        mode: pull
+        delete: true
+        owner: false
+        group: false
+        perms: false
+      delegate_to: 127.0.0.1
+
+    - name: Sincronizar media remota -> backup
+      ansible.builtin.synchronize:
+        src: "{{ remote_site_path }}/media/"
+        dest: "{{ local_backup_path }}/media/"
+        mode: pull
+        delete: true
+        compress: true
+        owner: false
+        group: false
+      delegate_to: 127.0.0.1
