@@ -1,22 +1,68 @@
 ---
-- name: Hacer copia de seguridad de la base de datos
+- name: Hacer copia de seguridad de base de datos y carpeta de medios
   hosts: all
   gather_facts: true
   vars:
-    local_backup_path: "{{ lookup('env', 'HOME') }}/tmp/backup/wlili"
-    remote_site_path: "{{ ansible_env.HOME }}/sites/wlili"
+    backup_parent: "{{ lookup('env', 'HOME') }}/tmp/backup"
+    backup_name: "wlili"
+    backup_path: "{{ backup_parent }}/{{ backup_name }}"
+    remote_site_path: "{{ ansible_facts['env']['HOME'] }}/sites/wlili"
 
   tasks:
-    - name: Asegurar que directorios de backup existan
+    # 1. Rotación de backups locales (mantener hasta 3 versiones)
+    - name: Verificar existencia de versiones locales
+      ansible.builtin.stat:
+        path: "{{ backup_parent }}/{{ item }}"
+      loop:
+        - "{{ backup_name }}"
+        - "{{ backup_name }}1"
+        - "{{ backup_name }}2"
+      register: backup_versions
+      delegate_to: 127.0.0.1
+
+    - name: Establecer hechos sobre versiones existentes
+      set_fact:
+        has_wlili: "{{ (backup_versions.results | selectattr('stat.exists') | map(attribute='stat.path') | map('basename') | select('equalto', backup_name) | list | length > 0) }}"
+        has_wlili1: "{{ (backup_versions.results | selectattr('stat.exists') | map(attribute='stat.path') | map('basename') | select('equalto', backup_name ~ '1') | list | length > 0) }}"
+        has_wlili2: "{{ (backup_versions.results | selectattr('stat.exists') | map(attribute='stat.path') | map('basename') | select('equalto', backup_name ~ '2') | list | length > 0) }}"
+
+    - name: Eliminar versión más antigua (wlili2)
       ansible.builtin.file:
-        path: "{{ local_backup_path }}/media"
+        path: "{{ backup_parent }}/{{ backup_name }}2"
+        state: absent
+      when: has_wlili2
+      delegate_to: 127.0.0.1
+
+    - name: Renombrar wlili1 a wlili2 si existe
+      ansible.builtin.command:
+        cmd: "mv {{ backup_parent }}/{{ backup_name }}1 {{ backup_parent }}/{{ backup_name }}2"
+      when: has_wlili1
+      delegate_to: 127.0.0.1
+      args:
+        removes: "{{ backup_parent }}/{{ backup_name }}1"
+        creates: "{{ backup_parent }}/{{ backup_name }}2"
+
+    - name: Renombrar wlili a wlili1 si existe
+      ansible.builtin.command:
+        cmd: "mv {{ backup_parent }}/{{ backup_name }} {{ backup_parent }}/{{ backup_name }}1"
+      when: has_wlili
+      delegate_to: 127.0.0.1
+      args:
+        removes: "{{ backup_parent }}/{{ backup_name }}"
+        creates: "{{ backup_parent }}/{{ backup_name }}1"
+
+    # 2. Crear nuevo directorio wlili y subdirectorio media
+    - name: Crear directorio wlili y subdirectorio media
+      ansible.builtin.file:
+        path: "{{ backup_path }}/media"
         state: directory
       delegate_to: 127.0.0.1
 
+    # 3. Sincronizar base de datos y carpeta de medios
     - name: Sincronizar DB remota -> backup
       ansible.builtin.synchronize:
         src: "{{ remote_site_path }}/db.sqlite3"
-        dest: "{{ local_backup_path }}/db.sqlite3"
+        dest: "{{ backup_path }}/db.sqlite3"
         mode: pull
         delete: true
         owner: false
@@ -27,7 +73,7 @@
     - name: Sincronizar media remota -> backup
       ansible.builtin.synchronize:
         src: "{{ remote_site_path }}/media/"
-        dest: "{{ local_backup_path }}/media/"
+        dest: "{{ backup_path }}/media/"
         mode: pull
         delete: true
         compress: true
