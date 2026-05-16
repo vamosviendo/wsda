@@ -68,6 +68,7 @@ python manage.py runserver
 ## General behavior
 - Atenerse al modo Plan a menos que esté seleccionado explicitamente el modo build
 - No aplicar directamente cambios al código, sino presentarlos en pantalla para su revisión. Indicar con un comentario los lugares específicos del código en los que se han hecho cambios.
+- Cuando falte información, solicitarla. Comprobar en vez de inferir o suponer. Empiria.
 
 ---
 
@@ -243,3 +244,11 @@ DEBUG = True
 SECRET_KEY = "your-secret-key"
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 ```
+
+## Deployment
+
+- El sitio se encuentra alojado en un droplet de Digital Ocean con Ubuntu 20.04 LTS
+- El dominio (y la url de producción del sitio) es lilianamedela.com.ar. La url de staging es staging.lilianamedela.com.ar
+- Datos del sitio en server remoto (base de datos, archivos de media, etc.) en /home/vv/sites/wlili
+- Datos del sitio staging en server remoto en /home/vv/sites/wlili-staging
+
