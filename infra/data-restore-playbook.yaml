@@ -1,0 +1,193 @@
+---
+# Modo de uso:
+#
+# Restaurar última versión de db y media:
+# ansible-playbook infra/data-restore-playbook.yaml
+#
+# Restaurar versión intermadia de db y media:
+# ansible-playbook infra/data-restore-playbook.yaml -e "backup_version=1"
+#
+# Restaurar versión más antigua de db y media:
+# ansible-playbook infra/data-restore-playbook.yaml -e "backup_version=2"
+#
+# Restaurar sólo la base de datos
+# ansible-playbook infra/data-restore-playbook.yaml -e "restore_media=false"
+#
+# Restaurar sólo la media desde wlili1
+# ansible-playbook infra/data-restore-playbook.yaml -e "backup_version=1 restore_db=false"
+
+- name: Restaurar backup desde local a server
+  hosts: all
+  gather_facts: true
+  vars:
+    # Rutas locales
+    backup_parent: "{{ lookup('env', 'HOME') }}/tmp/backup"
+    backup_name: "wlili"
+    backup_suffix: "{{ backup_version | default('') }}"
+    backup_path: "{{ backup_parent }}/{{ backup_name }}{{ backup_suffix }}"
+
+    # Rutas remotas
+    remote_site_path: "{{ ansible_facts['env']['HOME'] }}/sites/wlili"
+    remote_pre_restore_dir: "{{ remote_site_path }}/pre_restore"
+
+    # Qué restaurar
+    restore_db: true
+    restore_media: true
+
+    # Valores por defecto para metadatos (se usarán si el archivo no existe previamente)
+    # TODO: simplificar en default_owner, default_group, default_media_group,
+    #       default_media_content_mode
+    default_db_owner: "1234"
+    default_db_group: "vv"
+    default_db_mode: "0644"
+
+    default_media_owner: "1234"
+    default_media_group: "root"
+    default_media_mode: "0755"
+
+    default_media_content_owner: "1234"
+    default_media_content_group: "vv"
+    default_media_content_dir_mode: "0755"
+    default_media_content_file_mode: "0755"
+
+  tasks:
+    # 1. Verificar que el backup existe localmente
+    - name: Verificar existencia del backup local
+      ansible.builtin.stat:
+        path: "{{ backup_path }}"
+      register: backup_dir_stat
+      delegate_to: 127.0.0.1
+      run_once: true
+
+    - name: Fallar si el backup local no existe
+      ansible.builtin.fail:
+        msg: "Backup no encontrado en {{ backup_path }}"
+      when: not backup_dir_stat.stat.exists
+      run_once: true
+
+    # 2. Registrar metadatos actuales de archivos remotos
+    - name: Obtener estado actual de db.sqlite3
+      ansible.builtin.stat:
+        path: "{{ remote_site_path }}/db.sqlite3"
+      register: remote_db_stat
+      when: restore_db | bool
+
+    - name: Obtener estado actual de dir media
+      ansible.builtin.stat:
+        path: "{{ remote_site_path }}/media"
+      register: remote_media_stat
+      when: restore_media | bool
+
+    # Asignar a variables metadatos existentes o valores por defecto
+    - name: Definir metadatos para db.sqlite3
+      ansible.builtin.set_fact:
+        db_owner: "{{ remote_db_stat.stat.pw_name | default(default_db_owner) }}"
+        db_group: "{{ remote_db_stat.stat.gr_name | default(default_db_group) }}"
+        db_mode: "{{ remote_db_stat.stat.mode | default(default_db_mode) }}"
+      when: restore_db | bool
+
+    - name: Definir metadatos para media (raíz)
+      ansible.builtin.set_fact:
+        media_owner: "{{ remote_media_stat.stat.pw_name | default(default_media_owner) }}"
+        media_group: "{{ remote_media_stat.stat.gr_name | default(default_media_group) }}"
+        media_mode: "{{ remote_media_stat.stat.mode | default(default_media_mode) }}"
+      when: restore_media | bool
+
+    # Para el contenido de media usaremos los defaults (son fijos en el entorno)
+    # No se pueden detectar dinámicamente fácilmente, pero el usuario los ha especificado.
+    - name: Definir metadatos para media (contenido)
+      ansible.builtin.set_fact:
+        media_content_owner: "{{ default_media_content_owner }}"
+        media_content_group: "{{ default_media_content_group }}"
+        media_content_dir_mode: "{{ default_media_content_dir_mode }}"
+        media_content_file_mode: "{{ default_media_content_file_mode }}"
+      when: restore_media | bool
+
+    # 3. Crear copia de seguridad previa
+    - name: Crear directorio para copia de seguridad previa
+      ansible.builtin.file:
+        path: "{{ remote_pre_restore_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Copiar db.sqlite3 actual a copia de seguridad previa (si existe y restore_db)
+      ansible.builtin.copy:
+        src: "{{ remote_site_path }}/db.sqlite3"
+        dest: "{{ remote_pre_restore_dir }}/db.sqlite3"
+        remote_src: true
+        mode: preserve
+      when:
+        - restore_db | bool
+        - remote_db_stat.stat.exists
+
+    - name: Sincronizar media actual a copia de seguridad previa (sobrescribe)
+      ansible.builtin.synchronize:
+        src: "{{ remote_site_path }}/media/"
+        dest: "{{ remote_pre_restore_dir }}/media/"
+        mode: push
+        delete: true
+        compress: true
+      delegate_to: "{{ inventory_hostname }}"
+      when:
+        - restore_media | bool
+        - remote_media_stat.stat.exists
+
+    # 4. Restaurar desde backup local hacia servidor
+    - name: Resturar db.sqlite3 (push sin preservar metadatos)
+      ansible.builtin.synchronize:
+        src: "{{ backup_path }}/db.sqlite3"
+        dest: "{{ remote_site_path }}/db.sqlite3"
+        mode: push
+        owner: false
+        group: false
+        perms: false
+      delegate_to: 127.0.0.1
+      when: restore_db | bool
+
+    - name: Resturar media (push sin preservar metadatos)
+      ansible.builtin.synchronize:
+        src: "{{ backup_path }}/media/"
+        dest: "{{ remote_site_path }}/media/"
+        mode: push
+        delete: true
+        compress: true
+        owner: false
+        group: false
+        perms: false
+      delegate_to: 127.0.0.1
+      when: restore_media | bool
+
+    # 5. Reaplicar los metadatos originales
+    - name: Ajustar ownership y permisos de db.sqlite3
+      ansible.builtin.file:
+        path: "{{ remote_site_path }}/db.sqlite3"
+        owner: "{{ db_owner }}"
+        group: "{{ db_group }}"
+        mode: "{{ db_mode }}"
+      become: true
+      when: restore_db | bool
+
+    - name: Ajustar ownership y permisos del dir media (raíz)
+      ansible.builtin.file:
+        path: "{{ remote_site_path }}/media"
+        owner: "{{ media_owner }}"
+        group: "{{ media_group }}"
+        mode: "{{ media_mode }}"
+      become: true
+      when: restore_media | bool
+
+    - name: Ajustar ownership y permisos del contenido de media (recursivo)
+      ansible.builtin.shell: |
+        chown -R {{ media_content_owner }}:{{ media_content_group }} {{ remote_site_path }}/media/*
+        find {{ remote_site_path }}/media -type d -exec chmod {{ media_content_dir_mode }} {} \;
+        find {{ remote_site_path }}/media -type f -exec chmod {{ media_content_file_mode }} {} \;
+      when: restore_media | bool
+      become: true
+      changed_when: false
+
+    - name: Mensaje de éxito
+      ansible.builtin.debug:
+        msg:
+          - "Restauración completada desde {{ backup_path }}"
+          - "Copia previa a restauración guardada en {{ remote_pre_restore_dir }}"
+      run_once: true
