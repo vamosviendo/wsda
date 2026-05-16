@@ -37,6 +37,11 @@ def locale():
     Locale.objects.get_or_create(language_code=settings.LANGUAGE_CODE)
 
 
+@pytest.fixture(autouse=True)
+def temporary_media_root(tmp_path, settings):
+    settings.MEDIA_ROOT = tmp_path / "media"
+
+
 @pytest.fixture
 def root_page():
     # Página raíz del árbol de Wagtail. Tomar o crear
