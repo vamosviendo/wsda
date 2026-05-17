@@ -8,10 +8,10 @@
 {% endblock %}
 
 {% block content %}
-  <div class="elemento-layout">
+  <div id="elemento-layout" class="elemento-layout">
 
     {% if page.imagen %}
-      <div class="elemento-imagen">
+      <div id="elemento-imagen" class="elemento-imagen">
         {% image page.imagen width-1600 as img_full %}
         {% image page.imagen width-800 as img_preview %}
         <img
@@ -20,37 +20,38 @@
           data-width="{{ img_full.width }}"
           data-height="{{ img_full.height }}"
           alt="{{ page.alt_imagen }}"
+          id="elemento-img-preview"
           class="elemento-img-preview"
         >
       </div>
     {% endif %}
 
-    <div class="elemento-info">
+    <div id="elemento-info" class="elemento-info">
 
-      <h2 class="elemento-titulo">
+      <h2 id="elemento-titulo" class="elemento-titulo">
         {% if page.titulo %}{{ page.titulo }}{% else %}Sin título{% endif %}
       </h2>
 
       {% if page.alto or page.ancho %}
-        <p class="elemento-dimensiones">
+        <p id="elemento-dimensiones" class="elemento-dimensiones">
           {% if page.alto %}{{ page.alto }}{% endif %}
-          {% if page.alto and page.ancho %}&times;{% endif %}
+          {% if page.alto and page.ancho %}x{% endif %}
           {% if page.ancho %}{{ page.ancho }}{% endif %}
-          {% if page.profundidad %}&times;{{ page.profundidad }}{% endif %}
-          {% if page.unidad %}&nbsp;{{ page.unidad }}{% endif %}
+          {% if page.profundidad %}x{{ page.profundidad }}{% endif %}
+          {% if page.unidad %}{{ page.unidad }}{% endif %}
         </p>
       {% endif %}
 
       {% if page.peso %}
-        <p class="elemento-peso">{{ page.peso }}&nbsp;kg</p>
+        <p id="elemento-peso" class="elemento-peso">{{ page.peso }}&nbsp;kg</p>
       {% endif %}
 
       {% if page.descripcion %}
-        <div class="elemento-descripcion">{{ page.descripcion|richtext }}</div>
+        <div id="elemento-descripcion" class="elemento-descripcion">{{ page.descripcion|richtext }}</div>
       {% endif %}
 
       {% if page.comentarios %}
-        <div class="elemento-comentarios">
+        <div id="elemento-comentarios" class="elemento-comentarios">
           {% for bloque in page.comentarios %}
             <div class="elemento-comentario">{% include_block bloque %}</div>
           {% endfor %}

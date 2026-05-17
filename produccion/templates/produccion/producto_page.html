@@ -8,14 +8,15 @@
 {% endblock %}
 
 {% block content %}
-  <h2 class="producto-titulo">{{ page.titulo }}</h2>
+  <h2 id="producto-titulo" class="producto-titulo">{{ page.titulo }}</h2>
 
   {% if page.descripcion %}
-    <div class="pagina-descripcion">{{ page.descripcion|richtext }}</div>
+    <div id="descripcion" class="pagina-descripcion">{{ page.descripcion|richtext }}</div>
   {% endif %}
 
-  <div class="imagenes-grid">
+  <div id="elementos-grid" class="imagenes-grid">
     {% for elemento in elementos %}
+      {% if elemento %}
       <div class="imagen">
         <a href="{{ elemento.url }}">
           {% if elemento.imagen %}
@@ -23,6 +24,7 @@
           {% endif %}
         </a>
       </div>
+      {% endif %}
     {% endfor %}
   </div>
   <nav class="navegacion-productos">

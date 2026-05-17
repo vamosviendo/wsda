@@ -1,0 +1,10 @@
+{% load wagtailimages_tags %}
+
+<div class="elemento-block">
+  {% if self.imagen %}
+    {% image self.imagen width-400 %}
+  {% endif %}
+  {% if self.titulo %}
+    <p>{{ self.titulo }}</p>
+  {% endif %}
+</div>

@@ -1,0 +1,222 @@
+# Deploy a producción (comportamiento actual)
+# ansible-playbook -i infra/inventory infra/deploy-remote-playbook.yaml
+#
+# Deploy a staging
+# ansible-playbook -i infra/inventory infra/deploy-remote-playbook.yaml -e "site_env=staging"
+- hosts: all
+  vars:
+    site_env: "production"
+    site_name: "{{ 'wlili' if site_env == 'production' else 'wlili-staging' }}"
+    site_path: "{{ ansible_env.HOME }}/sites/{{ site_name }}"
+    container_name: "{{ 'wlili' if site_env == 'production' else 'wlili-staging' }}"
+    network_name: "wlili-net"
+    db_path_in_container: "/home/vv/db.sqlite3"
+
+  tasks:
+    - name: Instalar docker
+      ansible.builtin.apt:
+        name: docker.io
+        state: latest
+        update_cache: true
+      become: true
+
+    - name: Agregar usuario al grupo docker para no tener que usar sudo/become
+      ansible.builtin.user:
+        name: '{{ ansible_user }}'
+        groups: docker
+        append: true    # No eliminar ningún grupo existente
+      become: true
+
+    - name: Restablecer conexión ssh para permitir que los cambios a user/group tengan efecto
+      ansible.builtin.meta: reset_connection
+
+    - name: Detener y deshabilitar caddy del sistema
+      ansible.builtin.systemd:
+        name: caddy
+        state: stopped
+        enabled: false
+      become: true
+      failed_when: false
+
+    - name: Limpiar containers antiguos
+      community.docker.docker_container:
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ container_name }}"
+        - caddy
+
+    - name: Crear docker network wlili-net
+      community.docker.docker_network:
+        name: "{{ network_name }}"
+        driver: bridge
+
+    - name: Construir imagen container localmente
+      community.docker.docker_image:
+        name: wlili
+        source: build
+        state: present
+        build:
+          path: ..
+          platform: linux/amd64
+        force_source: true
+      delegate_to: 127.0.0.1
+
+    - name: Exportar imagen container localmente
+      community.docker.docker_image:
+        name: wlili
+        archive_path: /tmp/wlili-img.tar
+        source: local
+      delegate_to: 127.0.0.1
+
+    - name: Cargar imagen al server
+      ansible.builtin.copy:
+        src: /tmp/wlili-img.tar
+        dest: /tmp/wlili-img.tar
+
+    - name: Importar imagen container en el server
+      community.docker.docker_image:
+        name: wlili
+        load_path: /tmp/wlili-img.tar
+        source: load
+        force_source: true
+        state: present
+
+    - name: Verificar que exista .secret-key
+      # La intención es que esto suceda solo una vez por server
+      ansible.builtin.copy:
+        dest: "{{ site_path }}/.secret-key"
+        content: "{{ lookup('password', '/dev/null length=32 chars=ascii_letters') }}"
+        mode: 0600
+        force: false  # no recrear el archivo si ya existe
+
+    - name: Lee secret key del archivo
+      ansible.builtin.slurp:
+        src: "{{ site_path }}/.secret-key"
+      register: secret_key
+
+    - name: Asegurar que db.sqlite3 existe fuera del container
+      ansible.builtin.file:
+        path: "{{ site_path }}/db.sqlite3"
+        state: touch
+        owner: 1234
+      become: true
+
+    - name: Asegurar que directorio media existe fuera del container
+      ansible.builtin.file:
+        path: "{{ site_path }}/media"
+        state: directory
+        mode: '0755'
+        owner: 1234
+      become: true
+
+    - name: Verificar si existe swapfile
+      ansible.builtin.stat:
+        path: /swapfile
+      register: swapfile_exists
+
+    - name: Crear swapfile de 1GB
+      ansible.builtin.command:
+        cmd:  fallocate -l 1G /swapfile
+        creates: /swapfile
+      become: true
+      when: not swapfile_exists.stat.exists
+
+    - name: Configurar permisos swapfile
+      ansible.builtin.command:
+        cmd:  chmod 600 /swapfile
+      become: true
+      when: not swapfile_exists.stat.exists
+
+    - name: Formatear y activar swap
+      ansible.builtin.command:
+        cmd:  mkswap /swapfile && swapon /swapfile
+      become: true
+      when:
+        - not swapfile_exists.stat.exists
+        - ansible_facts.swaptotal_mb == 0
+
+    - name: Asegurar que el swapfile está activo
+      ansible.builtin.command:
+        cmd:  swapon /swapfile
+      become: true
+      when: ansible_facts.swaptotal_mb == 0
+      register: swap_activate_result
+      failed_when: swapon_activate_result.rc != 0 and 'already active' not in swap_activate_result.stderr
+
+    - name: Agregar swap a /etc/fstab
+      ansible.builtin.lineinfile:
+        path: /etc/fstab
+        line: "/swapfile none swap sw 0 0"
+        state: present
+        create: true
+        mode: '0644'
+      become: true
+      when: not swapfile_exists.stat.exists
+
+    - name: Ejecutar container
+      community.docker.docker_container:
+        name: "{{ container_name }}"
+        image: wlili
+        state: started
+        recreate: true
+        env:
+          DJANGO_SETTINGS_MODULE: "wlili.settings.production"
+          DJANGO_SECRET_KEY: "{{ secret_key.content | b64decode }}"
+          DJANGO_ALLOWED_HOST: "{{ 'lilianamedela.com.ar,www.lilianamedela.com.ar' if site_env == 'production' else 'staging.lilianamedela.com.ar' }}"
+          DJANGO_DB_PATH: "{{ db_path_in_container }}"
+        volumes:
+          - "{{ site_path }}/db.sqlite3:{{ db_path_in_container }}:rw"
+          - "{{ site_path }}/media:/src/media:rw"
+        networks:
+          - name: "{{ network_name }}"
+        restart_policy: always
+
+    - name: Asegurar que el directorio sites/wlili existe
+      ansible.builtin.file:
+        path: "{{ site_path }}"
+        state: directory
+        mode: '0755'
+
+    - name: Asegurar que el directorio caddy-data existe
+      ansible.builtin.file:
+        path: "{{ site_path }}/caddy-data"
+        state: directory
+        mode: '0755'
+      become: true
+
+    - name: Crear caddyfile
+      ansible.builtin.copy:
+        dest: "{{ site_path }}/Caddyfile"
+        content: |
+          {{ inventory_hostname }} {
+            reverse_proxy wlili:8888
+          }
+          www.{{ inventory_hostname }} {
+            reverse_proxy wlili:8888
+          }
+          staging.lilianamedela.com.ar {
+            reverse_proxy wlili-staging:8888
+          }
+        mode: '0644'
+
+    - name: Asegurar que Caddy está corriendo
+      community.docker.docker_container:
+        name: caddy
+        image: caddy:latest
+        state: started
+        recreate: true
+        ports:
+          - 80:80
+          - 443:443
+        volumes:
+          - "{{ site_path }}/Caddyfile:/etc/caddy/Caddyfile:ro"
+          - "{{ site_path }}/caddy-data:/data"
+        networks:
+          - name: "{{ network_name }}"
+        restart_policy: always
+
+    - name: Run migration inside container
+      community.docker.docker_container_exec:
+        container: "{{ container_name }}"
+        command: ./manage.py migrate

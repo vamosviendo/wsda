@@ -1,6 +1,7 @@
 from selenium.webdriver.common.by import By
 from wagtail.images import get_image_model
 from wagtail.images.tests.utils import get_test_image_file
+from wagtail.blocks import StreamValue
 
 from functional_tests.base import FunctionalTestBase
 from produccion.models import AreaPage, ProductoPage, ElementoPage
@@ -35,19 +36,30 @@ class ProductoPageFunctionalTests(FunctionalTestBase):
 
     def _crear_elemento(self, slug="elemento-1"):
         """
-        Helper: crea un ElementoPage con imagen real como hijo de ProductoPage.
-        Las imágenes de ProductoPage provienen de sus hijos ElementoPage.
+        Helper: crea un elemento en el StreamField del producto.
+        Esto asegura que el elemento se sincroniza con una ElementoPage
+        y aparece en la galería.
         """
         Image = get_image_model()
         image = Image(title="Obra de prueba")
         image.file = get_test_image_file()
         image.save()
-        elemento = ElementoPage(
-            title="Obra de prueba",
-            slug=slug,
-            imagen=image
+
+        stream_data = [
+            ("elemento", {
+                "imagen": image,
+                "alt_imagen": "Obra de prueba",
+                "titulo": "Obra de prueba"
+            }),
+        ]
+        self.producto_page.elementos = StreamValue(
+            self.producto_page.elementos.stream_block,
+            stream_data,
+            is_lazy=False
         )
-        self.producto_page.add_child(instance=elemento)
+        self.producto_page.save()
+
+        elemento = self.producto_page.get_children().specific().first()
         return elemento
 
     def test_producto_page_carga(self):
@@ -202,10 +214,38 @@ class ProductoPageFunctionalTests(FunctionalTestBase):
         )
 
     def test_multiples_elementos_aparecen_en_galeria(self):
-        """Varios ElementoPage hijos producen varias imágenes en la galería."""
-        self._crear_elemento(slug="elemento-1")
-        self._crear_elemento(slug="elemento-2")
-        self._crear_elemento(slug="elemento-3")
+        """Varios elementos en el StreamField producen varias imágenes en la galería."""
+        Image = get_image_model()
+        
+        for i in range(1, 4):
+            image = Image(title=f"Obra {i}")
+            image.file = get_test_image_file()
+            image.save()
+
+        stream_data = [
+            ("elemento", {
+                "imagen": Image.objects.get(title="Obra 1"),
+                "alt_imagen": "Obra 1",
+                "titulo": "Obra 1"
+            }),
+            ("elemento", {
+                "imagen": Image.objects.get(title="Obra 2"),
+                "alt_imagen": "Obra 2",
+                "titulo": "Obra 2"
+            }),
+            ("elemento", {
+                "imagen": Image.objects.get(title="Obra 3"),
+                "alt_imagen": "Obra 3",
+                "titulo": "Obra 3"
+            }),
+        ]
+        self.producto_page.elementos = StreamValue(
+            self.producto_page.elementos.stream_block,
+            stream_data,
+            is_lazy=False
+        )
+        self.producto_page.save()
+
         self.get(self.producto_page.url)
         self.wait_for(".imagenes-grid img")
         imgs = self.browser.find_elements(By.CSS_SELECTOR, ".imagenes-grid img")
