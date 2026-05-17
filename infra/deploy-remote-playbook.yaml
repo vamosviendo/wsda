@@ -1,4 +1,16 @@
+# Deploy a producción (comportamiento actual)
+# ansible-playbook -i infra/inventory infra/deploy-remote-playbook.yaml
+#
+# Deploy a staging
+# ansible-playbook -i infra/inventory infra/deploy-remote-playbook.yaml -e "site_env=staging"
 - hosts: all
+  vars:
+    site_env: "production"
+    site_name: "{{ 'wlili' if site_env == 'production' else 'wlili-staging' }}"
+    site_path: "{{ ansible_env.HOME }}/sites/{{ site_name }}"
+    container_name: "{{ 'wlili' if site_env == 'production' else 'wlili-staging' }}"
+    network_name: "wlili-net"
+    db_path_in_container: "/home/vv/db.sqlite3"
 
   tasks:
     - name: Instalar docker
@@ -31,12 +43,12 @@
         name: "{{ item }}"
         state: absent
       loop:
-        - wlili
+        - "{{ container_name }}"
         - caddy
 
     - name: Crear docker network wlili-net
       community.docker.docker_network:
-        name: wlili-net
+        name: "{{ network_name }}"
         driver: bridge
 
     - name: Construir imagen container localmente
@@ -73,26 +85,26 @@
     - name: Verificar que exista .secret-key
       # La intención es que esto suceda solo una vez por server
       ansible.builtin.copy:
-        dest: ~/sites/wlili/.secret-key
+        dest: "{{ site_path }}/.secret-key"
         content: "{{ lookup('password', '/dev/null length=32 chars=ascii_letters') }}"
         mode: 0600
         force: false  # no recrear el archivo si ya existe
 
     - name: Lee secret key del archivo
       ansible.builtin.slurp:
-        src: ~/sites/wlili/.secret-key
+        src: "{{ site_path }}/.secret-key"
       register: secret_key
 
     - name: Asegurar que db.sqlite3 existe fuera del container
       ansible.builtin.file:
-        path: "{{ ansible_env.HOME }}/sites/wlili/db.sqlite3"
+        path: "{{ site_path }}/db.sqlite3"
         state: touch
         owner: 1234
       become: true
 
     - name: Asegurar que directorio media existe fuera del container
       ansible.builtin.file:
-        path: "{{ ansible_env.HOME }}/sites/wlili/media"
+        path: "{{ site_path }}/media"
         state: directory
         mode: '0755'
         owner: 1234
@@ -144,44 +156,47 @@
 
     - name: Ejecutar container
       community.docker.docker_container:
-        name: wlili
+        name: "{{ container_name }}"
         image: wlili
         state: started
         recreate: true
         env:
           DJANGO_SETTINGS_MODULE: "wlili.settings.production"
           DJANGO_SECRET_KEY: "{{ secret_key.content | b64decode }}"
-          DJANGO_ALLOWED_HOST: "{{ inventory_hostname }},www.{{ inventory_hostname }}"
-          DJANGO_DB_PATH: "/home/vv/db.sqlite3"
+          DJANGO_ALLOWED_HOST: "{{ 'lilianamedela.com.ar,www.lilianamedela.com.ar' if site_env == 'production' else 'staging.lilianamedela.com.ar' }}"
+          DJANGO_DB_PATH: "{{ db_path_in_container }}"
         volumes:
-          - "{{ ansible_env.HOME }}/sites/wlili/db.sqlite3:/home/vv/db.sqlite3:rw"
-          - "{{ ansible_env.HOME }}/sites/wlili/media:/src/media:rw"
+          - "{{ site_path }}/db.sqlite3:{{ db_path_in_container }}:rw"
+          - "{{ site_path }}/media:/src/media:rw"
         networks:
-          - name: wlili-net
+          - name: "{{ network_name }}"
         restart_policy: always
 
     - name: Asegurar que el directorio sites/wlili existe
       ansible.builtin.file:
-        path: "{{ ansible_env.HOME }}/sites/wlili"
+        path: "{{ site_path }}"
         state: directory
         mode: '0755'
 
     - name: Asegurar que el directorio caddy-data existe
       ansible.builtin.file:
-        path: "{{ ansible_env.HOME }}/sites/wlili/caddy-data"
+        path: "{{ site_path }}/caddy-data"
         state: directory
         mode: '0755'
       become: true
 
     - name: Crear caddyfile
       ansible.builtin.copy:
-        dest: "{{ ansible_env.HOME }}/sites/wlili/Caddyfile"
+        dest: "{{ site_path }}/Caddyfile"
         content: |
           {{ inventory_hostname }} {
             reverse_proxy wlili:8888
           }
           www.{{ inventory_hostname }} {
             reverse_proxy wlili:8888
+          }
+          staging.lilianamedela.com.ar {
+            reverse_proxy wlili-staging:8888
           }
         mode: '0644'
 
@@ -195,13 +210,13 @@
           - 80:80
           - 443:443
         volumes:
-          - "{{ ansible_env.HOME }}/sites/wlili/Caddyfile:/etc/caddy/Caddyfile:ro"
-          - "{{ ansible_env.HOME }}/sites/wlili/caddy-data:/data"
+          - "{{ site_path }}/Caddyfile:/etc/caddy/Caddyfile:ro"
+          - "{{ site_path }}/caddy-data:/data"
         networks:
-          - name: wlili-net
+          - name: "{{ network_name }}"
         restart_policy: always
 
     - name: Run migration inside container
       community.docker.docker_container_exec:
-        container: wlili
+        container: "{{ container_name }}"
         command: ./manage.py migrate
