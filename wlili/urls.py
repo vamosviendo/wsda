@@ -1,3 +1,5 @@
+import os
+
 from django.conf import settings
 from django.urls import include, path
 from django.contrib import admin
@@ -18,6 +20,14 @@ urlpatterns = [
     path("search/", search_views.search, name="search"),
 ]
 
+
+if os.environ.get("DJANGO_TEST_TOKEN"):
+    from utils.remote_test_utils import deployment_smoke, remote_test_admin
+
+    urlpatterns += [
+        path("__test__/admin-user/", remote_test_admin, name="remote-test-admin"),
+        path("__test__/deployment-smoke/", deployment_smoke, name="deployment-smoke"),
+    ]
 
 if settings.DEBUG:
     from django.conf.urls.static import static

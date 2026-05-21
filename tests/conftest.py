@@ -27,7 +27,9 @@ def pytest_collection_modifyitems(items):
 @pytest.fixture(scope="session")
 def live_server_url(live_server):
     if test_server := os.environ.get("TEST_SERVER"):
-        return "http://" + test_server
+        if test_server.startswith(("http://", "https://")):
+            return test_server.rstrip("/")
+        return f"https://{test_server}".rstrip("/")
     return live_server.url
 
 
@@ -233,3 +235,5 @@ def root_collection():
     # Colección raíz: necesaria para guardar imágenes de Wagtail
     if not Collection.objects.filter(depth=1).exists():
         Collection.add_root(name="Root")
+
+
