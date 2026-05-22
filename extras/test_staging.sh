@@ -1,5 +1,5 @@
 #!/bin/bash
-arg="${1:-tests/remote}"
+arg="${1:-tests/functional/remote}"
 
 TEST_SERVER=https://staging.lilianamedela.com.ar \
 DJANGO_TEST_TOKEN='ooio4903_4uu3u_4rui344u890' \

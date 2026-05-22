@@ -114,4 +114,3 @@ def remote_test_admin(request):
             "username": username,
         }
     )
-
