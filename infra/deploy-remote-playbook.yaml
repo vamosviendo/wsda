@@ -6,6 +6,9 @@
 - hosts: all
   vars:
     site_env: "production"
+    staging_test_token: "ooio4903_4uu3u_4rui344u890"
+    staging_test_admin_username: "admin"
+    staging_test_admin_password: "pasparafrasia"
     site_name: "{{ 'wlili' if site_env == 'production' else 'wlili-staging' }}"
     site_path: "{{ ansible_env.HOME }}/sites/{{ site_name }}"
     container_name: "{{ 'wlili' if site_env == 'production' else 'wlili-staging' }}"
@@ -154,7 +157,30 @@
       become: true
       when: not swapfile_exists.stat.exists
 
-    - name: Ejecutar container
+    - name: Ejecutar container staging
+      when: site_env == 'staging'
+      community.docker.docker_container:
+        name: "{{ container_name }}"
+        image: wlili
+        state: started
+        recreate: true
+        env:
+          DJANGO_SETTINGS_MODULE: "wlili.settings.production"
+          DJANGO_SECRET_KEY: "{{ secret_key.content | b64decode }}"
+          DJANGO_ALLOWED_HOST: "{{ 'lilianamedela.com.ar,www.lilianamedela.com.ar' if site_env == 'production' else 'staging.lilianamedela.com.ar' }}"
+          DJANGO_DB_PATH: "{{ db_path_in_container }}"
+          DJANGO_TEST_TOKEN: "{{ lookup('env', 'DJANGO_TEST_TOKEN') or staging_test_token }}"
+          DJANGO_TEST_ADMIN_USERNAME: "{{ lookup('env', 'DJANGO_TEST_ADMIN_USERNAME') or staging_test_admin_username }}"
+          DJANGO_TEST_ADMIN_PASSWORD: "{{ lookup('env', 'DJANGO_TEST_ADMIN_PASSWORD') or staging_test_admin_password }}"
+        volumes:
+          - "{{ site_path }}/db.sqlite3:{{ db_path_in_container }}:rw"
+          - "{{ site_path }}/media:/src/media:rw"
+        networks:
+          - name: "{{ network_name }}"
+        restart_policy: always
+
+    - name: Ejecutar container production
+      when: site_env == 'production'
       community.docker.docker_container:
         name: "{{ container_name }}"
         image: wlili
