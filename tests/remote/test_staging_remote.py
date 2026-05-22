@@ -4,7 +4,6 @@ from urllib.parse import urljoin
 import pytest
 import requests
 from bs4 import BeautifulSoup
-from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 
 pytestmark = pytest.mark.skipif(
