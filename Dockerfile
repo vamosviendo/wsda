@@ -24,7 +24,7 @@ WORKDIR /src
 
 ENV DJANGO_SETTINGS_MODULE="wlili.settings.production"
 
-COPY . /src
+COPY src/ /src
 
 RUN DJANGO_SECRET_KEY=placeholder DJANGO_ALLOWED_HOST=localhost DJANGO_DB_PATH=/dev/null python manage.py collectstatic --noinput
 

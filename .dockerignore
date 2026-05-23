@@ -1,6 +1,7 @@
 # Django project
 /media/
 /static/
+src/static
 *.sqlite3
 
 # Python and others

@@ -5,6 +5,7 @@ media
 .vwlili
 Dockerfile.backup
 /static
+src/static
 container.db.sqlite3
 tmp
 node_modules
