@@ -1,3 +1,12 @@
+# Sincronizar solo la base de datos
+# ansible-playbook -i infra/inventory infra/sync-to-sever-playbook.yaml -e "sync=db"
+
+# Sincronizar solo media
+# ansible-playbook -i infra/inventory infra/sync-to-sever-playbook.yaml -e "sync=media"
+
+# Sincronizar ambos (comportamiento por defecto)
+# ansible-playbook -i infra/inventory infra/sync-to-sever-playbook.yaml
+
 ---
 - name: Sincronizar DB y media local -> server
   hosts: all
@@ -6,6 +15,7 @@
     local_db_path: "{{ playbook_dir }}/../db.sqlite3"
     local_media_path: "{{ playbook_dir }}/../media"
     remote_site_path: "{{ ansible_env.HOME }}/sites/wlili"
+    sync: "all"   # Opciones: all, db, media
 
   tasks:
     - name: Verificar que DB local existe
@@ -14,7 +24,7 @@
       register: local_db
       delegate_to: 127.0.0.1
       run_once: true
-      tags: [always, db]
+      when: sync in ['all', 'db']
 
     - name: Verificar que media local existe
       ansible.builtin.stat:
@@ -22,20 +32,23 @@
       register: local_media
       delegate_to: 127.0.0.1
       run_once: true
-      tags: [always, media]
+      when: sync in ['all', 'media']
 
     - name: Fallar si no existe DB local
       ansible.builtin.fail:
         msg: "DB local no encontrada en {{ local_db_path }}"
-      when: not local_db.stat.exists
+      when:
+        - sync in ['all', 'db']
+        - not local_db.stat.exists
       delegate_to: 127.0.0.1
       run_once: true
-      tags: [db]
 
     - name: Informar si no existe media local
       ansible.builtin.debug:
         msg: "ADVERTENCIA: Directorio media no encontrado, omitiendo sync de media"
-      when: not local_media.stat.exists
+      when:
+        - sync in ['all', 'media']
+        - not local_media.stat.exists
       delegate_to: 127.0.0.1
       run_once: true
       tags: [media]
@@ -46,7 +59,7 @@
         name: wlili
         state: stopped
       become: true
-      tags: [db]
+      when: sync in ['all', 'db']
 
     - name: Sincronizar DB local -> server
       ansible.builtin.synchronize:
@@ -58,7 +71,7 @@
         group: false
         perms: false
       delegate_to: 127.0.0.1
-      tags: [db]
+      when: sync in ['all', 'db']
 
     - name: Asegurar permisos correctos de DB en server
       ansible.builtin.file:
@@ -66,14 +79,14 @@
         mode: '0644'
         owner: "1234"
       become: true
-      tags: [db]
+      when: sync in ['all', 'db']
 
     - name: Iniciar container wlili
       community.docker.docker_container:
         name: wlili
         state: started
       become: true
-      tags: [db]
+      when: sync in ['all', 'db']
 
     # --- Sincronización de media --------------------------------------------
     - name: Cambiar owner de media a uid 1000 para poder sincronizar
@@ -82,7 +95,9 @@
         owner: "1000"
         recurse: true
       become: true
-      tags: [media]
+      when:
+        - sync in ['all', 'media']
+        - local_media.stat.exists
 
     - name: Sincronizar media local -> server
       ansible.builtin.synchronize:
@@ -97,8 +112,9 @@
         # (evita re-transferir todo si se corre por error frecuentemente)
         # timeargs: -mtime 0  # Descomentar si se quiere solo archivos nuevos
       delegate_to: 127.0.0.1
-      when: local_media.stat.exists
-      tags: [media]
+      when:
+        - sync in ['all', 'media']
+        - local_media.stat.exists
 
     - name: Asegurar permisos correctos para media en server
       ansible.builtin.file:
@@ -107,5 +123,6 @@
         owner: "1234"
         recurse: true
       become: true
-      when: local_media.stat.exists
-      tags: [media]
+      when:
+        - sync in ['all', 'media']
+        - local_media.stat.exists
