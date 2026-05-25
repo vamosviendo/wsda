@@ -64,7 +64,7 @@ def test_elemento_page(browser, producto_page, elemento_con_datos):
     assert dimensiones.is_displayed()
     assert \
         dimensiones.text == \
-        f"{float_format(elemento.alto)} x {float_format(elemento.ancho)} {elemento.unidad}"
+        f"{float_format(elemento.ancho)} x {float_format(elemento.alto)} {elemento.unidad}"
 
     peso = browser.wait_for("#elemento-peso")
     assert peso.is_displayed()

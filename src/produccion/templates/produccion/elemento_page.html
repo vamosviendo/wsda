@@ -34,9 +34,9 @@
 
       {% if page.alto or page.ancho %}
         <p id="elemento-dimensiones" class="elemento-dimensiones">
-          {% if page.alto %}{{ page.alto }}{% endif %}
-          {% if page.alto and page.ancho %}x{% endif %}
           {% if page.ancho %}{{ page.ancho }}{% endif %}
+          {% if page.alto and page.ancho %}x{% endif %}
+          {% if page.alto %}{{ page.alto }}{% endif %}
           {% if page.profundidad %}x{{ page.profundidad }}{% endif %}
           {% if page.unidad %}{{ page.unidad }}{% endif %}
         </p>
