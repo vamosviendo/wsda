@@ -111,6 +111,7 @@
         state: directory
         mode: '0755'
         owner: 1234
+        group: vv
       become: true
 
     - name: Verificar si existe swapfile

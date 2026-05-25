@@ -1,0 +1,20 @@
+---
+# Playbook para corregir permisos de archivo erróneos en el server remoto
+- name: Corregir permisos de archivos de media y directorio
+  hosts: all
+  gather_facts: true
+  vars:
+    remote_site_path: "{{ ansible_env.HOME }}/sites/wlili-staging"
+
+  tasks:
+    - name: Quitar bit x de archivos de media
+      ansible.builtin.shell: |
+        find {{ remote_site_path }}/media -type f -exec chmod -x {} \;
+      become: true
+
+    - name: Cambiar group del directorio media a vv
+      ansible.builtin.file:
+        path: "{{ remote_site_path }}/media"
+        group: vv
+      become: true
+

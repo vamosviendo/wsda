@@ -121,6 +121,7 @@
         path: "{{ remote_site_path }}/media"
         mode: "0755"
         owner: "1234"
+        group: vv
         recurse: true
       become: true
       when:
