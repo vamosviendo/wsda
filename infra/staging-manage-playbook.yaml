@@ -1,0 +1,18 @@
+---
+# Encender staging
+# ansible-playbook -i infra/inventory infra/staging-playbook.yaml -e "accion=start"
+# Apagar staging
+# ansible-playbook -i infra/inventory infra/staging-playbook.yaml -e "accion=stop"
+
+- name: Gestionar container staging
+  hosts: all
+  gather_facts: false
+  vars:
+    container_name: "wlili-staging"
+    accion: start   # start | stop"
+
+  tasks:
+    - name: "{{ 'Iniciar' if accion == 'start' else 'Detener' }} container {{ container_name }}"
+      community.docker.docker_container:
+        name: "{{ container_name }}"
+        state: "{{ 'started' if accion == 'start' else 'stopped' }}"
