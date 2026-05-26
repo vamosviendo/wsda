@@ -1,3 +1,4 @@
+---
 # Deploy a producción (comportamiento actual)
 # ansible-playbook -i infra/inventory infra/deploy-remote-playbook.yaml
 #
@@ -89,7 +90,7 @@
       # La intención es que esto suceda solo una vez por server
       ansible.builtin.copy:
         dest: "{{ site_path }}/.secret-key"
-        content: "{{ lookup('password', '/dev/null length=32 chars=ascii_letters') }}"
+        content: "{{ lookup('password', '/dev/null length=80 chars=ascii_letters') }}"
         mode: 0600
         force: false  # no recrear el archivo si ya existe
 
