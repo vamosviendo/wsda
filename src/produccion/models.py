@@ -247,6 +247,7 @@ class ElementoPage(Page):
         ("cm", "cm"),
         ("mm", "mm"),
         ("m", "m"),
+        ("px", "px"),
     ]
     unidad = models.CharField(
         max_length=10, choices=UNIDAD_CHOICES, blank=True, default="cm",
