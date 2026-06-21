@@ -15,7 +15,8 @@
     {% for bloque in entradas_ordenadas %}
       {% with e=bloque.value %}
       <div class="curriculum-entrada">
-        <span class="curriculum-anio">{{ e.anio }}</span>
+        <span class="curriculum-anio">{{ e.anio }}{% if e.anio_hasta %} - {{e.anio_hasta}}{% endif %}
+        </span>
         <div class="curriculum-detalle">
           <p class="curriculum-titulo">{{ e.titulo }}</p>
           {% if e.lugar %}

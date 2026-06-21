@@ -97,6 +97,7 @@ anio_validator = RegexValidator(
 
 class EntradaCurriculumBlock(StructBlock):
     anio = CharBlock(label="Año", max_length=4, validators=[anio_validator])
+    anio_hasta = CharBlock(label="Año hasta", max_length=4, validators=[anio_validator], required=False)
     titulo = CharBlock(label="Título", max_length=255)
     lugar = CharBlock(
         label="Lugar / Institución",
