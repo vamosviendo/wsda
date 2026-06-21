@@ -1,12 +1,24 @@
-{% load navigation_tags %}
+{% load static navigation_tags %}
 
 <footer>
   <div id="footer-inner" class="footer-inner">
     <div id="footer-social" class="footer-social">
       {% with instagram_url=settings.base.NavigationSettings.instagram_url facebook_url=settings.base.NavigationSettings.facebook_url x_url=settings.base.NavigationSettings.x_url %}
-        {% if instagram_url %}<a href="{{ instagram_url }}" target="_blank" rel="noopener">Instagram</a>{% endif %}
-        {% if facebook_url %}<a href="{{ facebook_url }}" target="_blank" rel="noopener">Facebook</a>{% endif %}
-        {% if x_url %}<a href="{{ x_url }}" target="_blank" rel="noopener">X</a>{% endif %}
+        {% if instagram_url %}
+          <a href="{{ instagram_url }}" target="_blank" rel="noopener" aria-label="Instagram">
+            <img src="{% static 'images/instagram.svg' %}" alt="Instagram" width="24" height="24">
+          </a>
+        {% endif %}
+        {% if facebook_url %}
+          <a href="{{ facebook_url }}" target="_blank" rel="noopener">
+            <img src="{% static 'images/facebook.svg' %}" alt="Facebook" width="24" height="24">
+          </a>
+        {% endif %}
+        {% if x_url %}
+          <a href="{{ x_url }}" target="_blank" rel="noopener">
+            <img src="{% static 'images/x.svg' %}" alt="X" width="24" height="24">
+          </a>
+        {% endif %}
       {% endwith %}
     </div>
 
