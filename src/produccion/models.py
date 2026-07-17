@@ -231,40 +231,6 @@ class ElementoPage(Page):
     )
     alt_imagen = models.CharField(max_length=255, null=True, blank=True)
     titulo = models.CharField(max_length=255, null=True, blank=True)
-    alto = models.DecimalField(
-        max_digits=8, decimal_places=2, null=True, blank=True,
-        verbose_name="Alto"
-    )
-    ancho = models.DecimalField(
-        max_digits=8, decimal_places=2, null=True, blank=True,
-        verbose_name="Ancho"
-    )
-    profundidad = models.DecimalField(
-        max_digits=8, decimal_places=2, null=True, blank=True,
-        verbose_name="Profundidad"
-    )
-    UNIDAD_CHOICES = [
-        ("cm", "cm"),
-        ("mm", "mm"),
-        ("m", "m"),
-        ("px", "px"),
-    ]
-    unidad = models.CharField(
-        max_length=10, choices=UNIDAD_CHOICES, blank=True, default="cm",
-        verbose_name="Unidad de medida"
-    )
-    peso = models.DecimalField(
-        max_digits=8, decimal_places=2, null=True, blank=True,
-        verbose_name="Peso"
-    )
-    UNIDAD_PESO_CHOICES = [
-        ("g", "g"),
-        ("kg", "kg"),
-    ]
-    unidad_peso = models.CharField(
-        max_length=10, choices=UNIDAD_PESO_CHOICES, blank=True, default="kg",
-        verbose_name="Unidad de peso"
-    )
     descripcion = RichTextField(blank=True)
     comentarios = StreamField(
         [("comentario", wagtail.blocks.RichTextBlock())],
@@ -280,22 +246,6 @@ class ElementoPage(Page):
             heading="Imagen",
         ),
         FieldPanel("titulo"),
-        MultiFieldPanel(
-            [
-                FieldPanel("alto"),
-                FieldPanel("ancho"),
-                FieldPanel("profundidad"),
-                FieldPanel("unidad"),
-            ],
-            heading="Dimensiones",
-        ),
-        MultiFieldPanel(
-            [
-                FieldPanel("peso"),
-                FieldPanel("unidad_peso"),
-            ],
-            heading="Peso",
-        ),
         FieldPanel("descripcion"),
         FieldPanel("comentarios"),
     ]

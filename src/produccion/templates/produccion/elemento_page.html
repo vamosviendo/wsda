@@ -32,19 +32,6 @@
         {% if page.titulo %}{{ page.titulo }}{% else %}Sin título{% endif %}
       </h2>
 
-      {% if page.alto or page.ancho %}
-        <p id="elemento-dimensiones" class="elemento-dimensiones">
-          {% if page.ancho %}{{ page.ancho }}{% endif %}
-          {% if page.alto and page.ancho %}x{% endif %}
-          {% if page.alto %}{{ page.alto }}{% endif %}
-          {% if page.profundidad %}x{{ page.profundidad }}{% endif %}
-          {% if page.unidad %}{{ page.unidad }}{% endif %}
-        </p>
-      {% endif %}
-
-      {% if page.peso %}
-        <p id="elemento-peso" class="elemento-peso">{{ page.peso }}&nbsp;kg</p>
-      {% endif %}
 
       {% if page.descripcion %}
         <div id="elemento-descripcion" class="elemento-descripcion">{{ page.descripcion|richtext }}</div>
