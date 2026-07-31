@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static wagtailcore_tags wagtailimages_tags %}
+{% load static wagtailcore_tags wagtailimages_tags wagtailembeds_tags %}
 
 {% block body_class %}template-elementopage{% endblock %}
 
@@ -10,20 +10,56 @@
 {% block content %}
   <div id="elemento-layout" class="elemento-layout">
 
-    {% if page.imagen %}
-      <div id="elemento-imagen" class="elemento-imagen">
-        {% image page.imagen width-1600 as img_full %}
-        {% image page.imagen width-800 as img_preview %}
-        <img
-          src="{{ img_preview.url }}"
-          data-full="{{ img_full.url }}"
-          data-width="{{ img_full.width }}"
-          data-height="{{ img_full.height }}"
-          alt="{{ page.alt_imagen }}"
-          id="elemento-img-preview"
-          class="elemento-img-preview"
-        >
+    {% if page.tipo == "imagen" %}
+      {% if page.thumbnail %}
+        <div id="elemento-imagen" class="elemento-imagen">
+          {% image page.imagen width-1600 as img_full %}
+          {% image page.imagen width-800 as img_preview %}
+          <img
+            src="{{ img_preview.url }}"
+            data-full="{{ img_full.url }}"
+            data-width="{{ img_full.width }}"
+            data-height="{{ img_full.height }}"
+            alt="{{ page.alt_thumbnail }}"
+            id="elemento-img-preview"
+            class="elemento-img-preview"
+          >
+        </div>
+      {% endif %}
+
+    {% elif page.tipo == "video" %}
+      <div id="elemento-video" class="elemento-video">
+        {% if page.contenido_url %}
+          {% embed page.contenido_url %}
+        {% elif page.thumbnail %}
+          {% image page.thumbnail width-1600 %}
+        {% endif %}
       </div>
+
+    {% elif page.tipo == "audio" %}
+      <div id="elemento-audio" class="elemento-audio">
+        {% if page.contenido_url %}
+          <audio src="{{ page.contenido_url }}" controls>
+            Tu navegador no soporta el elemento de audio.
+          </audio>
+        {% elif page.thmbnail %}
+          {% image page.thumbnail width-800 %}
+        {% endif %}
+      </div>
+
+    {% elif page.tipo == "texto" %}
+      <div id="elemento-texto" class="elemento-texto">
+        {% if page.contenido_texto %}
+          {{ page.contenido_texto|safe }}
+        {% elif page.contenido_url %}
+          <iframe src="{{ page.contenido_url }}" width="100%" height="600" frameborder="0">
+            Tu navegador no soporta iframes.
+          </iframe>
+        {% elif page.thumbnail %}
+          {% image page.thumbnail width-1000 %}
+        {% endif %}
+      </div>
+
     {% endif %}
 
     <div id="elemento-info" class="elemento-info">

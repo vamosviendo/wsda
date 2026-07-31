@@ -1,11 +1,27 @@
-from wagtail.blocks import StructBlock, CharBlock, StreamBlock, RichTextBlock
+from wagtail.blocks import StructBlock, CharBlock, StreamBlock, \
+    RichTextBlock, ChoiceBlock, URLBlock, TextBlock
 from wagtail.images.blocks import ImageBlock
 from wagtail_link_block.blocks import LinkBlock
 
 
+TIPO_CHOICES = [
+    ('imagen', 'Imagen'),
+    ('video', 'Video'),
+    ('audio', 'Audio'),
+    ('texto', 'Texto'),
+]
+
+
 class ElementoBlock(StructBlock):
-    imagen = ImageBlock(required=False)
-    alt_imagen = CharBlock(required=False, max_length=255)
+    thumbnail = ImageBlock(required=False)
+    alt_thumbnail = CharBlock(required=False, max_length=255)
+    tipo = ChoiceBlock(
+        choices=TIPO_CHOICES,
+        default="imagen",
+        required=False
+    )
+    contenido_url = URLBlock(required=False)
+    contenido_texto = TextBlock(required=False)
     titulo = CharBlock(required=False, max_length=255)
     block_id = CharBlock(required=False, max_length=36)
 

@@ -138,12 +138,16 @@ def test_page(db, site):
 
 @pytest.fixture
 def elemento_factory(db, site):
-    def _factory(producto, imagen=None, alt_imagen="Imagen", titulo="Elemento", page_data=None):
+    def _factory(
+            producto: ProductoPage, thumbnail=None, alt_thumbnail="Imagen",
+            tipo="imagen", titulo="Elemento", page_data=None
+    ):
         block_id = uuid.uuid4()
         stream_data = [
             ("elemento", {
-                "imagen": imagen,
-                "alt_imagen": alt_imagen,
+                "thumbnail": thumbnail,
+                "alt_thumbnail": alt_thumbnail,
+                "tipo": tipo,
                 "titulo": titulo,
                 "block_id": str(block_id),
             }),
@@ -158,10 +162,8 @@ def elemento_factory(db, site):
         page = get_elemento_page_from_block_id(producto, block_id)
 
         if page_data:
-            print("PAGE DATA:", page_data)
             for key, value in page_data.items():
-                print(f"{key}: {value}")
-                if key != "imagen":
+                if key != "thumbnail":
                     setattr(page, key, value)
             page.save()
 
@@ -182,7 +184,7 @@ def area_page(test_page):
 
 
 @pytest.fixture
-def producto_page(test_page, area_page):
+def producto_page(test_page, area_page) -> ProductoPage:
     return test_page(
         parent=area_page,
         page_type=ProductoPage,
@@ -196,8 +198,8 @@ def producto_page(test_page, area_page):
 def elemento(elemento_factory, objeto_imagen, producto_page):
     return elemento_factory(
         producto=producto_page,
-        imagen=objeto_imagen,
-        alt_imagen="Imagen de elemento",
+        thumbnail=objeto_imagen,
+        alt_thumbnail="Imagen de elemento",
         titulo="Elemento"
     )
 
@@ -206,8 +208,8 @@ def elemento(elemento_factory, objeto_imagen, producto_page):
 def elemento_2(elemento_factory, objeto_imagen, producto_page):
     return elemento_factory(
         producto=producto_page,
-        imagen=objeto_imagen,
-        alt_imagen="Imagen de segundo elemento",
+        thumbnail=objeto_imagen,
+        alt_thumbnail="Imagen de segundo elemento",
         titulo="Segundo elemento"
     )
 
@@ -216,9 +218,29 @@ def elemento_2(elemento_factory, objeto_imagen, producto_page):
 def elemento_3(elemento_factory, producto_page, objeto_imagen):
     return elemento_factory(
         producto=producto_page,
-        imagen=objeto_imagen,
-        alt_imagen="Imagen de tercer elemento",
+        thumbnail=objeto_imagen,
+        alt_thumbnail="Imagen de tercer elemento",
         titulo="Tercer elemento"
+    )
+
+
+@pytest.fixture
+def elemento_video(elemento_factory, producto_page):
+    return elemento_factory(
+        producto=producto_page,
+        tipo="video",
+        titulo="Elemento de video",
+        page_data={"contenido_url": "https://www.youtube.com/watch?v=abc"},
+    )
+
+
+@pytest.fixture
+def elemento_texto(elemento_factory, producto_page):
+    return elemento_factory(
+        producto=producto_page,
+        tipo="texto",
+        titulo="Elemento de texto",
+        page_data={"contenido_texto": "<p>Texto original</p>"},
     )
 
 

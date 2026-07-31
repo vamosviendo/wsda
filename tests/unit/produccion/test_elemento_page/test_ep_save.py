@@ -11,14 +11,14 @@ def test_al_modificar_titulo_en_elemento_page_se_modifica_en_block(
     assert block.value.get("titulo") == "Título modificado desde página"
 
 
-def test_al_modificar_imagen_en_elemento_page_se_actualiza_block(
+def test_al_modificar_thumbnail_en_elemento_page_se_actualiza_block(
         producto_page, elemento, block_elemento, objeto_imagen_2):
     elemento.imagen = objeto_imagen_2
     elemento.save()
 
     producto_page.refresh_from_db()
     block = producto_page.elementos[0]
-    assert block.value['imagen'] == objeto_imagen_2
+    assert block.value['thumbnail'] == objeto_imagen_2
 
 
 def test_elemento_page_sin_block_id_no_actualiza_padre(

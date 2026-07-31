@@ -14,6 +14,16 @@ def block_elemento(producto_page, elemento):
 
 
 @pytest.fixture
+def block_elemento_video(producto_page, elemento_video):
+    return get_elemento_block_from_block_id(producto_page, elemento_video.block_id)
+
+
+@pytest.fixture
+def block_elemento_texto(producto_page, elemento_texto):
+    return get_elemento_block_from_block_id(producto_page, elemento_texto.block_id)
+
+
+@pytest.fixture
 def objeto_imagen_2(root_collection):
     image = Image(title="segunda imagen de prueba")
     image.file = get_test_image_file()

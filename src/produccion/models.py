@@ -4,14 +4,24 @@ import uuid
 from typing import Self
 
 from django.db import models
+from django.templatetags.static import static
 from django.utils.text import slugify
 import wagtail.blocks
 from wagtail.admin.panels import FieldPanel, MultiFieldPanel
+from wagtail.embeds.embeds import get_embed
+from wagtail.embeds.exceptions import EmbedException
 from wagtail.fields import RichTextField, StreamField
 from wagtail.models import Page
 from wagtail.blocks import StreamValue
 
 from produccion.blocks import ProduccionStreamBlock, ElementosStreamBlock
+
+TIPO_CHOICES = [
+    ('imagen', 'Imagen'),
+    ('video', 'Video'),
+    ('audio', 'Audio'),
+    ('texto', 'Texto'),
+]
 
 
 class AreaPage(Page):
@@ -130,8 +140,11 @@ class ProductoPage(Page):
 
     def _crear_elemento(self, block_value):
         titulo = block_value.get('titulo') or 'Sin título'
-        imagen = block_value.get('imagen')
-        alt_imagen = block_value.get('alt_imagen')
+        thumbnail = block_value.get('thumbnail')
+        alt_thumbnail = block_value.get('alt_thumbnail')
+        tipo = block_value.get("tipo", "imagen")
+        contenido_url = block_value.get("contenido_url", "")
+        contenido_texto = block_value.get("contenido_texto", "")
         block_id = block_value.get('block_id')
 
         slug_base = slugify(titulo) if titulo else 'elemento'
@@ -144,51 +157,55 @@ class ProductoPage(Page):
         elemento = ElementoPage(
             title=titulo,
             slug=slug,
-            imagen=imagen,
-            alt_imagen=alt_imagen,
+            thumbnail=thumbnail,
+            alt_thumbnail=alt_thumbnail,
             titulo=titulo,
             block_id=block_id,
+            tipo=tipo,
+            contenido_url=contenido_url,
+            contenido_texto=contenido_texto,
         )
 
         self.add_child(instance=elemento)
 
     def _actualizar_elemento_si_necesario(self, elemento, block_value):
+        thumbnail = block_value.get("thumbnail")
+        alt_thumbnail = block_value.get("alt_thumbnail", "")
+        tipo = block_value.get("tipo", "imagen")
+        contenido_url = block_value.get("contenido_url", "")
+        contenido_texto = block_value.get("contenido_texto", "")
+
+        block_tiene_thumbnail = thumbnail is not None
+        elemento_tiene_thumbnail = elemento.thumbnail_id is not None
+
         necesita_actualizar = (
-            elemento.imagen_id != block_value.get('imagen') if block_value.get('imagen') else elemento.imagen_id is not None
+            block_tiene_thumbnail != elemento_tiene_thumbnail
+            or (block_tiene_thumbnail and elemento.thumbnail_id != thumbnail.id)
         ) or (
-            elemento.alt_imagen != block_value.get('alt_imagen')
+            elemento.alt_thumbnail != alt_thumbnail
         ) or (
             elemento.titulo != block_value.get('titulo')
+        ) or (
+            elemento.tipo != tipo
+        ) or (
+            elemento.contenido_url != contenido_url
+        ) or (
+            elemento.contenido_texto != contenido_texto
         )
 
         if necesita_actualizar:
             elemento._syncing_from_block = True
-            elemento.imagen = block_value.get('imagen')
-            elemento.alt_imagen = block_value.get('alt_imagen')
+            elemento.thumbnail = block_value.get('thumbnail')
+            elemento.alt_thumbnail = block_value.get('alt_thumbnail')
             elemento.titulo = block_value.get('titulo')
+            elemento.tipo = tipo
+            elemento.contenido_url = contenido_url
+            elemento.contenido_texto =  contenido_texto
             elemento.save()
 
     def _eliminar_elemento(self, elemento):
         elemento._state.adding = False
         elemento.delete()
-
-    def _actualizar_elemento(self, elemento, block_value):
-        elemento._syncing_from_block = True
-
-        elemento.title = block_value.get('titulo', elemento.title)
-        elemento.slug = block_value.get('titulo', elemento.title)
-        if elemento.slug:
-            elemento.slug = slugify(elemento.slug) or f"elemento-{uuid.uuid4().hex[:8]}"
-
-        elemento.imagen = block_value.get('imagen')
-
-        elemento.alt_imagen = block_value.get('alt_imagen')
-        elemento.titulo = block_value.get('titulo', '')
-        elemento.block_id = block_value.get('block_id')
-
-        elemento.save()
-        if hasattr(elemento, '_syncing_from_block'):
-            delattr(elemento, '_syncing_from_block')
 
     def get_context(self, request, *args, **kwargs):
         context = super().get_context(request, *args, **kwargs)
@@ -222,14 +239,20 @@ class ProductoPage(Page):
 
 class ElementoPage(Page):
     block_id = models.UUIDField(null=True, blank=True, editable=False)
-    imagen = models.ForeignKey(
+    thumbnail = models.ForeignKey(
         "wagtailimages.Image",
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
         related_name="+",
+        verbose_name="imagen",
     )
-    alt_imagen = models.CharField(max_length=255, null=True, blank=True)
+    alt_thumbnail = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name="alt imagen",
+    )
     titulo = models.CharField(max_length=255, null=True, blank=True)
     descripcion = RichTextField(blank=True)
     comentarios = StreamField(
@@ -237,18 +260,57 @@ class ElementoPage(Page):
         blank=True,
         use_json_field=True,
     )
+    tipo = models.CharField(
+        max_length=10,
+        choices=TIPO_CHOICES,
+        default="imagen",
+    )
+    contenido_url = models.URLField(blank=True)
+    contenido_texto = models.TextField(blank=True)
 
     parent_page_types = ["produccion.ProductoPage"]
 
     content_panels = Page.content_panels + [
+        FieldPanel("tipo"),
         MultiFieldPanel(
-            [FieldPanel("imagen"), FieldPanel("alt_imagen")],
-            heading="Imagen",
+            [FieldPanel("thumbnail"), FieldPanel("alt_thumbnail")],
+            heading="Thumbnail",
+        ),
+        MultiFieldPanel(
+            [FieldPanel("contenido_url"), FieldPanel("contenido_texto")],
+            heading="Contenido",
         ),
         FieldPanel("titulo"),
         FieldPanel("descripcion"),
         FieldPanel("comentarios"),
     ]
+
+    @property
+    def imagen(self):
+        return self.thumbnail
+
+    @imagen.setter
+    def imagen(self, value):
+        self.thumbnail = value
+
+    @property
+    def alt_imagen(self):
+        return self.alt_thumbnail
+
+    @alt_imagen.setter
+    def alt_imagen(self, value):
+        self.alt_thumbnail = value
+
+    def get_thumbnail_url(self, width=400):
+        if self.thumbnail:
+            return self.thumbnail.get_rendition(f"width-{width}").url
+        if self.tipo == "video" and self.contenido_url:
+            try:
+                embed = get_embed(self.contenido_url)
+                return embed.thumbnail_url
+            except EmbedException:
+                pass
+        return static(f"img/default_{self.tipo}.png")
 
     def save(self, *args, **kwargs):
         if getattr(self, '_syncing_from_block', False):
@@ -269,9 +331,11 @@ class ElementoPage(Page):
         for block in padre.elementos:
             block_value = dict(block.value)
             if str(block_value.get('block_id')) == str(self.block_id):
-                block_value['imagen'] = self.imagen
-                block_value['alt_imagen'] = self.alt_imagen
+                block_value['thumbnail'] = self.thumbnail
+                block_value['alt_thumbnail'] = self.alt_thumbnail
                 block_value['titulo'] = self.titulo
+                block_value['tipo'] == self.tipo
+                block_value['contenido_url'] = self.contenido_url
             nuevos_blocks.append(('elemento', block_value))
 
         padre.elementos = StreamValue(

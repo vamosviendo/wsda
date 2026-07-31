@@ -19,9 +19,14 @@
       {% if elemento %}
       <div class="imagen">
         <a href="{{ elemento.url }}">
-          {% if elemento.imagen %}
-            {% image elemento.imagen width-800 alt=elemento.alt_imagen %}
+          {% if elemento.tipo == 'video' %}
+            <span class="tipo-icono video">▶</span>
+          {% elif elemento.tipo == 'audio' %}
+            <span class="tipo-icono audio">♫</span>
+          {% elif elemento.tipo == 'texto' %}
+            <span class="tipo-icono texto">📄</span>
           {% endif %}
+          <img src="{{ elemento.get_thumbnail_url }}" alt="{{ elemento.alt_thumbnail }}">
         </a>
       </div>
       {% endif %}

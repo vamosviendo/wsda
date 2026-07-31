@@ -4,8 +4,6 @@ from django.utils.html import strip_tags
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 
-from tests.functional.helpers import float_format
-
 
 @pytest.fixture
 def elemento_con_datos(elemento_factory, producto_page, objeto_imagen):
@@ -29,8 +27,8 @@ def elemento_con_datos(elemento_factory, producto_page, objeto_imagen):
 
     return elemento_factory(
         producto=producto_page,
-        imagen=objeto_imagen,
-        alt_imagen="Imagen de elemento con datos",
+        thumbnail=objeto_imagen,
+        alt_thumbnail="Imagen de elemento con datos",
         titulo="Elemento con datos",
         page_data=data,
     )
@@ -55,7 +53,7 @@ def test_elemento_page(browser, producto_page, elemento_con_datos):
         "Los estilos css no se están aplicando correctamente"
 
     # La página de elemento muestra (en caso de que los haya) título,
-    # dimensiones, peso, descripción y comentarios
+    # descripción y comentarios
     titulo = browser.wait_for("#elemento-titulo")
     assert titulo.is_displayed()
     assert titulo.text == elemento.titulo

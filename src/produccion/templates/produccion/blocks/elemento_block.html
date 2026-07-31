@@ -1,8 +1,14 @@
 {% load wagtailimages_tags %}
 
 <div class="elemento-block">
-  {% if self.imagen %}
-    {% image self.imagen width-400 %}
+  {% if self.thumbnail %}
+    {% image self.thumbnail width-400 %}
+  {% elif self.tipo == 'video' %}
+    <span class="tipo-icono video">▶ Video</span>
+  {% elif self.tipo == 'audio' %}
+    <span class="tipo-icono audio">♫ Audio</span>
+  {% elif self.tipo == 'texto' %}
+    <span class="tipo-icono texto">📄 Texto</span>
   {% endif %}
   {% if self.titulo %}
     <p>{{ self.titulo }}</p>
