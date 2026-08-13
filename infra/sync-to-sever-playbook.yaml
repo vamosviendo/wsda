@@ -1,19 +1,21 @@
+# Copiar DB y/o media locales al server.
+
 # Sincronizar solo la base de datos
-# ansible-playbook -i infra/inventory infra/sync-to-sever-playbook.yaml -e "sync=db"
+# ansible-playbook -i infra/inventory infra/sync-to-server-playbook.yaml -e "sync=db"
 
 # Sincronizar solo media
-# ansible-playbook -i infra/inventory infra/sync-to-sever-playbook.yaml -e "sync=media"
+# ansible-playbook -i infra/inventory infra/sync-to-server-playbook.yaml -e "sync=media"
 
 # Sincronizar ambos (comportamiento por defecto)
-# ansible-playbook -i infra/inventory infra/sync-to-sever-playbook.yaml
+# ansible-playbook -i infra/inventory infra/sync-to-server-playbook.yaml
 
 ---
 - name: Sincronizar DB y media local -> server
   hosts: all
   gather_facts: true
   vars:
-    local_db_path: "{{ playbook_dir }}/../db.sqlite3"
-    local_media_path: "{{ playbook_dir }}/../media"
+    local_db_path: "{{ playbook_dir }}/../src/db.sqlite3"
+    local_media_path: "{{ playbook_dir }}/../src/media"
     remote_site_path: "{{ ansible_env.HOME }}/sites/wlili"
     sync: "all"   # Opciones: all, db, media
 

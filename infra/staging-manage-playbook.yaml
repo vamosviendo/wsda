@@ -1,8 +1,8 @@
 ---
 # Encender staging
-# ansible-playbook -i infra/inventory infra/staging-playbook.yaml -e "accion=start"
+# ansible-playbook -i infra/inventory infra/staging-manage-playbook.yaml -e "accion=start"
 # Apagar staging
-# ansible-playbook -i infra/inventory infra/staging-playbook.yaml -e "accion=stop"
+# ansible-playbook -i infra/inventory infra/staging-manage-playbook.yaml -e "accion=stop"
 
 - name: Gestionar container staging
   hosts: all
