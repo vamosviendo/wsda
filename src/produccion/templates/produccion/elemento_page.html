@@ -12,7 +12,7 @@
 
     {% if page.tipo == "imagen" %}
       {% if page.thumbnail %}
-        <div id="elemento-imagen" class="elemento-imagen">
+        <div id="elemento-imagen" class="elemento-media elemento-imagen">
           {% image page.imagen width-1600 as img_full %}
           {% image page.imagen width-800 as img_preview %}
           <img
@@ -28,7 +28,7 @@
       {% endif %}
 
     {% elif page.tipo == "video" %}
-      <div id="elemento-video" class="elemento-video">
+      <div id="elemento-video" class="elemento-media elemento-video">
         {% if page.contenido_url %}
           {% embed page.contenido_url %}
         {% elif page.thumbnail %}
@@ -37,7 +37,7 @@
       </div>
 
     {% elif page.tipo == "audio" %}
-      <div id="elemento-audio" class="elemento-audio">
+      <div id="elemento-audio" class="elemento-media elemento-audio">
         {% if page.contenido_url %}
           <audio src="{{ page.contenido_url }}" controls>
             Tu navegador no soporta el elemento de audio.
@@ -48,7 +48,7 @@
       </div>
 
     {% elif page.tipo == "texto" %}
-      <div id="elemento-texto" class="elemento-texto">
+      <div id="elemento-texto" class="elemento-media elemento-texto">
         {% if page.contenido_texto %}
           {{ page.contenido_texto|safe }}
         {% elif page.contenido_url %}

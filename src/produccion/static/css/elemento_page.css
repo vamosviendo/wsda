@@ -10,13 +10,13 @@
   padding-top: 1.5rem;
 }
 
-.elemento-imagen {
+.elemento-media {
   flex: 0 0 55%;
   max-width: 55%;
   overflow: hidden;
 }
 
-.elemento-imagen img {
+.elemento-media img {
   width: 100%;
   height: auto;
   display: block;
@@ -75,7 +75,7 @@
     flex-direction: column;
   }
 
-  .elemento-imagen {
+  .elemento-media {
     flex: unset;
     max-width: 100%;
     width: 100%;
@@ -97,6 +97,18 @@
   object-fit: contain;
   cursor: zoom-in;
   display: block;
+}
+
+.elemento-media iframe,
+.elemento-media video,
+.elemento-media audio {
+  width: 100%;
+  display: block;
+}
+
+.elemento-media iframe {
+  aspect-ratio: 16 / 9;
+  height: auto;
 }
 
 /* --- Overlay pantalla completa --- */
