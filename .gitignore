@@ -1,6 +1,7 @@
 *.sqlite3
 __pycache__
 media
+src/media
 .idea
 .vwlili
 Dockerfile.backup

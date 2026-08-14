@@ -1,0 +1,80 @@
+# Traer DB y/o media del server -> local
+# ansible-playbook -i infra/inventory infra/pull-from-server-playbook.yaml -e "pull=db"
+# ansible-playbook -i infra/inventory infra/pull-from-server-playbook.yaml -e "pull=media"
+# ansible-playbook -i infra/inventory infra/pull-from-server-playbook.yaml  # ambos
+
+---
+- name: Sincronizar DB y media server -> local
+  hosts: all
+  gather_facts: true
+  vars:
+    local_db_path: "{{ playbook_dir }}/../src/db.sqlite3"
+    local_media_path: "{{ playbook_dir }}/../src/media"
+    remote_site_path: "{{ ansible_env.HOME }}/sites/wlili"
+    pull: "all"   # Opciones: all, db, media
+
+  tasks:
+    - name: Verificar que media local existe
+      ansible.builtin.stat:
+        path: "{{ local_media_path }}"
+      register: local_media
+      delegate_to: 127.0.0.1
+      run_once: true
+      when: pull in ['all', 'media']
+
+    - name: Crear directorio media local si no existe
+      ansible.builtin.file:
+        path: "{{ local_media_path }}"
+        state: directory
+      delegate_to: 127.0.0.1
+      run_once: true
+      when: pull in ['all', 'media']
+
+    # --- DB ---------------------------------------------------------------
+    - name: Detener container wlili para garantizar consistencia
+      community.docker.docker_container:
+        name: wlili
+        state: stopped
+      become: true
+      when: pull in ['all', 'db']
+
+    - name: Sincronizar DB server -> local
+      ansible.builtin.synchronize:
+        src: "{{ remote_site_path }}/db.sqlite3"
+        dest: "{{ local_db_path }}"
+        mode: pull
+        delete: true   # la DB local es reemplazada por la del server
+        compress: true
+        owner: false
+        group: false
+        perms: false
+      delegate_to: 127.0.0.1
+      when: pull in ['all', 'db']
+
+    - name: Iniciar container wlili
+      community.docker.docker_container:
+        name: wlili
+        state: started
+      become: true
+      when: pull in ['all', 'db']
+
+    # --- Media -----------------------------------------------------------
+    - name: Cambiar owner de media remota a uid 1000 para sincronizar
+      ansible.builtin.file:
+        path: "{{ remote_site_path }}/media"
+        owner: "1000"
+        recurse: true
+      become: true
+      when: pull in ['all', 'media']
+
+    - name: Sincronizar media server -> local
+      ansible.builtin.synchronize:
+        src: "{{ remote_site_path }}/media/"
+        dest: "{{ local_media_path }}"
+        mode: pull
+        delete: false   # no borrar archivos locales no presentes en server
+        compress: true
+        owner: false
+        group: false
+      delegate_to: 127.0.0.1
+      when: pull in ['all', 'media']

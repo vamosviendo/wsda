@@ -23,6 +23,9 @@ test-unit:
 
 # Comandos de deploy (ansible-playbook)
 
+pull:
+		./.vwlili/bin/ansible-playbook -i infra/inventory infra/pull-from-server-playbook.yaml
+
 data-backup:
 		./.vwlili/bin/ansible-playbook infra/data-backup-playbook.yaml
 

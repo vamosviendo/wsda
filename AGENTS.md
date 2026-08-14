@@ -69,6 +69,7 @@ python manage.py runserver
 - Atenerse al modo Plan a menos que esté seleccionado explicitamente el modo build
 - No aplicar directamente cambios al código, sino presentarlos en pantalla para su revisión. Indicar con un comentario los lugares específicos del código en los que se han hecho cambios.
 - Cuando falte información, solicitarla. Comprobar en vez de inferir o suponer. Empiria.
+- No vamos a salir del modo Plan nunca, o lo haremos en muy raras ocasiones. Los cambios siempre serán presentados, y yo, el humano, me encargaré de aplicalos luego de haberlos revisado.
 
 ---
 
@@ -223,13 +224,17 @@ class TestFuncion(TestCase):
 
 ## Key Files
 
-| Path | Description |
-|------|-------------|
-| `wlili/settings/base.py` | Main Django settings |
-| `wlili/settings/dev.py` | Development settings |
-| `base/models.py` | Core settings snippets |
-| `functional_tests/base.py` | Selenium test base class |
-| `pytest.ini` | pytest configuration |
+| Path                       | Description                                                                                                                   |
+|----------------------------|-------------------------------------------------------------------------------------------------------------------------------|
+| `wlili/settings/base.py`   | Main Django settings                                                                                                          |
+| `wlili/settings/dev.py`    | Development settings                                                                                                          |
+| `base/models.py`           | Core settings snippets                                                                                                        |
+| `functional_tests/base.py` | Selenium test base class                                                                                                      |
+| `pytest.ini`               | pytest configuration                                                                                                          |
+| `src/media`                | directorio canónico de media (alineado con MEDIA_ROOT y con el bind mount de production ```~/sites/wlili/media:/src/media```) |
+| `src/db.sqlite3`           | SQLite database file (alineado con DATABASE_URL). Es la DB que usa el runserver.                                              |
+
+- El sync local <-> server usa src/, no la raíz.
 
 ---
 
