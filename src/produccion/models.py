@@ -334,7 +334,7 @@ class ElementoPage(Page):
                 block_value['thumbnail'] = self.thumbnail
                 block_value['alt_thumbnail'] = self.alt_thumbnail
                 block_value['titulo'] = self.titulo
-                block_value['tipo'] == self.tipo
+                block_value['tipo'] = self.tipo
                 block_value['contenido_url'] = self.contenido_url
             nuevos_blocks.append(('elemento', block_value))
 
