@@ -29,7 +29,15 @@
 
     {% elif page.tipo == "video" %}
       <div id="elemento-video" class="elemento-media elemento-video">
-        {% if page.contenido_url %}
+        {% if page.tipo == "video" and page.get_youtube_embed_id %}
+        <iframe
+            src="https://www.youtube.com/embed/{{ page.get_youtube_embed_id }}"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+            referrerpolicy="strict-origin-when-cross-origin"
+        ></iframe>
+        {% elif page.contenido_url %}
           {% embed page.contenido_url %}
         {% elif page.thumbnail %}
           {% image page.thumbnail width-1600 %}

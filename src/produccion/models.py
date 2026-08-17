@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import uuid
 from typing import Self
+from urllib.parse import urlparse, parse_qs
 
 from django.db import models
 from django.templatetags.static import static
@@ -325,6 +326,28 @@ class ElementoPage(Page):
                 self._sincronizar_desde_elemento(padre.specific)
 
         super().save(*args, **kwargs)
+
+    def get_youtube_embed_id(self):
+        """ Si el campo contenido_url contiene la url de un video de youtube,
+            extrae la ID del video del url."""
+        # 1. contenido_url vacío
+        if not self.contenido_url:
+            return None
+
+        url = urlparse(self.contenido_url)
+
+        # 2. contenido_url no corresponde a un video de youtube
+        if url.netloc not in ["youtu.be", "youtube.com", "www.youtube.com"]:
+            return None
+
+        # 3. contenido_url contiene una url de youtube de tipo watch
+        # (www.youtube.com/watch?v=ID)
+        if url.path == "/watch":
+            querydict = parse_qs(url.query)
+            return querydict["v"][0]
+
+        # 4. contenido_url contiene una url corta de youtube (youtu.be/ID)
+        return url.path.split("/")[-1]
 
     def _sincronizar_desde_elemento(self, padre):
         nuevos_blocks = []
