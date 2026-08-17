@@ -157,28 +157,8 @@ Follow this structure in tests:
 
 1. **Functional tests**: Test from user perspective using templates
 2. **Unit tests**: Test models, template tags, views
-
-```python
-class MyFunctionalTests(WagtailPageTestCase):
-    """Tests from user's perspective."""
-
-    def setUp(self):
-        # Create minimal site structure
-        ...
-
-    def test_user_sees_expected_content(self):
-        response = self.client.get(self.homepage.url)
-        self.assertContains(response, "expected")
-
-
-class MyModelTests(WagtailPageTestCase):
-    """Unit tests for models."""
-
-    def test_model_creation(self):
-        obj = MyModel(field="value")
-        obj.save()
-        self.assertEqual(MyModel.objects.count(), 1)
-```
+3. Los tests deben basarse en pytest.
+4. La ubicación canónica para los test es tests/, Los tests alojados en directorios dentro de las aplicaciones, así como los alojados en functional_tests/ (basados en unittest) son obsoletos y no deben ser tenidos en cuenta.
 
 ### Functional Tests (Selenium)
 
