@@ -42,13 +42,10 @@
       become: true
       failed_when: false
 
-    - name: Limpiar containers antiguos
+    - name: Limpiar container antiguo del sitio a desplegar
       community.docker.docker_container:
-        name: "{{ item }}"
+        name: "{{ container_name }}"
         state: absent
-      loop:
-        - "{{ container_name }}"
-        - caddy
 
     - name: Crear docker network wlili-net
       community.docker.docker_network:
@@ -120,43 +117,33 @@
         path: /swapfile
       register: swapfile_exists
 
-    - name: Crear swapfile de 1GB
-      ansible.builtin.command:
-        cmd:  fallocate -l 1G /swapfile
-        creates: /swapfile
-      become: true
-      when: not swapfile_exists.stat.exists
+    - name: Configurar swapfile si no existe
+      block:
+        - name: Crear swapfile de 1GB
+          ansible.builtin.command:
+            cmd:  fallocate -l 1G /swapfile
+            creates: /swapfile
+          become: true
 
-    - name: Configurar permisos swapfile
-      ansible.builtin.command:
-        cmd:  chmod 600 /swapfile
-      become: true
-      when: not swapfile_exists.stat.exists
+        - name: Configurar permisos swapfile
+          ansible.builtin.command:
+            cmd:  chmod 600 /swapfile
+          become: true
 
-    - name: Formatear y activar swap
-      ansible.builtin.command:
-        cmd:  mkswap /swapfile && swapon /swapfile
-      become: true
-      when:
-        - not swapfile_exists.stat.exists
-        - ansible_facts.swaptotal_mb == 0
+        - name: Formatear y activar swap
+          ansible.builtin.command:
+            cmd:  mkswap /swapfile && swapon /swapfile
+          become: true
 
-    - name: Asegurar que el swapfile está activo
-      ansible.builtin.command:
-        cmd:  swapon /swapfile
-      become: true
-      when: ansible_facts.swaptotal_mb == 0
-      register: swap_activate_result
-      failed_when: swapon_activate_result.rc != 0 and 'already active' not in swap_activate_result.stderr
+        - name: Agregar swap a /etc/fstab
+          ansible.builtin.lineinfile:
+            path: /etc/fstab
+            line: "/swapfile none swap sw 0 0"
+            state: present
+            create: true
+            mode: '0644'
+          become: true
 
-    - name: Agregar swap a /etc/fstab
-      ansible.builtin.lineinfile:
-        path: /etc/fstab
-        line: "/swapfile none swap sw 0 0"
-        state: present
-        create: true
-        mode: '0644'
-      become: true
       when: not swapfile_exists.stat.exists
 
     - name: Ejecutar container staging
@@ -247,4 +234,38 @@
     - name: Run migration inside container
       community.docker.docker_container_exec:
         container: "{{ container_name }}"
-        command: ./manage.py migrate
+        command: ./manage.py migrate --noinput
+      register: migrate_result
+      failed_when: migrate_result.rc | int != 0
+
+    - name: Verificar que gunicorn booteó workers
+      community.docker.docker_container_exec:
+        container: "{{ container_name }}"
+        command: sh -c "ps aux | grep -v grep | grep gunicorn | grep -c 'wlili.wsgi' || echo 0"
+      register: worker_count
+      retries: 5
+      delay: 3
+      until: worker_count.stdout | trim | int >= 1
+      failed_when: worker_count.rc | int != 0
+
+    - name: Verificar que el sitio responde via HTTPS
+      ansible.builtin.uri:
+        url: "https://{{ inventory_hostname if site_env == 'production' else 'staging.lilianamedela.com.ar' }}/"
+        status_code: 200
+        validate_certs: true
+        timeout: 10
+      register: response
+      retries: 3
+      delay: 5
+      until: response.status == 200
+      failed_when: false
+
+    - name: Verificar conectividad Caddy - wlili/wlili-staging
+      community docker.docker_container_exec:
+        container: caddy
+        command: "wget -q -O- http://{{ container_name }}:8888/ > /dev/null && echo OK || echo FAIL"
+      register: connectivity
+      retries: 3
+      delay: 5
+      until: "'OK' in connectivity.stdout"
+      failed_when: false
