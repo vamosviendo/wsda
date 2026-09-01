@@ -20,6 +20,13 @@ test-functional:
 test-unit:
 		./.vwlili/bin/pytest tests/unit
 
+test-staging:
+		DJANGO_TEST_TOKEN="ooio4903_4uu3u_4rui344u890" \
+		TEST_SERVER=staging.lilianamedela.com.ar \
+		DJANGO_TEST_ADMIN_USERNAME=admin \
+		DJANGO_TEST_ADMIN_PASSWORD=pasparafrasia \
+		.vwlili/bin/pytest tests/functional/remote
+
 
 # Comandos de deploy (ansible-playbook)
 
@@ -55,3 +62,8 @@ staging-off:
 
 staging-on:
 		./.vwlili/bin/ansible-playbook infra/staging-manage-playbook.yaml -e "accion=start"
+
+
+# Comandos de control de versiones
+tag-live:
+		git tag -f LIVE && export TAG=`date +DEPLOYED-%F/%H%M` && git tag $TAG && git push -f LIVE $TAG

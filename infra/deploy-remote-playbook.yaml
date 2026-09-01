@@ -261,7 +261,7 @@
       failed_when: false
 
     - name: Verificar conectividad Caddy - wlili/wlili-staging
-      community docker.docker_container_exec:
+      community.docker.docker_container_exec:
         container: caddy
         command: "wget -q -O- http://{{ container_name }}:8888/ > /dev/null && echo OK || echo FAIL"
       register: connectivity

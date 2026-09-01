@@ -36,19 +36,22 @@ python manage.py collectstatic --noinput
 pytest
 
 # Run a single test file
-pytest base/tests.py
+pytest tests/test.py
 
 # Run a single test class
-pytest base/tests.py::FooterFunctionalTests
+pytest tests/test.py::FooterFunctionalTests
 
 # Run a single test method
-pytest base/tests.py::FooterFunctionalTests::test_footer_renders_without_error
+pytest tests/test.py::FooterFunctionalTests::test_footer_renders_without_error
+
+# Run a single test method outside of a class
+pytest tests/test.py::test_footer_renders_without_error
 
 # Run unit/integration tests only (excludes functional tests)
-pytest -k "not FunctionalTest"
+pytest tests/unit
 
 # Run functional tests only (Selenium)
-pytest functional_tests/
+pytest tests/functional
 
 # Run tests with verbose output
 pytest -v
@@ -159,6 +162,7 @@ Follow this structure in tests:
 2. **Unit tests**: Test models, template tags, views
 3. Los tests deben basarse en pytest.
 4. La ubicación canónica para los test es tests/, Los tests alojados en directorios dentro de las aplicaciones, así como los alojados en functional_tests/ (basados en unittest) son obsoletos y no deben ser tenidos en cuenta.
+5. Presentar primero functional tests, luego unit tests.
 
 ### Functional Tests (Selenium)
 
