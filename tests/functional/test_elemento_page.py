@@ -151,3 +151,72 @@ def test_visor_de_imagen_de_elemento(browser, elemento):
     assert len(overlays_activos) == 0, \
         "El overlay de imagen a pantalla completa sigue mostrándose " \
         "después de pulsar la tecla Escape."
+
+
+def test_elemento_page_muestra_reproductor_de_video_local(
+        browser, producto_page, elemento_factory, objeto_documento_video):
+    """ Una ElementoPage de tipo video con contenido_multimedia local muestra
+        un elemento <video controls> con la URL del documento.
+    """
+    elemento = elemento_factory(
+        producto=producto_page,
+        tipo="video",
+        titulo="Video local",
+        page_data={"contenido_multimedia": objeto_documento_video},
+    )
+
+    browser.get_page(elemento.url)
+
+    video = browser.wait_for("#elemento-video video")
+    assert video.is_displayed()
+
+    src = video.get_attribute("src")
+    assert src is not None
+    assert "video_prueba.mp4" in src or "/documents/" in src
+
+
+def test_elemento_page_muestra_reproductor_de_audio_local(
+        browser, producto_page, elemento_factory, objeto_documento_audio):
+    """ Una ElementoPage de tipo audio con contenido_multimedia local muestra
+        un elemento <audio controls> con la URL del documento.
+    """
+    elemento = elemento_factory(
+        producto=producto_page,
+        tipo="audio",
+        titulo="Audio local",
+        page_data={"contenido_multimedia": objeto_documento_audio},
+    )
+
+    browser.get_page(elemento.url)
+
+    audio = browser.wait_for("#elemento-audio audio")
+    assert audio.is_displayed()
+
+    src = audio.get_attribute("src")
+    assert src is not None
+    assert "audio_prueba.mp3" in src or "/documents/" in src
+
+
+def test_contenido_multimedia_local_tiene_precedencia_sobre_url_externa(
+        browser, producto_page, elemento_factory, objeto_documento_video):
+    """ Si una ElementoPage tiene contenido_multimedia local y contenido_url
+        externa (YouTube), se muestra el contenido local. NO se muestra el iframe.
+    """
+    elemento = elemento_factory(
+        producto=producto_page,
+        tipo="video",
+        titulo="Video con local y url",
+        page_data={
+            "contenido_url": "https://www.youtube.com/watch?v=abc",
+            "contenido_multimedia": objeto_documento_video,
+        },
+    )
+
+    browser.get_page(elemento.url)
+
+    video = browser.wait_for("#elemento-video video")
+    assert video.is_displayed()
+
+    iframes = browser.wait_fors("#elemento-video iframe", fail=False)
+    assert len(iframes) == 0, \
+        "Si hay contenido_multimedia local, no debe renderizarse el iframe de YouTube"

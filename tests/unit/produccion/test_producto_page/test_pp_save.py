@@ -1,6 +1,9 @@
+import uuid
+
 from wagtail.blocks import StreamValue
 from wagtail.images import get_image_model
 
+from produccion.blocks import ElementoBlock
 from produccion.models import ElementoPage
 from utils.test_utils import get_elemento_block_from_block_id
 
@@ -296,3 +299,66 @@ def test_si_un_block_elemento_no_tiene_imagen_elemento_page_tampoco(
     hijos = producto_page.get_children().specific()
     assert len(hijos) == 1
     assert hijos[0].imagen is None
+
+
+def test_block_elemento_acepta_contenido_multimedia(objeto_documento_video):
+    block = ElementoBlock()
+    value = block.to_python({
+        "tipo": "video",
+        "contenido_multimedia": objeto_documento_video.pk,
+        "block_id": "00000000-0000-0000-0000-000000000000",
+    })
+
+    assert value["contenido_multimedia"] == objeto_documento_video
+
+def test_block_elemento_acepta_contenido_multimedia_vacio():
+    """ El campo contenido_multimedia es opcional."""
+    block = ElementoBlock()
+    value = block.to_python({
+        "tipo": "video",
+        "block_id": "00000000-0000-0000-0000-000000000000",
+    })
+
+    assert value["contenido_multimedia"] is None
+
+def test_block_elemento_acepta_url_y_archivo_simultaneamente(objeto_documento_video):
+    """ Ambos campos pueden coexistir. La precedencia se resuelve en el template,
+        no en el bloque.
+    """
+    block = ElementoBlock()
+    value = block.to_python({
+        "tipo": "video",
+        "contenido_url": "https://www.youtube.com/watch?v=abc",
+        "contenido_multimedia": objeto_documento_video.pk,
+        "block_id": "00000000-0000-0000-0000-000000000000",
+    })
+
+    assert value["contenido_url"] == "https://www.youtube.com/watch?v=abc"
+    assert value["contenido_multimedia"] == objeto_documento_video
+
+def test_crear_elemento_desde_block_copia_contenido_multimedia(
+        producto_page, objeto_documento_video):
+    """ Al guardar un bloque con contenido_multimedia en ProductoPage.elementos,
+        se crea una ElementoPage con ese documento asignado.
+    """
+    block_id = uuid.uuid4()
+    stream_data = [
+        ("elemento", {
+            "tipo": "video",
+            "titulo": "Elemento desde block",
+            "contenido_multimedia": objeto_documento_video,
+            "block_id": str(block_id),
+        }),
+    ]
+    producto_page.elementos = StreamValue(
+        producto_page.elementos.stream_block,
+        stream_data,
+        is_lazy=False,
+    )
+    producto_page.save()
+
+    elemento = next(
+        e for e in producto_page.get_children().specific()
+        if str(e.block_id) == str(block_id)
+    )
+    assert elemento.contenido_multimedia == objeto_documento_video

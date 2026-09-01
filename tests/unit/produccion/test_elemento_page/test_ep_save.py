@@ -38,6 +38,16 @@ def test_elemento_page_sin_block_id_no_actualiza_padre(
     assert len(producto_page.elementos) == 0
 
 
+def test_al_modificar_contenido_multimedia_en_elemento_page_se_actualiza_block(
+        producto_page, elemento, objeto_documento_video):
+    elemento.contenido_multimedia = objeto_documento_video
+    elemento.save()
+
+    producto_page.refresh_from_db()
+    block = producto_page.elementos[0]
+    assert block.value['contenido_multimedia'] == objeto_documento_video
+
+
 """ TODO: Agregar test  
     test_elemento_page_solo_puede_crearse_desde_block_en_producto
 """

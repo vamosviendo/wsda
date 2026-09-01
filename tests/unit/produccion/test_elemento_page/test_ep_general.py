@@ -30,7 +30,7 @@ def test_permite_guardar_texto(producto_page):
     assert "<p>Texto de prueba</p>" in elem.contenido_texto
 
 
-def test_permite_guardar_video(producto_page):
+def test_permite_guardar_video_externo(producto_page):
     elem = ElementoPage(
         title="Test", slug="test-video", tipo="video",
         contenido_url="https://www.youtube.com/watch?v=abc"
@@ -40,7 +40,7 @@ def test_permite_guardar_video(producto_page):
     assert elem.contenido_url == "https://www.youtube.com/watch?v=abc"
 
 
-def test_permite_guardar_audio(producto_page):
+def test_permite_guardar_audio_externo(producto_page):
     elem = ElementoPage(
         title="Test", slug="test-audio", tipo="audio",
         contenido_url="https://soundcloud.com/test"
@@ -48,6 +48,42 @@ def test_permite_guardar_audio(producto_page):
     producto_page.add_child(instance=elem)
     assert elem.tipo == "audio"
     assert elem.contenido_url == "https://soundcloud.com/test"
+
+
+def test_permite_guardar_video_local(producto_page, objeto_documento_video):
+    elem = ElementoPage(
+        title="Test", slug="test-video-local", tipo="video",
+        contenido_multimedia=objeto_documento_video
+    )
+    producto_page.add_child(instance=elem)
+    elem.refresh_from_db()
+
+    assert elem.tipo == "video"
+    assert elem.contenido_multimedia == objeto_documento_video
+    assert elem.contenido_multimedia.title == "documento de video de prueba"
+
+
+def test_permite_guardar_audio_local(producto_page, objeto_documento_audio):
+    elem = ElementoPage(
+        title="Test", slug="test-audio-local", tipo="audio",
+        contenido_multimedia=objeto_documento_audio
+    )
+    producto_page.add_child(instance=elem)
+    elem.refresh_from_db()
+
+    assert elem.tipo == "audio"
+    assert elem.contenido_multimedia == objeto_documento_audio
+    assert elem.contenido_multimedia.title == "documento de audio de prueba"
+
+def test_contenido_multimedia_puede_ser_none(producto_page):
+    elem = ElementoPage(
+        title="Test", slug="test-video-local", tipo="video",
+        contenido_multimedia=None
+    )
+    producto_page.add_child(instance=elem)
+    elem.refresh_from_db()
+
+    assert elem.contenido_multimedia is None
 
 
 """ TODO: En la implementación actual, no se actualiza contenido_texto. 

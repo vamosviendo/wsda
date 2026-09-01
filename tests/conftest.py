@@ -6,7 +6,9 @@ import uuid
 import pytest
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.files.base import ContentFile
 from wagtail.blocks import StreamValue
+from wagtail.documents import get_document_model
 from wagtail.images import get_image_model
 from wagtail.images.tests.utils import get_test_image_file
 from wagtail.models import Collection, Locale, Page, Site
@@ -257,5 +259,36 @@ def root_collection():
     # Colección raíz: necesaria para guardar imágenes de Wagtail
     if not Collection.objects.filter(depth=1).exists():
         Collection.add_root(name="Root")
+    return Collection.objects.filter(depth=1).first()
 
 
+@pytest.fixture
+def objeto_documento_video(root_collection, tmp_path):
+    """ Documento de video de prueba (mp4)."""
+    Document = get_document_model()
+
+    # Bytes mínimos válidos como placeholder de mp4
+    contenido = b"\x00\x00\x00\x18ftypmp42\x00\x00\x00\x00mp42isom"
+
+    doc = Document(
+        title="documento de video de prueba",
+        collection=root_collection,
+    )
+    doc.file.save("video_prueba.mp4", ContentFile(contenido), save=True)
+    return doc
+
+
+@pytest.fixture
+def objeto_documento_audio(root_collection, tmp_path):
+    """ Documento de audio de prueba (mp3)."""
+    Document = get_document_model()
+
+    # Bytes mínimos válidos como placeholder de mp3.
+    contenido = b"\xff\xfb\x90\x00" + b"\x00" * 100
+
+    doc = Document(
+        title="documento de audio de prueba",
+        collection=root_collection
+    )
+    doc.file.save("audio_prueba.mp3", ContentFile(contenido), save=True)
+    return doc

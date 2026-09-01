@@ -1,5 +1,13 @@
-from wagtail.blocks import StructBlock, CharBlock, StreamBlock, \
-    RichTextBlock, ChoiceBlock, URLBlock, TextBlock
+from wagtail.blocks import (
+    CharBlock,
+    ChoiceBlock,
+    RichTextBlock,
+    StreamBlock,
+    StructBlock,
+    TextBlock,
+    URLBlock,
+)
+from wagtail.documents.blocks import DocumentChooserBlock
 from wagtail.images.blocks import ImageBlock
 from wagtail_link_block.blocks import LinkBlock
 
@@ -21,6 +29,7 @@ class ElementoBlock(StructBlock):
         required=False
     )
     contenido_url = URLBlock(required=False)
+    contenido_multimedia = DocumentChooserBlock(required=False,)
     contenido_texto = TextBlock(required=False)
     titulo = CharBlock(required=False, max_length=255)
     block_id = CharBlock(required=False, max_length=36)

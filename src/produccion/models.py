@@ -145,6 +145,7 @@ class ProductoPage(Page):
         alt_thumbnail = block_value.get('alt_thumbnail')
         tipo = block_value.get("tipo", "imagen")
         contenido_url = block_value.get("contenido_url", "")
+        contenido_multimedia = block_value.get("contenido_multimedia")
         contenido_texto = block_value.get("contenido_texto", "")
         block_id = block_value.get('block_id')
 
@@ -164,6 +165,7 @@ class ProductoPage(Page):
             block_id=block_id,
             tipo=tipo,
             contenido_url=contenido_url,
+            contenido_multimedia=contenido_multimedia,
             contenido_texto=contenido_texto,
         )
 
@@ -174,6 +176,7 @@ class ProductoPage(Page):
         alt_thumbnail = block_value.get("alt_thumbnail", "")
         tipo = block_value.get("tipo", "imagen")
         contenido_url = block_value.get("contenido_url", "")
+        contenido_multimedia = block_value.get("contenido_multimedia")
         contenido_texto = block_value.get("contenido_texto", "")
 
         block_tiene_thumbnail = thumbnail is not None
@@ -191,6 +194,8 @@ class ProductoPage(Page):
         ) or (
             elemento.contenido_url != contenido_url
         ) or (
+            elemento.contenido_multimedia != contenido_multimedia
+        ) or (
             elemento.contenido_texto != contenido_texto
         )
 
@@ -201,6 +206,7 @@ class ProductoPage(Page):
             elemento.titulo = block_value.get('titulo')
             elemento.tipo = tipo
             elemento.contenido_url = contenido_url
+            elemento.contenido_multimedia = contenido_multimedia
             elemento.contenido_texto =  contenido_texto
             elemento.save()
 
@@ -267,6 +273,14 @@ class ElementoPage(Page):
         default="imagen",
     )
     contenido_url = models.URLField(blank=True)
+    contenido_multimedia = models.ForeignKey(
+        "wagtaildocs.Document",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        verbose_name="archivo multimedia"
+    )
     contenido_texto = models.TextField(blank=True)
 
     parent_page_types = ["produccion.ProductoPage"]
@@ -278,7 +292,11 @@ class ElementoPage(Page):
             heading="Thumbnail",
         ),
         MultiFieldPanel(
-            [FieldPanel("contenido_url"), FieldPanel("contenido_texto")],
+            [
+                FieldPanel("contenido_url"),
+                FieldPanel("contenido_multimedia"),
+                FieldPanel("contenido_texto"),
+            ],
             heading="Contenido",
         ),
         FieldPanel("titulo"),
@@ -359,6 +377,7 @@ class ElementoPage(Page):
                 block_value['titulo'] = self.titulo
                 block_value['tipo'] = self.tipo
                 block_value['contenido_url'] = self.contenido_url
+                block_value['contenido_multimedia'] = self.contenido_multimedia
             nuevos_blocks.append(('elemento', block_value))
 
         padre.elementos = StreamValue(

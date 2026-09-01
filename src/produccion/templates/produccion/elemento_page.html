@@ -29,14 +29,20 @@
 
     {% elif page.tipo == "video" %}
       <div id="elemento-video" class="elemento-media elemento-video">
-        {% if page.tipo == "video" and page.get_youtube_embed_id %}
-        <iframe
-            src="https://www.youtube.com/embed/{{ page.get_youtube_embed_id }}"
-            frameborder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowfullscreen
-            referrerpolicy="strict-origin-when-cross-origin"
-        ></iframe>
+        {% if page.contenido_multimedia %}
+          <video controls preload="metadata"
+                 src="{{ page.contenido_multimedia.url }}"
+                 {% if page.thumbnail %}poster="{{ page.thumbnail.file.url }}"{% endif %}>
+            Tu navegador no soporta el elemento de video.
+          </video>
+        {% elif page.get_youtube_embed_id %}
+            <iframe
+                src="https://www.youtube.com/embed/{{ page.get_youtube_embed_id }}"
+                frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen
+                referrerpolicy="strict-origin-when-cross-origin"
+            ></iframe>
         {% elif page.contenido_url %}
           {% embed page.contenido_url %}
         {% elif page.thumbnail %}
@@ -46,11 +52,15 @@
 
     {% elif page.tipo == "audio" %}
       <div id="elemento-audio" class="elemento-media elemento-audio">
-        {% if page.contenido_url %}
+        {% if page.contenido_multimedia %}
+          <audio controls preload="metadata" src="{{ page.contenido_multimedia.url }}">
+            Tu navegador no soporta el elemento de audio.
+          </audio>
+        {% elif page.contenido_url %}
           <audio src="{{ page.contenido_url }}" controls>
             Tu navegador no soporta el elemento de audio.
           </audio>
-        {% elif page.thmbnail %}
+        {% elif page.thumbnail %}
           {% image page.thumbnail width-800 %}
         {% endif %}
       </div>
