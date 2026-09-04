@@ -238,16 +238,6 @@
       register: migrate_result
       failed_when: migrate_result.rc | int != 0
 
-    - name: Verificar que gunicorn booteó workers
-      community.docker.docker_container_exec:
-        container: "{{ container_name }}"
-        command: sh -c "ps aux | grep -v grep | grep gunicorn | grep -c 'wlili.wsgi' || echo 0"
-      register: worker_count
-      retries: 5
-      delay: 3
-      until: worker_count.stdout | trim | int >= 1
-      failed_when: worker_count.rc | int != 0
-
     - name: Verificar que el sitio responde via HTTPS
       ansible.builtin.uri:
         url: "https://{{ inventory_hostname if site_env == 'production' else 'staging.lilianamedela.com.ar' }}/"

@@ -9,6 +9,7 @@ from django.http import Http404, JsonResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_http_methods
+from wagtail.documents import get_document_model
 
 
 def _check_test_token(request):
@@ -114,3 +115,24 @@ def remote_test_admin(request):
             "username": username,
         }
     )
+
+@csrf_exempt
+@require_POST
+def delete_document_smoke(request):
+    """ Elimina un documento por id. Endpoint de testing. """
+    _check_test_token(request)
+
+    document_id = request.POST.get("document_id")
+    if not document_id:
+        return JsonResponse({"error": "Falta document_id"}, status=400)
+
+    Document = get_document_model()
+    try:
+        document = Document.objects.get(pk=document_id)
+        document.delete()
+        return JsonResponse({"deleted": True, "document_id": document_id})
+    except Document.DoesNotExist:
+        return JsonResponse(
+            {"deleted": False, "error": "Documento no encontrado"},
+            status=404,
+        )

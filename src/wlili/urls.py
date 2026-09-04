@@ -21,14 +21,21 @@ urlpatterns = [
 ]
 
 
+# Para tests remotos
 if os.environ.get("DJANGO_TEST_TOKEN"):
-    from utils.remote_test_utils import deployment_smoke, remote_test_admin
+    from utils.remote_test_utils import (
+        deployment_smoke,
+        remote_test_admin,
+        delete_document_smoke
+    )
 
     urlpatterns += [
         path("__test__/admin-user/", remote_test_admin, name="remote-test-admin"),
         path("__test__/deployment-smoke/", deployment_smoke, name="deployment-smoke"),
+        path("__test__/delete-document/", delete_document_smoke, name="delete-document-smoke"),
     ]
 
+# Para tests locales
 if settings.DEBUG:
     from django.conf.urls.static import static
     from django.contrib.staticfiles.urls import staticfiles_urlpatterns
@@ -43,7 +50,7 @@ urlpatterns += [
     re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
 ]
 
-urlpatterns = urlpatterns + [
+urlpatterns += [
     # For anything not caught by a more specific rule above, hand over to
     # Wagtail's page serving mechanism. This should be the last pattern in
     # the list:

@@ -31,4 +31,4 @@ RUN DJANGO_SECRET_KEY=placeholder DJANGO_ALLOWED_HOST=localhost DJANGO_DB_PATH=/
 RUN adduser --uid 1234 vv
 USER vv
 
-CMD ["gunicorn", "--bind", ":8888", "-w", "1", "wlili.wsgi:application"]
+CMD ["gunicorn", "--bind", ":8888", "-w", "2", "--timeout", "120", "--max-requests", "500", "--max-requests-jitter", "50", "wlili.wsgi:application"]
