@@ -41,7 +41,7 @@ def test_producto_page(
     assert descripcion.is_displayed()
     assert descripcion.text == "Página de producto genérica"
 
-    # La galería de imágenes incluye imágenes de todos los elementos
+    # La galería de thumbnails incluye thumbnails de todos los elementos
     # del producto en la página
     grid = browser.wait_for("#elementos-grid")
     imgs = grid.find_elements(By.TAG_NAME, "img")
@@ -52,25 +52,26 @@ def test_producto_page(
 
     for index, img in enumerate(imgs):
         src = img.get_attribute("src")
-        # Las imágenes incluidas son cargadas realmente por el navegador-
+        # Los thumbnails incluidas son cargadas realmente por el navegador-
         assert \
             browser.get_img_natural_width(img) > 0, \
             f"La imagen {src} no se cargó en el browser"
 
-        # Las imágenes son visibles.
+        # Los thumbnails son visibles.
         assert \
             img.is_displayed(), \
             f"La imagen {src} está en el DOM pero no es visible"
 
-        # El atributo src de las imágenes apunta a /media/
+        # El atributo src de los thumbnails apunta a /media/
         assert \
             "/media/" in src, \
             f"El atributo src de la imagen {src} no apunta a /media/"
 
-        # Las imágenes enlazan a una página de elemento
+        # Los thumbnails enlazan a una página de elemento
         assert len(imgs) == len(links)
         link = links[index]
         assert elementos[index].url in link.get_attribute("href")
+
 
 def test_producto_anterior_siguiente(browser, area_page, producto_page, test_page):
     # Dado un producto entre otros:
@@ -109,4 +110,45 @@ def test_producto_anterior_siguiente(browser, area_page, producto_page, test_pag
     # producto-anterior.
     browser.get_page(producto_page.url)
     browser.wait_for_not("#producto-anterior")
+
+
+def test_galeria_muestra_icono_segun_tipo_de_elemento(
+        browser, producto_page, elemento_audio, elemento_video, elemento_texto,
+        objeto_imagen, elemento_factory):
+    """Para cada elemento de tipo video/audio/texto se muestra un ícono SVG
+    sobreimpreso en la esquina inferior derecha del thumbnail."""
+
+    # Crear un elemento de tipo imagen (sin ícono)
+    elemento_imagen = elemento_factory(
+        producto=producto_page,
+        thumbnail=objeto_imagen,
+        tipo="imagen",
+        titulo="Elemento de imagen",
+    )
+
+    browser.get_page(producto_page.url)
+    grid = browser.wait_for("#elementos-grid")
+
+    # Verificar que cada elemento tiene su ícono según tipo
+    for tipo, expected_icon_class in [
+        ("video", "tipo-icono-video"),
+        ("audio", "tipo-icono-audio"),
+        ("texto", "tipo-icono-texto"),
+    ]:
+        icono = grid.find_element(
+            By.CSS_SELECTOR, f".tipo-icono-{tipo}"
+        )
+        assert icono.is_displayed(), \
+            f"El ícono de tipo {tipo} no es visible"
+
+        src = icono.get_attribute("src")
+        assert f"icon_{tipo}.svg" in src, \
+            f"El src del ícono de {tipo} no apunta al SVG correcto: {src}"
+
+    # El elemento de tipo imagen NO tiene ícono
+    iconos_imagen = grid.find_elements(
+        By.CSS_SELECTOR, ".tipo-icono-imagen"
+    )
+    assert len(iconos_imagen) == 0, \
+        "Los elementos de tipo imagen no deben mostrar ícono de tipo"
 

@@ -32,6 +32,7 @@
 }
 
 .imagen {
+  position: relative;
   overflow: hidden;
   line-height: 0;
 }
@@ -91,4 +92,22 @@
   .producto-siguiente {
     align-self: flex-end;
   }
+}
+
+/* ============================================================
+   Íconos de tipo sobre thumbnails (esquina inferior derecha)
+   ============================================================ */
+img.tipo-icono {
+  position: absolute;
+  bottom: 0.6rem;
+  right: 0.6rem;
+  height: 2rem;
+  width: auto;
+  max-width: 4rem;
+  z-index: 2;
+  pointer-events: none;
+  background-color: rgba(255, 255, 255, 0.85);
+  border-radius: 0.4rem;
+  padding: 0.25rem 0.4rem;
+  box-sizing: border-box;
 }

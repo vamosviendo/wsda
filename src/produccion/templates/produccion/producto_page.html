@@ -20,11 +20,20 @@
       <div class="imagen">
         <a href="{{ elemento.url }}">
           {% if elemento.tipo == 'video' %}
-            <span class="tipo-icono video">▶</span>
+            <img class="tipo-icono tipo-icono-video"
+                 src="{% static 'img/icon_video.svg' %}"
+                 alt=""
+                 aria-hidden="true">
           {% elif elemento.tipo == 'audio' %}
-            <span class="tipo-icono audio">♫</span>
+            <img class="tipo-icono tipo-icono-audio"
+                 src="{% static 'img/icon_audio.svg' %}"
+                 alt=""
+                 aria-hidden="true">
           {% elif elemento.tipo == 'texto' %}
-            <span class="tipo-icono texto">📄</span>
+            <img class="tipo-icono tipo-icono-texto"
+                 src="{% static 'img/icon_texto.svg' %}"
+                 alt=""
+                 aria-hidden="true">
           {% endif %}
           <img src="{{ elemento.get_thumbnail_url }}" alt="{{ elemento.alt_thumbnail }}">
         </a>

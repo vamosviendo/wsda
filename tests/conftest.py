@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import uuid
+from urllib.parse import urlparse
 
 import pytest
 from django.conf import settings
@@ -78,8 +79,8 @@ def hostname(live_server_url):
 
 @pytest.fixture
 def port(live_server_url):
-    parts = live_server_url.replace("http://", "").split(":")
-    return int(parts[1]) if len(parts) > 1 else 80
+    parsed = urlparse(live_server_url)
+    return parsed.port or (443 if parsed.scheme == "https" else 80)
 
 
 @pytest.fixture
@@ -223,6 +224,16 @@ def elemento_3(elemento_factory, producto_page, objeto_imagen):
         thumbnail=objeto_imagen,
         alt_thumbnail="Imagen de tercer elemento",
         titulo="Tercer elemento"
+    )
+
+
+@pytest.fixture
+def elemento_audio(elemento_factory, producto_page):
+    return elemento_factory(
+        producto=producto_page,
+        tipo="audio",
+        titulo="Elemento de audio",
+        page_data={"contenido_url": "https://soundcloud.com/test"},
     )
 
 
