@@ -142,7 +142,9 @@ def test_galeria_muestra_icono_segun_tipo_de_elemento(
             f"El ícono de tipo {tipo} no es visible"
 
         src = icono.get_attribute("src")
-        assert f"icon_{tipo}.svg" in src, \
+        src_name = src.split("/")[-1]
+        assert \
+            src_name.startswith(f"icon_{tipo}") and src_name.endswith(".svg"), \
             f"El src del ícono de {tipo} no apunta al SVG correcto: {src}"
 
     # El elemento de tipo imagen NO tiene ícono

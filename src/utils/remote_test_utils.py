@@ -12,7 +12,8 @@ from django.views.decorators.http import require_POST, require_http_methods
 from wagtail.documents import get_document_model
 
 
-def _check_test_token(request):
+def _check_test_token(request) -> None:
+    """ Comprueba un DJANGO_TEST_TOKEN recibido con el guardado en el entorno."""
     expected_token = os.environ.get("DJANGO_TEST_TOKEN")
 
     if not expected_token:

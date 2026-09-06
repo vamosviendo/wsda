@@ -5,7 +5,7 @@ from wagtail.models import Page
 
 
 def assert_can_create_at(parent_model, child_model):
-    """Versión py8test de WagtailTestCase.assertCanCreateAt"""
+    """Versión pytest de WagtailTestCase.assertCanCreateAt"""
     assert child_model in parent_model.allowed_subpage_models()
 
 

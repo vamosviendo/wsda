@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import uuid
+from types import SimpleNamespace
 from urllib.parse import urlparse
 
 import pytest
@@ -16,6 +17,7 @@ from wagtail.models import Collection, Locale, Page, Site
 
 from home.models import HomePage
 from produccion.models import AreaPage, ProductoPage
+from tests.remote_fixtures import RemoteProductoFixtures
 from utils.test_utils import get_elemento_page_from_block_id
 
 
@@ -25,6 +27,18 @@ Image = get_image_model()
 def pytest_collection_modifyitems(items):
     for item in items:
         item.add_marker(pytest.mark.django_db(transaction=True))
+
+
+@pytest.fixture
+def remote_fixtures(live_server_url):
+    if not os.environ.get("TEST_SERVER"):
+        yield None
+        return
+    token = os.environ.get("DJANGO_TEST_TOKEN")
+    assert token, "TEST_SERVER definido pero falta DJANGO_TEST_TOKEN"
+    client = RemoteProductoFixtures(live_server_url, token)
+    yield client
+    client.cleanup()
 
 
 @pytest.fixture(scope="session")
@@ -140,11 +154,18 @@ def test_page(db, site):
 
 
 @pytest.fixture
-def elemento_factory(db, site):
+def elemento_factory(remote_fixtures, site):
     def _factory(
             producto: ProductoPage, thumbnail=None, alt_thumbnail="Imagen",
             tipo="imagen", titulo="Elemento", page_data=None
     ):
+        if os.environ.get("TEST_SERVER"):
+            return remote_fixtures.crear_elemento(
+                producto.pk, tipo, titulo, alt_thumbnail,
+                page_data=page_data,
+                thumbnail_path=getattr(thumbnail, "path", None),
+            )
+
         block_id = uuid.uuid4()
         stream_data = [
             ("elemento", {
@@ -187,7 +208,13 @@ def area_page(test_page):
 
 
 @pytest.fixture
-def producto_page(test_page, area_page) -> ProductoPage:
+def producto_page(remote_fixtures, test_page, area_page):
+    if os.environ.get("TEST_SERVER"):
+        _, producto = remote_fixtures.setup(
+            "Producto Page", "Página de producto genérica"
+        )
+        return producto
+
     return test_page(
         parent=area_page,
         page_type=ProductoPage,
@@ -258,7 +285,15 @@ def elemento_texto(elemento_factory, producto_page):
 
 
 @pytest.fixture
-def objeto_imagen(root_collection):
+def objeto_imagen(root_collection, tmp_path):
+    if os.environ.get("TEST_SERVER"):
+        img_file = get_test_image_file()
+        img_file.seek(0)
+        content = img_file.read()
+        p = tmp_path / "test.png"
+        p.write_bytes(content)
+        return SimpleNamespace(path=str(p))
+
     image = Image(title="imagen de prueba")
     image.file = get_test_image_file()
     image.save()
