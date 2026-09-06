@@ -142,11 +142,11 @@ class ProductoPage(Page):
     def _crear_elemento(self, block_value):
         titulo = block_value.get('titulo') or 'Sin título'
         thumbnail = block_value.get('thumbnail')
-        alt_thumbnail = block_value.get('alt_thumbnail')
+        alt_thumbnail = block_value.get('alt_thumbnail') or ""
         tipo = block_value.get("tipo", "imagen")
-        contenido_url = block_value.get("contenido_url", "")
+        contenido_url = block_value.get("contenido_url") or ""
         contenido_multimedia = block_value.get("contenido_multimedia")
-        contenido_texto = block_value.get("contenido_texto", "")
+        contenido_texto = block_value.get("contenido_texto") or ""
         block_id = block_value.get('block_id')
 
         slug_base = slugify(titulo) if titulo else 'elemento'
@@ -173,11 +173,11 @@ class ProductoPage(Page):
 
     def _actualizar_elemento_si_necesario(self, elemento, block_value):
         thumbnail = block_value.get("thumbnail")
-        alt_thumbnail = block_value.get("alt_thumbnail", "")
+        alt_thumbnail = block_value.get("alt_thumbnail") or ""
         tipo = block_value.get("tipo", "imagen")
-        contenido_url = block_value.get("contenido_url", "")
+        contenido_url = block_value.get("contenido_url") or ""
         contenido_multimedia = block_value.get("contenido_multimedia")
-        contenido_texto = block_value.get("contenido_texto", "")
+        contenido_texto = block_value.get("contenido_texto") or ""
 
         block_tiene_thumbnail = thumbnail is not None
         elemento_tiene_thumbnail = elemento.thumbnail_id is not None
@@ -281,7 +281,7 @@ class ElementoPage(Page):
         related_name="+",
         verbose_name="archivo multimedia"
     )
-    contenido_texto = models.TextField(blank=True)
+    contenido_texto = models.TextField(blank=True, default="")
 
     parent_page_types = ["produccion.ProductoPage"]
 
