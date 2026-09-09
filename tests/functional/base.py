@@ -1,7 +1,8 @@
+import time
 from typing import Iterable
 
 from selenium import webdriver
-from selenium.common import NoSuchElementException, StaleElementReferenceException
+from selenium.common import NoSuchElementException, StaleElementReferenceException, WebDriverException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 
@@ -13,8 +14,23 @@ class MiFirefox(webdriver.Firefox):
         super().__init__(*args, **kwargs)
         self.base_url = base_url
 
-    def get_page(self, page="/"):
-        return self.get(f"{self.base_url}{page}")
+    def get_page(self, page="/", retries=5, delay=1.5):
+        """get con espera para evitar errores de conectividad en Selenium"""
+        url = f"{self.base_url}{page}"
+        last_exc = None
+        for _ in range(retries):
+            try:
+                self.get(url)
+                return self
+            except WebDriverException as exc:
+                msg = str(exc).lower()
+                if "neterror" not in msg and "connection" not in msg and "no route" not in msg:
+                    raise
+                last_exc = exc
+                time.sleep(delay)
+        raise WebDriverException(
+            f"No se pudo cargar {url} tras {retries} reintentos: {last_exc}"
+        ) from last_exc
 
     def get_computed_style(self, element, prop):
         """Devuelve el valor de una propiedad CSS computada (interpretada por el browser)."""

@@ -1,7 +1,9 @@
 import json
 import os
 import requests
+from requests.adapters import HTTPAdapter
 from urllib.parse import urljoin
+from urllib3.util.retry import Retry
 
 
 class Handle:
@@ -20,8 +22,22 @@ class RemoteProductoFixtures:
         self.token = token
         self.home_pk = None
 
+        # Varios intentos de conexión para evitar errores de conectividad
+        retry = Retry(
+            connect=5,
+            read=0,
+            status=0,
+            redirect=0,
+            backoff_factor=1.0,
+            allowed_methods=None,
+        )
+        self.session = requests.Session()
+        adapter = HTTPAdapter(max_retries=retry)
+        self.session.mount("https://", adapter)
+        self.session.mount("http://", adapter)
+
     def _post(self, path, data=None, files=None):
-        response = requests.post(
+        response = self.session.post(
             urljoin(self.base_url, path),
             data=data,
             files=files,
