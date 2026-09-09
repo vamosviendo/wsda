@@ -26,7 +26,7 @@ class RemoteProductoFixtures:
             data=data,
             files=files,
             headers={"X-Test-Token": self.token},
-            timeout=(20),
+            timeout=20,
         )
         try:
             response.raise_for_status()
@@ -46,34 +46,47 @@ class RemoteProductoFixtures:
 
     def crear_elemento(
             self, producto_pk, tipo, titulo, alt_thumbnail="",
-            page_data=None, thumbnail_path=None):
+            page_data=None, thumbnail=None):
         data = {
             "producto_pk": producto_pk,
             "tipo": tipo,
             "titulo": titulo,
             "alt_thumbnail": alt_thumbnail,
         }
+
+        files = {}
+
+        if thumbnail is not None:
+            path = getattr(thumbnail, "path", None)
+            if path:
+                fobj = open(path, "rb")
+                files["thumbnail"] = (
+                    os.path.basename(path),
+                    fobj,
+                    "image/png"
+                )
+
+        if page_data:
+            clean_page_data = {}
+            for key, value in page_data.items():
+                path = getattr(value, "path", None)
+                if path:
+                    fobj = open(path, "rb")
+                    ct = "image/png" if key == "thumbnail" else "application/octet-stream"
+                    files[key] = (os.path.basename(path), fobj, ct)
+                else:
+                    clean_page_data[key] = value
+            page_data = clean_page_data
+
         if page_data:
             data["page_data"] = json.dumps(page_data)
 
-        files = None
-        fobj = None
-        if thumbnail_path:
-            # files = {"thumbnail": open(thumbnail_path, "rb")}
-            fobj = open(thumbnail_path, "rb")
-            files = {"thumbnail": (
-                os.path.basename(thumbnail_path),
-                fobj,
-                "image/png",
-            )}
-
         try:
-            return Handle(self._post("/__test__/fixtures/producto/elemento/", data, files))
+            data = self._post("/__test__/fixtures/producto/elemento/", data, files)
+            return Handle(data)
         finally:
-            # if files:
-            #     files["thumbnail"].close()
-            if fobj:
-                fobj.close()
+            for f in files.values():
+                f[1].close()
 
     def cleanup(self):
         if self.home_pk:

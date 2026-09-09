@@ -7,11 +7,12 @@ from django.http import Http404, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from wagtail.blocks import StreamValue
+from wagtail.documents import get_document_model
 from wagtail.images import get_image_model
-from wagtail.models import Page, Site
+from wagtail.models import Collection, Page, Site
 
 from home.models import HomePage
-from produccion.models import AreaPage, ProductoPage
+from produccion.models import AreaPage, ElementoPage, ProductoPage
 from utils.remote_test_utils import _check_test_token
 
 
@@ -20,9 +21,6 @@ Image = get_image_model()
 
 def _crear_home():
     """ Crea homepage para tests."""
-    # root = Page.objects.filter(depth=1).first()
-    # if root is None:
-    #     raise Http404()
     site = (
         Site.objects.filter(is_default_site=True).first()
         or Site.objects.first()
@@ -31,7 +29,6 @@ def _crear_home():
         raise Http404()
 
     home = HomePage(title="Test Home", slug=f"test-home-{uuid.uuid4().hex[:8]}")
-    # root.add_child(instance=home)
     site.root_page.add_child(instance=home)
     home.save_revision().publish()
     return home
@@ -54,8 +51,29 @@ def _safe_json(view):
     return wrapper
 
 
-@csrf_exempt
-@require_POST
+def _crear_modelo_desde_field(field_name, uploaded_file):
+    """ Crea un modelo Wagtail (Image o Document) a partir de un archivo subido."""
+    if field_name == "thumbnail":
+        content = ContentFile(uploaded_file.read(), name="test.png")
+        obj = Image(title="thumbnail de test")
+        obj.file.save("test.png", content, save=False)
+        obj.save()
+        return obj
+
+    if field_name == "contenido_multimedia":
+        Document = get_document_model()
+        content = ContentFile(uploaded_file.read(), name=uploaded_file.name)
+        doc = Document(
+            title=f"documento de test {uploaded_file.name}",
+            collection=Collection.get_first_root_node(),
+        )
+        doc.file.save(uploaded_file.name, content, save=False)
+        doc.save()
+        return doc
+
+    return None
+
+
 @_safe_json
 def fixtures_producto(request):
     _check_test_token(request)
@@ -95,8 +113,6 @@ def fixtures_producto(request):
     })
 
 
-@csrf_exempt
-@require_POST
 @_safe_json
 def fixtures_producto_elemento(request):
     _check_test_token(request)
@@ -110,21 +126,18 @@ def fixtures_producto_elemento(request):
     titulo = request.POST.get("titulo", "Elemento")
     alt_thumbnail = request.POST.get("alt_thumbnail", "")
 
-    thumbnail = None
-    thumbnail_file = request.FILES.get("thumbnail")
-    if thumbnail_file:
-        content = ContentFile(thumbnail_file.read(), name="test.png")
-        thumbnail = Image(title="thumbnail de test")
-        thumbnail.file.save("test.png", content, save=False)
-        thumbnail.save()
-
     block_value = {
-        "thumbnail": thumbnail,
+        "thumbnail": None,
         "alt_thumbnail": alt_thumbnail,
         "tipo": tipo,
         "titulo": titulo,
-        "block_id": str(uuid.uuid4()),
+        "block_id": str(uuid.uuid4())
     }
+
+    for field_name, uploaded_file in request.FILES.items():
+        instance = _crear_modelo_desde_field(field_name, uploaded_file)
+        if instance is not None:
+            block_value[field_name] = instance
 
     page_data_raw = request.POST.get("page_data")
     if page_data_raw:

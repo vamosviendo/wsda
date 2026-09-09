@@ -21,6 +21,11 @@ from tests.remote_fixtures import RemoteProductoFixtures
 from utils.test_utils import get_elemento_page_from_block_id
 
 
+# Bytes mínimos válidos como placeholders de mp4 y mp3
+CONTENIDO_VIDEO = b"\x00\x00\x00\x18ftypmp42\x00\x00\x00\x00mp42isom"
+CONTENIDO_AUDIO = b"\xff\xfb\x90\x00" + b"\x00" * 100
+
+
 Image = get_image_model()
 
 
@@ -163,7 +168,7 @@ def elemento_factory(remote_fixtures, site):
             return remote_fixtures.crear_elemento(
                 producto.pk, tipo, titulo, alt_thumbnail,
                 page_data=page_data,
-                thumbnail_path=getattr(thumbnail, "path", None),
+                thumbnail=thumbnail,
             )
 
         block_id = uuid.uuid4()
@@ -311,10 +316,14 @@ def root_collection():
 @pytest.fixture
 def objeto_documento_video(root_collection, tmp_path):
     """ Documento de video de prueba (mp4)."""
-    Document = get_document_model()
+    contenido = CONTENIDO_VIDEO
 
-    # Bytes mínimos válidos como placeholder de mp4
-    contenido = b"\x00\x00\x00\x18ftypmp42\x00\x00\x00\x00mp42isom"
+    if os.environ.get("TEST_SERVER"):
+        p = tmp_path / "video_prueba.mp4"
+        p.write_bytes(contenido)
+        return SimpleNamespace(path=str(p))
+
+    Document = get_document_model()
 
     doc = Document(
         title="documento de video de prueba",
@@ -327,10 +336,14 @@ def objeto_documento_video(root_collection, tmp_path):
 @pytest.fixture
 def objeto_documento_audio(root_collection, tmp_path):
     """ Documento de audio de prueba (mp3)."""
-    Document = get_document_model()
-
     # Bytes mínimos válidos como placeholder de mp3.
-    contenido = b"\xff\xfb\x90\x00" + b"\x00" * 100
+    contenido = CONTENIDO_AUDIO
+
+    if os.environ.get("TEST_SERVER"):
+        p = tmp_path / "audio_prueba.mp3"
+        p.write_bytes(contenido)
+        return SimpleNamespace(path=str(p))
+    Document = get_document_model()
 
     doc = Document(
         title="documento de audio de prueba",

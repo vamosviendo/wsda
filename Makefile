@@ -20,12 +20,19 @@ test-functional:
 test-unit:
 		./.vwlili/bin/pytest tests/unit
 
-test-staging:
+test-remote:
 		DJANGO_TEST_TOKEN="ooio4903_4uu3u_4rui344u890" \
 		TEST_SERVER=staging.lilianamedela.com.ar \
 		DJANGO_TEST_ADMIN_USERNAME=admin \
 		DJANGO_TEST_ADMIN_PASSWORD=pasparafrasia \
 		.vwlili/bin/pytest tests/functional/remote
+
+test-staging:
+		DJANGO_TEST_TOKEN="ooio4903_4uu3u_4rui344u890" \
+		TEST_SERVER=staging.lilianamedela.com.ar \
+		DJANGO_TEST_ADMIN_USERNAME=admin \
+		DJANGO_TEST_ADMIN_PASSWORD=pasparafrasia \
+		.vwlili/bin/pytest tests/functional
 
 
 # Comandos de deploy (ansible-playbook)
