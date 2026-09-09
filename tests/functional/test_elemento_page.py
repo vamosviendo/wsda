@@ -20,8 +20,8 @@ def elemento_con_datos(elemento_factory, producto_page, objeto_imagen):
         "unidad_peso": "kg",
         "descripcion": "<p>Descripción de elemento</p>",
         "comentarios": [
-            ("comentario", "<p>Este es un comentario de prueba</p>"),
-            ("comentario", "<p>Este es <em>otro</em> comentario de prueba</p>")
+            ("comentario", "Este es un comentario de prueba"),
+            ("comentario", "Este es otro comentario de prueba")
         ],
     }
 
@@ -31,6 +31,16 @@ def elemento_con_datos(elemento_factory, producto_page, objeto_imagen):
         alt_thumbnail="Imagen de elemento con datos",
         titulo="Elemento con datos",
         page_data=data,
+    )
+
+
+@pytest.fixture
+def elemento_sin_titulo(elemento_factory, producto_page, objeto_imagen):
+    return elemento_factory(
+        producto=producto_page,
+        thumbnail=objeto_imagen,
+        alt_thumbnail="Imagen de elemento sin título",
+        titulo="",
     )
 
 
@@ -63,17 +73,14 @@ def test_elemento_page(browser, producto_page, elemento_con_datos):
     assert descripcion.text == strip_tags(elemento.descripcion)
 
     comentarios = browser.wait_fors(".elemento-comentario")
+    comentarios_esperados = [
+        "Este es un comentario de prueba",
+        "Este es otro comentario de prueba",
+    ]
+    assert len(comentarios) == len(comentarios_esperados)
     for index, comentario in enumerate(comentarios):
         assert comentario.is_displayed()
-        assert comentario.text == strip_tags(elemento.comentarios[index].value.source)
-
-    # En caso de que el título esté vacío, la página muestra "Sin título".
-    elemento.titulo = ""
-    elemento.save_revision().publish()
-    browser.get_page(elemento.url)
-    titulo = browser.wait_for("#elemento-titulo")
-    assert titulo.is_displayed()
-    assert titulo.text == "Sin título"
+        assert comentario.text == comentarios_esperados[index]
 
     # A la izquierda se muestra la imagen asociada al elemento
     img = browser.find_element(By.CSS_SELECTOR, "#elemento-img-preview")
@@ -81,6 +88,14 @@ def test_elemento_page(browser, producto_page, elemento_con_datos):
     assert \
         browser.get_img_natural_width(img) > 0, \
         f"La imagen {src} no se cargó correctamente"
+
+
+def test_elemento_page_muestra_sin_titulo(browser, elemento_sin_titulo):
+    # Dado un elemento sin título, la página muestra "Sin titulo"
+    browser.get_page(elemento_sin_titulo.url)
+    titulo = browser.wait_for("#elemento-titulo")
+    assert titulo.is_displayed()
+    assert titulo.text == "Sin título"
 
 
 def test_visor_de_imagen_de_elemento(browser, elemento):

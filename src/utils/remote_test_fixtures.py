@@ -18,6 +18,8 @@ from utils.remote_test_utils import _check_test_token
 
 Image = get_image_model()
 
+BLOCK_FIELDS = {"thumbnail", "alt_thumbnail", "tipo", "titulo", "block_id"}
+
 
 def _crear_home():
     """ Crea homepage para tests."""
@@ -140,8 +142,16 @@ def fixtures_producto_elemento(request):
             block_value[field_name] = instance
 
     page_data_raw = request.POST.get("page_data")
+    page_data_dict = {}
     if page_data_raw:
-        block_value.update(json.loads(page_data_raw))
+        page_data_dict = json.loads(page_data_raw)
+
+    page_fields = {}
+    for key, value in page_data_dict.items():
+        if key in BLOCK_FIELDS:
+            block_value[key] = value
+        else:
+            page_fields[key] = value
 
     producto.elementos += StreamValue(
         producto.elementos.stream_block,
@@ -154,10 +164,18 @@ def fixtures_producto_elemento(request):
         e for e in producto.get_children().specific()
         if str(e.block_id) == block_value["block_id"]
     )
+
+    for key, value in page_fields.items():
+        if hasattr(elemento, key):
+            setattr(elemento, key, value)
+    elemento.save()
+
     return JsonResponse({
         "url": elemento.url,
         "pk": elemento.pk,
         "title": elemento.title,
+        "titulo": elemento.titulo,
+        "descripcion": elemento.descripcion,
         "tipo": elemento.tipo,
         "block_id": block_value["block_id"],
     })

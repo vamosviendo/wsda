@@ -11,6 +11,14 @@ def test_block_id_de_pagina_coincide_con_el_de_el_block(
     assert block.value.get("block_id") == str(page.block_id)
 
 
+def test_titulo_vacio_se_guarda_como_cadena_vacia(producto_page):
+    elem = ElementoPage(
+        title="Test", slug="test-sin-titulo", titulo=""
+    )
+    producto_page.add_child(instance=elem)
+    assert elem.titulo == ""
+
+
 def test_permite_guardar_imagenes(producto_page, objeto_imagen):
     elem = ElementoPage(
         title="Test", slug="test-img", thumbnail=objeto_imagen, tipo="imagen"
