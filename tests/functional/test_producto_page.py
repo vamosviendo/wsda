@@ -1,11 +1,20 @@
+import os
+
 import pytest
 from selenium.webdriver.common.by import By
 
-from produccion.models import ElementoPage, ProductoPage
-
 
 @pytest.fixture
-def area_page_con_productos(area_page, producto_page, objeto_imagen):
+def area_page_con_productos(area_page, producto_page, objeto_imagen, remote_fixtures):
+    if os.environ.get("TEST_SERVER"):
+        return remote_fixtures.area_con_productos(
+            area_pk=area_page.pk,
+            producto_pk=producto_page.pk,
+            nombre=producto_page.titulo,
+            descripcion=producto_page.descripcion,
+            imagen_path=objeto_imagen.path,
+        )
+
     area_page.productos = [("producto", {
         "nombre": producto_page.titulo,
         "descripcion": producto_page.descripcion,
@@ -48,7 +57,7 @@ def test_producto_page(
     assert len(imgs) == 3
 
     links = grid.find_elements(By.TAG_NAME, "a")
-    elementos = ElementoPage.objects.all()
+    elementos_esperados = [elemento, elemento_2, elemento_3]
 
     for index, img in enumerate(imgs):
         src = img.get_attribute("src")
@@ -70,18 +79,11 @@ def test_producto_page(
         # Los thumbnails enlazan a una página de elemento
         assert len(imgs) == len(links)
         link = links[index]
-        assert elementos[index].url in link.get_attribute("href")
+        assert elementos_esperados[index].url in link.get_attribute("href")
 
 
-def test_producto_anterior_siguiente(browser, area_page, producto_page, test_page):
+def test_producto_anterior_siguiente(browser, producto_page, producto_page_2):
     # Dado un producto entre otros:
-    producto_page_2 = test_page(
-        parent=area_page,
-        page_type=ProductoPage,
-        title="ProductoPage2",
-        titulo="Producto Page 2",
-        descripcion="Página de segundo producto genérica",
-    )
     browser.get_page(producto_page_2.url)
 
     # Al final de la página hay un enlace con el título del producto anterior

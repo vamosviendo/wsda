@@ -13,7 +13,7 @@ def test_area_page(browser, area_page):
 
     desc = browser.find_element(By.CSS_SELECTOR, ".area-descripcion")
     assert desc.is_displayed()
-    assert "Página de área genérica" in desc.text
+    assert "Pagina de area de prueba" in desc.text
 
     productos = browser.find_elements(By.CSS_SELECTOR, ".productos-grid")
     assert len(productos) > 0, "No se encontró el contenedor .productos-grid en el DOM"

@@ -202,7 +202,9 @@ def elemento_factory(remote_fixtures, site):
 
 
 @pytest.fixture
-def area_page(test_page):
+def area_page(remote_fixtures, test_page):
+    if os.environ.get("TEST_SERVER"):
+        return remote_fixtures.setup_area()
     return test_page(
         page_type=AreaPage,
         title="AreaPage",
@@ -213,12 +215,27 @@ def area_page(test_page):
 
 
 @pytest.fixture
+def producto_page_2(remote_fixtures, test_page, area_page, producto_page):
+    if os.environ.get("TEST_SERVER"):
+        return remote_fixtures.setup_producto(
+            area_page.pk, "Producto Page 2", "Segunda página de producto genérica"
+        )
+
+    return test_page(
+        parent=area_page,
+        page_type=ProductoPage,
+        title="ProductoPage2",
+        titulo="Producto Page 2",
+        descripcion="Segunda página de producto genérica",
+    )
+
+
+@pytest.fixture
 def producto_page(remote_fixtures, test_page, area_page):
     if os.environ.get("TEST_SERVER"):
-        _, producto = remote_fixtures.setup(
-            "Producto Page", "Página de producto genérica"
+        return remote_fixtures.setup_producto(
+            area_page.pk, "Producto Page", "Página de producto genérica"
         )
-        return producto
 
     return test_page(
         parent=area_page,

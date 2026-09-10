@@ -12,7 +12,7 @@ from wagtail.images import get_image_model
 from wagtail.models import Collection, Page, Site
 
 from home.models import HomePage
-from produccion.models import AreaPage, ElementoPage, ProductoPage
+from produccion.models import AreaPage, ProductoPage
 from utils.remote_test_utils import _check_test_token
 
 
@@ -76,22 +76,46 @@ def _crear_modelo_desde_field(field_name, uploaded_file):
     return None
 
 
+def _serializar(p):
+    """ Serializa una página a dict para el JSON de respuesta."""
+    return {
+        "url": p.url,
+        "pk": p.pk,
+        "title": p.title,
+        "titulo": p.titulo,
+        "descripcion": p.descripcion,
+    }
+
+
+@_safe_json
+def fixtures_area(request):
+    _check_test_token(request)
+    home = _crear_home()
+    area = AreaPage(
+        title=f"Area test {uuid.uuid4().hex[:6]}",
+        slug=f"area-test-{uuid.uuid4().hex[:8]}",
+        titulo="Area Page",
+        descripcion="Pagina de area de prueba",
+    )
+    home.add_child(instance=area)
+    area.save_revision().publish()
+
+    return JsonResponse({
+        "home": {"pk": home.pk, "url": home.url},
+        "area": _serializar(area)
+    })
+
+
 @_safe_json
 def fixtures_producto(request):
     _check_test_token(request)
     titulo = request.POST.get("titulo", "Producto Page")
     descripcion = request.POST.get("descripcion", "")
 
-    home = _crear_home()
-
-    area = AreaPage(
-        title=f"Area test {uuid.uuid4().hex[:6]}",
-        slug=f"area-test-{uuid.uuid4().hex[:8]}",
-        titulo="Area Page",
-        descripcion="Página de area de test",
-    )
-    home.add_child(instance=area)
-    area.save_revision().publish()
+    try:
+        area = AreaPage.objects.get(pk=request.POST.get("area_pk"))
+    except (AreaPage.DoesNotExist, ValueError):
+        return JsonResponse({"error": "area_pk inválido"}, status=400)
 
     producto = ProductoPage(
         title=f"Producto test {uuid.uuid4().hex[:6]}",
@@ -102,16 +126,52 @@ def fixtures_producto(request):
     area.add_child(instance=producto)
     producto.save_revision().publish()
 
-    def _ser(p):
-        return {
-            "url": p.url, "pk": p.pk, "title": p.title,
-            "titulo": p.titulo, "descripcion": p.descripcion
-        }
+    return JsonResponse({
+        "producto": _serializar(producto),
+    })
+
+
+@_safe_json
+def fixtures_area_productos(request):
+    _check_test_token(request)
+
+    try:
+        area = AreaPage.objects.get(pk=request.POST.get("area_pk"))
+        producto = ProductoPage.objects.get(pk=request.POST.get("producto_pk"))
+    except (AreaPage.DoesNotExist, ProductoPage.DoesNotExist, ValueError):
+        return JsonResponse(
+            {"error": "area_pk o producto_pk inválido"},
+            status=400,
+        )
+
+    imagen = None
+    imagen_file = request.FILES.get("imagen")
+    if imagen_file:
+        content = ContentFile(imagen_file.read(), name="producto.png")
+        imagen = Image(title="imagen de producto")
+        imagen.file.save("producto.png", content, save=False)
+        imagen.save()
+
+    producto_value = {
+        "nombre": request.POST.get("nombre", producto.titulo),
+        "descripcion": request.POST.get("descripcion", ""),
+        "imagen": imagen,
+        "link": {"link_to": "page", "page": producto},
+    }
+
+    area.productos = StreamValue(
+        area.productos.stream_block,
+        [("producto", producto_value)],
+        is_lazy=False,
+    )
+    area.save_revision().publish()
 
     return JsonResponse({
-        "home": {"pk": home.pk, "url": home.url},
-        "area": _ser(area),
-        "producto": _ser(producto),
+        "url": area.url,
+        "pk": area.pk,
+        "title": area.title,
+        "titulo": area.titulo,
+        "descripcion": area.descripcion,
     })
 
 

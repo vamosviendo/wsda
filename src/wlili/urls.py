@@ -24,6 +24,8 @@ urlpatterns = [
 # Para tests remotos
 if os.environ.get("DJANGO_TEST_TOKEN"):
     from utils.remote_test_fixtures import (
+        fixtures_area,
+        fixtures_area_productos,
         fixtures_producto,
         fixtures_producto_cleanup,
         fixtures_producto_elemento,
@@ -38,6 +40,8 @@ if os.environ.get("DJANGO_TEST_TOKEN"):
         path("__test__/admin-user/", remote_test_admin, name="remote-test-admin"),
         path("__test__/deployment-smoke/", deployment_smoke, name="deployment-smoke"),
         path("__test__/delete-document/", delete_document_smoke, name="delete-document-smoke"),
+        path("__test__/fixtures/area/", fixtures_area, name="fixture-area"),
+        path("__test__/fixtures/area/productos/", fixtures_area_productos, name="fixture-area_productos"),
         path("__test__/fixtures/producto/", fixtures_producto, name="fixtures-producto"),
         path("__test__/fixtures/producto/elemento/", fixtures_producto_elemento, name="fixtures-producto-elemento"),
         path("__test__/fixtures/producto/cleanup/", fixtures_producto_cleanup, name="fixtures-producto-cleanup"),

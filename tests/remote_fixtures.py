@@ -52,13 +52,18 @@ class RemoteProductoFixtures:
 
         return response.json()
 
-    def setup(self, titulo, descripcion):
+    def setup_area(self):
+        data = self._post("/__test__/fixtures/area/", {})
+        self.home_pk = data["home"]["pk"]
+        return Handle(data["area"])
+
+    def setup_producto(self, area_pk, titulo, descripcion):
         data = self._post("/__test__/fixtures/producto/", {
+            "area_pk": area_pk,
             "titulo": titulo,
             "descripcion": descripcion,
         })
-        self.home_pk = data["home"]["pk"]
-        return Handle(data["area"]), Handle(data["producto"])
+        return Handle(data["producto"])
 
     def crear_elemento(
             self, producto_pk, tipo, titulo, alt_thumbnail="",
@@ -103,6 +108,22 @@ class RemoteProductoFixtures:
         finally:
             for f in files.values():
                 f[1].close()
+
+    def area_con_productos(
+            self, area_pk, producto_pk, nombre, descripcion, imagen_path):
+        fobj = open(imagen_path, "rb")
+        files = {"imagen": (os.path.basename(imagen_path), fobj, "image/png")}
+        data = {
+            "area_pk": area_pk,
+            "producto_pk": producto_pk,
+            "nombre": nombre,
+            "descripcion": descripcion or "",
+        }
+
+        try:
+            return Handle(self._post("/__test__/fixtures/area/productos/", data, files))
+        finally:
+            fobj.close()
 
     def cleanup(self):
         if self.home_pk:
