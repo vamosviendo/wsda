@@ -21,6 +21,7 @@ class RemoteProductoFixtures:
         self.base_url = base_url
         self.token = token
         self.home_pk = None
+        self.cleanup_pks = []
 
         # Varios intentos de conexión para evitar errores de conectividad
         retry = Retry(
@@ -125,7 +126,37 @@ class RemoteProductoFixtures:
         finally:
             fobj.close()
 
+    def crear_pagina_simple(
+            self, tipo, title, page_data=None, show_in_menus=False):
+        data = {"tipo": tipo, "title": title}
+        if page_data:
+            data["page_data"] = json.dumps(page_data)
+        if show_in_menus:
+            data["show_in_menus"] = "true"
+        handle = Handle(self._post("/__test__/fixtures/pagina/", data))
+        self.cleanup_pks.append(handle.pk)
+        return handle
+
+    def crear_curriculum(self,
+            title="Curriculum",
+            entradas=None,
+            show_in_menus=False):
+        data = {"title": title}
+        if show_in_menus:
+            data["show_in_menus"] = "true"
+        if entradas:
+            data["entradas"] = json.dumps(entradas)
+        handle = Handle(self._post("/__test__/fixtures/curriculum/", data))
+        self.cleanup_pks.append(handle.pk)
+        return handle
+
     def cleanup(self):
+        for pk in reversed(self.cleanup_pks):
+            self._cleanup_pk(pk)
+        self.cleanup_pks = []
         if self.home_pk:
             self._post("/__test__/fixtures/producto/cleanup/", {"home_pk": self.home_pk})
             self.home_pk = None
+
+    def _cleanup_pk(self, pk):
+        self._post("/__test__/fixtures/pagina/cleanup/", {"pk": pk})

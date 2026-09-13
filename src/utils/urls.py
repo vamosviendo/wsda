@@ -3,6 +3,9 @@ from django.urls import path
 from utils.remote_test_fixtures import (
     fixtures_area,
     fixtures_area_productos,
+    fixtures_curriculum,
+    fixtures_pagina_cleanup,
+    fixtures_pagina_simple,
     fixtures_producto,
     fixtures_producto_cleanup,
     fixtures_producto_elemento,
@@ -22,4 +25,7 @@ urlpatterns = [
     path("fixtures/producto/", fixtures_producto, name="fixtures-producto"),
     path("fixtures/producto/elemento/", fixtures_producto_elemento, name="fixtures-producto-elemento"),
     path("fixtures/producto/cleanup/", fixtures_producto_cleanup, name="fixtures-producto-cleanup"),
+    path("fixtures/pagina/", fixtures_pagina_simple, name="fixtures-pagina"),
+    path("fixtures/curriculum/", fixtures_curriculum, name="fixtures-curriculum"),
+    path("fixtures/pagina/cleanup/", fixtures_pagina_cleanup, name="fixtures-pagina-cleanup"),
 ]

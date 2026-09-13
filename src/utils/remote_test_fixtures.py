@@ -2,8 +2,10 @@ import json
 import traceback
 import uuid
 
+from django.apps import apps
 from django.core.files.base import ContentFile
 from django.http import Http404, JsonResponse
+from django.utils.text import slugify
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from wagtail.blocks import StreamValue
@@ -12,6 +14,7 @@ from wagtail.images import get_image_model
 from wagtail.models import Collection, Page, Site
 
 from home.models import HomePage
+from paginas.models import CurriculumPage
 from produccion.models import AreaPage, ProductoPage
 from utils.remote_test_utils import _check_test_token
 
@@ -19,6 +22,11 @@ from utils.remote_test_utils import _check_test_token
 Image = get_image_model()
 
 BLOCK_FIELDS = {"thumbnail", "alt_thumbnail", "tipo", "titulo", "block_id"}
+
+SIMPLE_PAGE_TYPES = {
+    "acerca_de": "paginas.AcercaDePage",
+    "contacto": "paginas.ContactPage",
+}
 
 
 def _crear_home():
@@ -173,6 +181,97 @@ def fixtures_area_productos(request):
         "titulo": area.titulo,
         "descripcion": area.descripcion,
     })
+
+
+@_safe_json
+def fixtures_pagina_simple(request):
+    _check_test_token(request)
+
+    tipo = request.POST.get("tipo")
+    if tipo not in SIMPLE_PAGE_TYPES:
+        return JsonResponse({"error": f"tipo no permitido: {tipo}"}, status=400)
+
+    app_label, _, model_name = SIMPLE_PAGE_TYPES[tipo].partition(".")
+    # app_label, model_name = SIMPLE_PAGE_TYPES[tipo].split(".")
+    Model = apps.get_model(app_label, model_name)
+    if not issubclass(Model, Page):
+        return JsonResponse({"error": "modelo no es Page"}, status=400)
+
+    # home = _crear_home()
+    site = Site.objects.filter(is_default_site=True).first() or Site.objects.first()
+    if site is None:
+        raise Http404()
+
+    title = request.POST.get("title", "Página de prueba")
+    slug = f"{slugify(title)}-{uuid.uuid4().hex[:8]}"
+
+    pagina = Model(title=title, slug=slug)
+
+    page_data_raw = request.POST.get("page_data")
+    if page_data_raw:
+        for key, value in json.loads(page_data_raw).items():
+            if hasattr(pagina, key):
+                setattr(pagina, key, value)
+
+    if request.POST.get("show_in_menus") == "true":
+        pagina.show_in_menus = True
+
+    # home.add_child(instance=pagina)
+    site.root_page.add_child(instance=pagina)
+    pagina.save_revision().publish()
+
+    return JsonResponse({
+        "url": pagina.url,
+        "pk": pagina.pk,
+        "title": pagina.title,
+        # "cleanup_pk": pagina.pk,
+    })
+
+
+@_safe_json
+def fixtures_curriculum(request):
+    _check_test_token(request)
+
+    # home = _crear_home()
+    site = Site.objects.filter(is_default_site=True).first() or Site.objects.first()
+
+
+    title = request.POST.get("title", "Curriculum")
+    slug = f"{slugify(title)}-{uuid.uuid4().hex[:8]}"
+
+    pagina = CurriculumPage(title=title, slug=slug)
+
+    if request.POST.get("show_in_menus") == "true":
+        pagina.show_in_menus = True
+
+    entradas_raw = request.POST.get("entradas")
+    if entradas_raw:
+        entradas = json.loads(entradas_raw)
+        pagina.entradas = StreamValue(
+            pagina.entradas.stream_block,
+            [("entrada", e) for e in entradas],
+            is_lazy=False,
+        )
+
+    # home.add_child(instance=pagina)
+    site.root_page.add_child(instance=pagina)
+    pagina.save_revision().publish()
+
+    return JsonResponse({
+        "url": pagina.url,
+        "pk": pagina.pk,
+        "title": pagina.title,
+        # "cleanup_pk": pagina.pk,
+    })
+
+
+@_safe_json
+def fixtures_pagina_cleanup(request):
+    _check_test_token(request)
+    pk = request.POST.get("pk")
+    if pk:
+        Page.objects.filter(pk=pk).delete()
+    return JsonResponse({"status": "ok", "deleted": bool(pk)})
 
 
 @_safe_json

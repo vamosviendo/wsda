@@ -1,3 +1,5 @@
+import os
+
 import pytest
 from selenium.webdriver.common.by import By
 
@@ -5,7 +7,16 @@ from paginas.models import ContactPage
 
 
 @pytest.fixture
-def contacto_page(test_page):
+def contacto_page(remote_fixtures, test_page):
+    if os.environ.get("TEST_SERVER"):
+        return remote_fixtures.crear_pagina_simple(
+            tipo="contacto",
+            title="Contacto",
+            page_data={
+                "thank_you_text": "<p>Gracias por contactar. Su mensaje ha sido enviado</p>",
+            },
+        )
+
     return test_page(
         page_type=ContactPage,
         title="Contacto",
