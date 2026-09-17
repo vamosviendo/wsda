@@ -60,6 +60,70 @@ pytest -v
 pytest --reuse-db --no-migrateci
 ```
 
+### Running Functional Tests Against Staging (Remote Fixtures)
+
+Los functional tests pueden ejecutarse contra el staging server. Cuando `TEST_SERVER`
+está definido, los fixtures **no crean datos vía ORM local**; en su lugar, llaman a
+**endpoints HTTP** del server remoto que crean datos reales en staging. El navegador
+(Selenium) apunta a staging, no al `live_server` local.
+
+```bash
+DJANGO_TEST_TOKEN="<token>" \
+TEST_SERVER=staging.lilianamedela.com.ar \
+DJANGO_TEST_ADMIN_USERNAME=admin \
+DJANGO_TEST_ADMIN_PASSWORD="<password>" \
+.vwlili/bin/pytest tests/functional/<archivo>.py
+```
+Variables de entorno:
+
+    TEST_SERVER — URL del server remoto. Si está presente, activa el modo remoto.
+    DJANGO_TEST_TOKEN — token que autentica los endpoints de test (X-Test-Token). Sin él, los endpoints no se registran.
+    DJANGO_TEST_ADMIN_USERNAME / DJANGO_TEST_ADMIN_PASSWORD — credenciales para crear el admin remoto (usado por algunos tests).
+
+Arquitectura (3 capas):
+
+    Server — src/utils/remote_test_fixtures.py: vistas @_safe_json (aplican @csrf_exempt + @require_POST + _check_test_token). Registradas en src/utils/urls.py, incluidas en src/wlili/urls.py solo bajo if os.environ.get("DJANGO_TEST_TOKEN"). Retornan JSON; ante error devuelven el traceback en {"error", "traceback"}.
+    Cliente — tests/remote_fixtures.py: clase RemoteProductoFixtures con métodos por fixture (crean páginas vía HTTP) y Handle (objeto liviano con .url, .pk, .title, .titulo, .descripcion, .block_id). Usa requests.Session con Retry(connect=5) para tolerar conectividad intermitente.
+    Fixtures — en tests/conftest.py, cada fixture hace:
+
+```python
+    if os.environ.get("TEST_SERVER"):
+        return remote_fixtures.<metodo_remoto>()
+# ... lógica ORM local
+```
+Endpoints disponibles (ruta → función → propósito):
+
+Ruta 	Función 	Propósito
+
+- /\_\_test__/fixtures/area/ 	fixtures_area 	Crea test-home + area; cuelga del site root_page
+- /\_\_test__/fixtures/producto/ 	fixtures_producto 	Crea producto bajo un area_pk
+- /\_\_test__/fixtures/producto/elemento/ 	fixtures_producto_elemento 	Agrega un elemento al producto
+- /\_\_test__/fixtures/area/productos/ 	fixtures_area_productos 	Rellena el StreamField productos del área (imagen + link)
+- /\_\_test__/fixtures/pagina/ 	fixtures_pagina_simple 	Crea AcercaDePage/ContactPage bajo site.root_page (slug con uuid)
+- /\_\_test__/fixtures/curriculum/ 	fixtures_curriculum 	Crea CurriculumPage con entradas (StreamField)
+- /\_\_test__/fixtures/homepage/ 	fixtures_homepage 	Configura la homepage real con una franja; captura el body original
+- /\_\_test__/fixtures/homepage/cleanup/ 	fixtures_homepage_cleanup 	Restaura el body original de la homepage
+- /\_\_test__/fixtures/pagina/cleanup/ 	fixtures_pagina_cleanup 	Borra una página por pk
+- /\_\_test__/fixtures/producto/cleanup/ 	fixtures_producto_cleanup 	Borra el test-home (y su subtree) por home_pk
+
+Navegación vs URL directa:
+
+    Páginas accedidas desde el menú (AcercaDePage, ContactPage, CurriculumPage, HomePage) cuelgan del site.root_page real de staging (show_in_menus=True, slug con uuid).
+    Páginas accedidas por URL directa (AreaPage, ProductoPage, ElementoPage) cuelgan de un test-home-<uuid> aislado.
+
+Cleanup: El fixture remote_fixtures (teardown) llama client.cleanup(), que:
+
+    Borra páginas de contenido por pk (cleanup_pks).
+    Borra el test-home por home_pk.
+    Restaura el body original de la homepage (homepage_original_body).
+
+Reglas de diseño (importante):
+
+    test_page (factory de tests/conftest.py) NO debe volverse remoto-consciente. Es un factory de ORM local usado por tests unitarios. Los functional tests que crean datos deben usar fixtures remotos específicos.
+    Los endpoints aceptan una lista blanca de modelos (e.g. SIMPLE_PAGE_TYPES) y validan issubclass(model, Page); no aceptan nombres de modelo arbitrarios.
+    Los tests que dependen del ORM (consultas a modelos, mutación de objetos) no funcionan en remoto y deben refactorizarse a asserts puramente de template.
+
+
 ### Running the Development Server
 
 ```bash
@@ -166,10 +230,10 @@ Follow this structure in tests:
 
 ### Functional Tests (Selenium)
 
-- Inherit from `FunctionalTestBase`
-- Use explicit waits (`wait_for`, `wait_for_text`)
-- Take screenshots on failure
-- Clean up in `tearDownClass`
+- Heredan de `tests.functional.base.MiFirefox` (con `base_url`).
+- Usan `browser.wait_for`, `browser.wait_fors`, `browser.wait_for_not` (waits explícitos).
+- `browser.get_page()` reintenta ante `about:neterror` (conectividad intermitente a staging).
+- Para ejecutarlos contra staging, ver "Running Functional Tests Against Staging (Remote Fixtures)".
 
 ### Unit tests:
 - Principalmente testean funciones o métodos.

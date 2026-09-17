@@ -111,7 +111,7 @@ def fixtures_homepage(request):
     imagen = None
     imagen_file = request.FILES.get("imagen")
     if imagen_file:
-        content = ContentFile(imagen_file.read(), name = "franja.png")
+        content = ContentFile(imagen_file.read(), name="franja.png")
         imagen = Image(title="imagen de franja")
         imagen.file.save("franja.png", content, save=False)
         imagen.save()
@@ -231,12 +231,10 @@ def fixtures_pagina_simple(request):
         return JsonResponse({"error": f"tipo no permitido: {tipo}"}, status=400)
 
     app_label, _, model_name = SIMPLE_PAGE_TYPES[tipo].partition(".")
-    # app_label, model_name = SIMPLE_PAGE_TYPES[tipo].split(".")
     Model = apps.get_model(app_label, model_name)
     if not issubclass(Model, Page):
         return JsonResponse({"error": "modelo no es Page"}, status=400)
 
-    # home = _crear_home()
     site = Site.objects.filter(is_default_site=True).first() or Site.objects.first()
     if site is None:
         raise Http404()
@@ -255,7 +253,6 @@ def fixtures_pagina_simple(request):
     if request.POST.get("show_in_menus") == "true":
         pagina.show_in_menus = True
 
-    # home.add_child(instance=pagina)
     site.root_page.add_child(instance=pagina)
     pagina.save_revision().publish()
 
@@ -263,7 +260,6 @@ def fixtures_pagina_simple(request):
         "url": pagina.url,
         "pk": pagina.pk,
         "title": pagina.title,
-        # "cleanup_pk": pagina.pk,
     })
 
 
@@ -271,7 +267,6 @@ def fixtures_pagina_simple(request):
 def fixtures_curriculum(request):
     _check_test_token(request)
 
-    # home = _crear_home()
     site = Site.objects.filter(is_default_site=True).first() or Site.objects.first()
 
 
@@ -292,7 +287,6 @@ def fixtures_curriculum(request):
             is_lazy=False,
         )
 
-    # home.add_child(instance=pagina)
     site.root_page.add_child(instance=pagina)
     pagina.save_revision().publish()
 
@@ -300,7 +294,6 @@ def fixtures_curriculum(request):
         "url": pagina.url,
         "pk": pagina.pk,
         "title": pagina.title,
-        # "cleanup_pk": pagina.pk,
     })
 
 
@@ -383,11 +376,6 @@ def fixtures_homepage_cleanup(request):
     if original_raw:
         field = homepage._meta.get_field("body")
         homepage.body = field.stream_block.to_python(json.loads(original_raw))
-        # homepage.body = StreamValue(
-        #     field.stream_block,
-        #     json.loads(original_raw),
-        #     is_lazy=False,
-        # )
         homepage.save_revision().publish()
 
     return JsonResponse({"status": "ok", "restored": bool(original_raw)})

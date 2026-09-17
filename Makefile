@@ -73,4 +73,4 @@ staging-on:
 
 # Comandos de control de versiones
 tag-live:
-		git tag -f LIVE && export TAG=`date +DEPLOYED-%F/%H%M` && git tag $TAG && git push -f LIVE $TAG
+		git tag -f LIVE && export TAG=`date +DEPLOYED-%F/%H%M` && git tag $TAG && git push origin -f --tags
