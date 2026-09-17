@@ -96,6 +96,45 @@ def _serializar(p):
 
 
 @_safe_json
+def fixtures_homepage(request):
+    _check_test_token(request)
+
+    site = Site.objects.filter(is_default_site=True).first() or Site.objects.first()
+    if site is None:
+        raise Http404()
+    homepage = site.root_page.specific
+    if not isinstance(homepage, HomePage):
+        return JsonResponse({"error": "Root page no es HomePage"}, status=400)
+
+    original_body = list(homepage.body.raw_data)
+
+    imagen = None
+    imagen_file = request.FILES.get("imagen")
+    if imagen_file:
+        content = ContentFile(imagen_file.read(), name = "franja.png")
+        imagen = Image(title="imagen de franja")
+        imagen.file.save("franja.png", content, save=False)
+        imagen.save()
+
+    area_url = request.POST.get("area_url", "")
+    homepage.body = StreamValue(
+        homepage.body.stream_block,
+        [("franja", {
+            "imagen": imagen,
+            "url": {"link_to": "custom_url", "custom_url": area_url}
+        })],
+        is_lazy=False,
+    )
+    homepage.save_revision().publish()
+
+    return JsonResponse({
+        "url": homepage.url,
+        "pk": homepage.pk,
+        "original_body": original_body,
+    })
+
+
+@_safe_json
 def fixtures_area(request):
     _check_test_token(request)
     home = _crear_home()
@@ -266,15 +305,6 @@ def fixtures_curriculum(request):
 
 
 @_safe_json
-def fixtures_pagina_cleanup(request):
-    _check_test_token(request)
-    pk = request.POST.get("pk")
-    if pk:
-        Page.objects.filter(pk=pk).delete()
-    return JsonResponse({"status": "ok", "deleted": bool(pk)})
-
-
-@_safe_json
 def fixtures_producto_elemento(request):
     _check_test_token(request)
 
@@ -338,6 +368,38 @@ def fixtures_producto_elemento(request):
         "tipo": elemento.tipo,
         "block_id": block_value["block_id"],
     })
+
+
+@_safe_json
+def fixtures_homepage_cleanup(request):
+    _check_test_token(request)
+
+    site = Site.objects.filter(is_default_site=True).first() or Site.objects.first()
+    if site is None:
+        return JsonResponse({"status": "ok", "restored": False})
+
+    homepage = site.root_page.specific
+    original_raw = request.POST.get("original_body")
+    if original_raw:
+        field = homepage._meta.get_field("body")
+        homepage.body = field.stream_block.to_python(json.loads(original_raw))
+        # homepage.body = StreamValue(
+        #     field.stream_block,
+        #     json.loads(original_raw),
+        #     is_lazy=False,
+        # )
+        homepage.save_revision().publish()
+
+    return JsonResponse({"status": "ok", "restored": bool(original_raw)})
+
+
+@_safe_json
+def fixtures_pagina_cleanup(request):
+    _check_test_token(request)
+    pk = request.POST.get("pk")
+    if pk:
+        Page.objects.filter(pk=pk).delete()
+    return JsonResponse({"status": "ok", "deleted": bool(pk)})
 
 
 @csrf_exempt

@@ -21,6 +21,7 @@ class RemoteProductoFixtures:
         self.base_url = base_url
         self.token = token
         self.home_pk = None
+        self.homepage_original_body = None
         self.cleanup_pks = []
 
         # Varios intentos de conexión para evitar errores de conectividad
@@ -48,10 +49,22 @@ class RemoteProductoFixtures:
         try:
             response.raise_for_status()
         except requests.exceptions.HTTPError:
-            print(f"\n[FIXTURE REMOTE 500] {response.url}\n{response.text[:3000]}")
+            print(f"\n[FIXTURE REMOTE ERROR] {response.url}\n{response.text[:3000]}")
             raise
 
         return response.json()
+
+    def set_homepage_franja(self, area_url, imagen_path):
+        fobj = open(imagen_path, 'rb')
+        files = {"imagen": (os.path.basename(imagen_path), fobj, "image/png")}
+        data = {"area_url": area_url}
+        try:
+            response = self._post("/__test__/fixtures/homepage/", data, files)
+        finally:
+            fobj.close()
+
+        self.homepage_original_body = response.get("original_body")
+        return Handle(response)
 
     def setup_area(self):
         data = self._post("/__test__/fixtures/area/", {})
@@ -157,6 +170,12 @@ class RemoteProductoFixtures:
         if self.home_pk:
             self._post("/__test__/fixtures/producto/cleanup/", {"home_pk": self.home_pk})
             self.home_pk = None
+        if self.homepage_original_body is not None:
+            self._post(
+                "/__test__/fixtures/homepage/cleanup/",
+                {"original_body": json.dumps(self.homepage_original_body)}
+            )
+            self.homepage_original_body = None
 
     def _cleanup_pk(self, pk):
         self._post("/__test__/fixtures/pagina/cleanup/", {"pk": pk})
