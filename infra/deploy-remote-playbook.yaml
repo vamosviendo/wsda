@@ -103,13 +103,14 @@
         owner: 1234
       become: true
 
-    - name: Asegurar que directorio media existe fuera del container
+    - name: Asegurar que el directorio media existe fuera del container
       ansible.builtin.file:
         path: "{{ site_path }}/media"
         state: directory
         mode: '0755'
         owner: 1234
-        group: vv
+        group: 1234
+        recurse: true
       become: true
 
     - name: Verificar si existe swapfile
