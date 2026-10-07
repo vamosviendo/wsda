@@ -1,15 +1,13 @@
 from wagtail.blocks import (
     CharBlock,
     ChoiceBlock,
-    RichTextBlock,
     StreamBlock,
     StructBlock,
     TextBlock,
-    URLBlock,
+    URLBlock, BooleanBlock,
 )
 from wagtail.documents.blocks import DocumentChooserBlock
 from wagtail.images.blocks import ImageBlock
-from wagtail_link_block.blocks import LinkBlock
 
 
 TIPO_CHOICES = [
@@ -21,6 +19,7 @@ TIPO_CHOICES = [
 
 
 class ElementoBlock(StructBlock):
+    compuesto = BooleanBlock(required=False)
     thumbnail = ImageBlock(required=False)
     alt_thumbnail = CharBlock(required=False, max_length=255)
     tipo = ChoiceBlock(
@@ -42,17 +41,3 @@ class ElementoBlock(StructBlock):
 
 class ElementosStreamBlock(StreamBlock):
     elemento = ElementoBlock(group="Galería")
-
-
-class ProductoBlock(StructBlock):
-    nombre = CharBlock()
-    descripcion = RichTextBlock(required=False)
-    imagen = ImageBlock()
-    link = LinkBlock()
-
-    class Meta:
-        template = "produccion/blocks/producto_block.html"
-
-
-class ProduccionStreamBlock(StreamBlock):
-    producto = ProductoBlock(group="Section")

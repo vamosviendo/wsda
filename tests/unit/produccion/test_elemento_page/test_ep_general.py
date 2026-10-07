@@ -2,68 +2,68 @@ from produccion.models import ElementoPage
 
 
 def test_block_id_de_pagina_coincide_con_el_de_el_block(
-        producto_page, elemento):
-    block = producto_page.elementos[0]
-    page = producto_page.get_children().specific().first()
+        elemento_compuesto, elemento):
+    block = elemento_compuesto.elementos[0]
+    page = elemento_compuesto.get_children().specific().first()
 
     assert block.value.get("block_id") is not None
     assert page.block_id is not None
     assert block.value.get("block_id") == str(page.block_id)
 
 
-def test_titulo_vacio_se_guarda_como_cadena_vacia(producto_page):
+def test_titulo_vacio_se_guarda_como_cadena_vacia(elemento_compuesto):
     elem = ElementoPage(
         title="Test", slug="test-sin-titulo", titulo=""
     )
-    producto_page.add_child(instance=elem)
+    elemento_compuesto.add_child(instance=elem)
     assert elem.titulo == ""
 
 
-def test_permite_guardar_imagenes(producto_page, objeto_imagen):
+def test_permite_guardar_imagenes(elemento_compuesto, objeto_imagen):
     elem = ElementoPage(
         title="Test", slug="test-img", thumbnail=objeto_imagen, tipo="imagen"
     )
-    producto_page.add_child(instance=elem)
+    elemento_compuesto.add_child(instance=elem)
     assert elem.tipo == "imagen"
     assert elem.thumbnail == objeto_imagen
 
 
-def test_permite_guardar_texto(producto_page):
+def test_permite_guardar_texto(elemento_compuesto):
     elem = ElementoPage(
         title="Test", slug="test-texto",
         tipo="texto", contenido_texto="<p>Texto de prueba</p>"
     )
-    producto_page.add_child(instance=elem)
+    elemento_compuesto.add_child(instance=elem)
     assert elem.tipo == "texto"
     assert "<p>Texto de prueba</p>" in elem.contenido_texto
 
 
-def test_permite_guardar_video_externo(producto_page):
+def test_permite_guardar_video_externo(elemento_compuesto):
     elem = ElementoPage(
         title="Test", slug="test-video", tipo="video",
         contenido_url="https://www.youtube.com/watch?v=abc"
     )
-    producto_page.add_child(instance=elem)
+    elemento_compuesto.add_child(instance=elem)
     assert elem.tipo == "video"
     assert elem.contenido_url == "https://www.youtube.com/watch?v=abc"
 
 
-def test_permite_guardar_audio_externo(producto_page):
+def test_permite_guardar_audio_externo(elemento_compuesto):
     elem = ElementoPage(
         title="Test", slug="test-audio", tipo="audio",
         contenido_url="https://soundcloud.com/test"
     )
-    producto_page.add_child(instance=elem)
+    elemento_compuesto.add_child(instance=elem)
     assert elem.tipo == "audio"
     assert elem.contenido_url == "https://soundcloud.com/test"
 
 
-def test_permite_guardar_video_local(producto_page, objeto_documento_video):
+def test_permite_guardar_video_local(elemento_compuesto, objeto_documento_video):
     elem = ElementoPage(
         title="Test", slug="test-video-local", tipo="video",
         contenido_multimedia=objeto_documento_video
     )
-    producto_page.add_child(instance=elem)
+    elemento_compuesto.add_child(instance=elem)
     elem.refresh_from_db()
 
     assert elem.tipo == "video"
@@ -71,24 +71,24 @@ def test_permite_guardar_video_local(producto_page, objeto_documento_video):
     assert elem.contenido_multimedia.title == "documento de video de prueba"
 
 
-def test_permite_guardar_audio_local(producto_page, objeto_documento_audio):
+def test_permite_guardar_audio_local(elemento_compuesto, objeto_documento_audio):
     elem = ElementoPage(
         title="Test", slug="test-audio-local", tipo="audio",
         contenido_multimedia=objeto_documento_audio
     )
-    producto_page.add_child(instance=elem)
+    elemento_compuesto.add_child(instance=elem)
     elem.refresh_from_db()
 
     assert elem.tipo == "audio"
     assert elem.contenido_multimedia == objeto_documento_audio
     assert elem.contenido_multimedia.title == "documento de audio de prueba"
 
-def test_contenido_multimedia_puede_ser_none(producto_page):
+def test_contenido_multimedia_puede_ser_none(elemento_compuesto):
     elem = ElementoPage(
         title="Test", slug="test-video-local", tipo="video",
         contenido_multimedia=None
     )
-    producto_page.add_child(instance=elem)
+    elemento_compuesto.add_child(instance=elem)
     elem.refresh_from_db()
 
     assert elem.contenido_multimedia is None

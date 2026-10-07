@@ -14,9 +14,20 @@
     <div class="area-descripcion">{{ page.descripcion|richtext }}</div>
   {% endif %}
 
-  <div class="productos-grid">
-    {% for producto in page.productos %}
-      {% include_block producto %}
+  <div id="elementos-grid" class="elementos-grid">
+    {% for elemento in elementos %}
+      {% if elemento %}
+        <div class="elemento">
+          <a href="{{ elemento.url }}">
+            <div class="elemento-texto">
+              <h3 class="elemento-titulo-card">{{ elemento.titulo }}</h3>
+            </div>
+            <div class="elemento-imagen-card">
+              <img src="{{ elemento.get_thumbnail_url }}" alt="{{ elemento.alt_thumbnail }}">
+            </div>
+          </a>
+        </div>
+      {% endif %}
     {% endfor %}
   </div>
 {% endblock %}

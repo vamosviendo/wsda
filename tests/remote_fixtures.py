@@ -80,13 +80,14 @@ class RemoteProductoFixtures:
         return Handle(data["producto"])
 
     def crear_elemento(
-            self, producto_pk, tipo, titulo, alt_thumbnail="",
-            page_data=None, thumbnail=None):
+            self, padre_pk, tipo, titulo, alt_thumbnail="",
+            compuesto=False, page_data=None, thumbnail=None):
         data = {
-            "producto_pk": producto_pk,
+            "padre": padre_pk,
             "tipo": tipo,
             "titulo": titulo,
             "alt_thumbnail": alt_thumbnail,
+            "compuesto": str(compuesto).lower(),
         }
 
         files = {}
@@ -96,9 +97,7 @@ class RemoteProductoFixtures:
             if path:
                 fobj = open(path, "rb")
                 files["thumbnail"] = (
-                    os.path.basename(path),
-                    fobj,
-                    "image/png"
+                    os.path.basename(path), fobj, "image/png"
                 )
 
         if page_data:
@@ -117,7 +116,7 @@ class RemoteProductoFixtures:
             data["page_data"] = json.dumps(page_data)
 
         try:
-            data = self._post("/__test__/fixtures/producto/elemento/", data, files)
+            data = self._post("/__test__/fixtures/elemento/", data, files)
             return Handle(data)
         finally:
             for f in files.values():

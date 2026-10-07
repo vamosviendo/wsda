@@ -14,7 +14,8 @@
         {# Omitir el campo block_id #}
         {% if child.block.name != 'block_id' %}
             <div class="field {% if child.block.required %}required{% endif %}"
-                 data-contentpath="{{ child.block.name }}">
+                 data-contentpath="{{ child.block.name }}"
+                 {% if child.block_name != 'compuesto' %}data-simple-field{% endif %}>
                 {% if child.block.label %}
                     <label class="field__label" {% if child.id_for_label %}for="{{ child.id_for_label }}"{% endif %}>
                         {{ child.block.label }}{% if child.block.required %}<span class="required">*</span>{% endif %}
@@ -25,3 +26,21 @@
         {% endif %}
     {% endfor %}
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var raiz = document.querySelector('[data-elemento-block]');
+    if (!raiz) return;
+    var toggle = function () {
+        var check = raiz.querySelector('[data-contentpath="compuesto"] input');
+        var compuesto = check ? check.checked : false;
+        raiz.querySelectorAll('[data-simple-field]').forEach(function (el) {
+            el.style.display = compuesto ? 'none' : '';
+        });
+    };
+    raiz.addEventListener('change', function (e) {
+        if (e.target.closest('[data-contentpath="compuesto"]')) toggle();
+    });
+    toggle();
+});
+</script>

@@ -10,73 +10,106 @@
 {% block content %}
   <div id="elemento-layout" class="elemento-layout">
 
-    {% if page.tipo == "imagen" %}
-      {% if page.thumbnail %}
-        <div id="elemento-imagen" class="elemento-media elemento-imagen">
-          {% image page.imagen width-1600 as img_full %}
-          {% image page.imagen width-800 as img_preview %}
-          <img
-            src="{{ img_preview.url }}"
-            data-full="{{ img_full.url }}"
-            data-width="{{ img_full.width }}"
-            data-height="{{ img_full.height }}"
-            alt="{{ page.alt_thumbnail }}"
-            id="elemento-img-preview"
-            class="elemento-img-preview"
-          >
+    {% if page.compuesto %}
+      <div id="elementos-grid" class="imagenes-grid">
+        {% for elemento in elementos %}
+          {% if elemento %}
+          <div class="imagen">
+            <a href="{{ elemento.url }}">
+              {% if elemento.tipo == 'video' %}
+                <img class="tipo-icono tipo-icono-video"
+                     src="{% static 'img/icon_video.svg' %}"
+                     alt=""
+                     aria-hidden="true">
+              {% elif elemento.tipo == 'audio' %}
+                <img class="tipo-icono tipo-icono-audio"
+                     src="{% static 'img/icon_audio.svg' %}"
+                     alt=""
+                     aria-hidden="true">
+              {% elif elemento.tipo == 'texto' %}
+                <img class="tipo-icono tipo-icono-texto"
+                     src="{% static 'img/icon_texto.svg' %}"
+                     alt=""
+                     aria-hidden="true">
+              {% endif %}
+              <img src="{{ elemento.get_thumbnail_url }}" alt="{{ elemento.alt_thumbnail }}">
+            </a>
+          </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+    {% else %}
+
+      {% if page.tipo == "imagen" %}
+        {% if page.thumbnail %}
+          <div id="elemento-imagen" class="elemento-media elemento-imagen">
+            {% image page.imagen width-1600 as img_full %}
+            {% image page.imagen width-800 as img_preview %}
+            <img
+              src="{{ img_preview.url }}"
+              data-full="{{ img_full.url }}"
+              data-width="{{ img_full.width }}"
+              data-height="{{ img_full.height }}"
+              alt="{{ page.alt_thumbnail }}"
+              id="elemento-img-preview"
+              class="elemento-img-preview"
+            >
+          </div>
+        {% endif %}
+
+      {% elif page.tipo == "video" %}
+        <div id="elemento-video" class="elemento-media elemento-video">
+          {% if page.contenido_multimedia %}
+            <video controls preload="metadata"
+                   src="{{ page.contenido_multimedia.url }}"
+                   {% if page.thumbnail %}poster="{{ page.thumbnail.file.url }}"{% endif %}>
+              Tu navegador no soporta el elemento de video.
+            </video>
+          {% elif page.get_youtube_embed_id %}
+              <iframe
+                  src="https://www.youtube.com/embed/{{ page.get_youtube_embed_id }}"
+                  frameborder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowfullscreen
+                  referrerpolicy="strict-origin-when-cross-origin"
+              ></iframe>
+          {% elif page.contenido_url %}
+            {% embed page.contenido_url %}
+          {% elif page.thumbnail %}
+            {% image page.thumbnail width-1600 %}
+          {% endif %}
         </div>
+
+      {% elif page.tipo == "audio" %}
+        <div id="elemento-audio" class="elemento-media elemento-audio">
+          {% if page.contenido_multimedia %}
+            <audio controls preload="metadata" src="{{ page.contenido_multimedia.url }}">
+              Tu navegador no soporta el elemento de audio.
+            </audio>
+          {% elif page.contenido_url %}
+            <audio src="{{ page.contenido_url }}" controls>
+              Tu navegador no soporta el elemento de audio.
+            </audio>
+          {% elif page.thumbnail %}
+            {% image page.thumbnail width-800 %}
+          {% endif %}
+        </div>
+
+      {% elif page.tipo == "texto" %}
+        <div id="elemento-texto" class="elemento-media elemento-texto">
+          {% if page.contenido_texto %}
+            {{ page.contenido_texto|safe }}
+          {% elif page.contenido_url %}
+            <iframe src="{{ page.contenido_url }}" width="100%" height="600" frameborder="0">
+              Tu navegador no soporta iframes.
+            </iframe>
+          {% elif page.thumbnail %}
+            {% image page.thumbnail width-1000 %}
+          {% endif %}
+        </div>
+
       {% endif %}
-
-    {% elif page.tipo == "video" %}
-      <div id="elemento-video" class="elemento-media elemento-video">
-        {% if page.contenido_multimedia %}
-          <video controls preload="metadata"
-                 src="{{ page.contenido_multimedia.url }}"
-                 {% if page.thumbnail %}poster="{{ page.thumbnail.file.url }}"{% endif %}>
-            Tu navegador no soporta el elemento de video.
-          </video>
-        {% elif page.get_youtube_embed_id %}
-            <iframe
-                src="https://www.youtube.com/embed/{{ page.get_youtube_embed_id }}"
-                frameborder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowfullscreen
-                referrerpolicy="strict-origin-when-cross-origin"
-            ></iframe>
-        {% elif page.contenido_url %}
-          {% embed page.contenido_url %}
-        {% elif page.thumbnail %}
-          {% image page.thumbnail width-1600 %}
-        {% endif %}
-      </div>
-
-    {% elif page.tipo == "audio" %}
-      <div id="elemento-audio" class="elemento-media elemento-audio">
-        {% if page.contenido_multimedia %}
-          <audio controls preload="metadata" src="{{ page.contenido_multimedia.url }}">
-            Tu navegador no soporta el elemento de audio.
-          </audio>
-        {% elif page.contenido_url %}
-          <audio src="{{ page.contenido_url }}" controls>
-            Tu navegador no soporta el elemento de audio.
-          </audio>
-        {% elif page.thumbnail %}
-          {% image page.thumbnail width-800 %}
-        {% endif %}
-      </div>
-
-    {% elif page.tipo == "texto" %}
-      <div id="elemento-texto" class="elemento-media elemento-texto">
-        {% if page.contenido_texto %}
-          {{ page.contenido_texto|safe }}
-        {% elif page.contenido_url %}
-          <iframe src="{{ page.contenido_url }}" width="100%" height="600" frameborder="0">
-            Tu navegador no soporta iframes.
-          </iframe>
-        {% elif page.thumbnail %}
-          {% image page.thumbnail width-1000 %}
-        {% endif %}
-      </div>
 
     {% endif %}
 
@@ -101,6 +134,22 @@
 
     </div>
   </div>
+
+  {# Navegación anterior/siguiente entre elementos hermanos. #}
+  <nav class="navegacion-elementos">
+    {% with anterior=page.get_elemento_anterior siguiente=page.get_elemento_siguiente %}
+      {% if anterior %}
+        <a href="{{ anterior.url }}" id="elemento-anterior" class="elemento-anterior">
+          ← {{ anterior.titulo }}
+        </a>
+      {% endif %}
+      {% if siguiente %}
+        <a href="{{ siguiente.url }}" id="elemento-siguiente" class="elemento-siguiente">
+          {{ siguiente.titulo }} →
+        </a>
+      {% endif %}
+    {% endwith %}
+  </nav>
 {% endblock %}
 
 {% block extra_js %}

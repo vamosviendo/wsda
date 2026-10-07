@@ -28,15 +28,15 @@ def crear_estructura_basica(test_case):
     )
     return root_page, homepage
 
-def get_elemento_page_from_block_id(producto, block_id):
+def get_elemento_page_from_block_id(contenedor, block_id):
     return next(
-        e for e in producto.get_children().specific()
+        e for e in contenedor.get_children().specific()
         if str(e.block_id) == str(block_id)
     )
 
 
-def get_elemento_block_from_block_id(producto, block_id):
+def get_elemento_block_from_block_id(contenedor, block_id):
     return next(
-        e.value for e in producto.elementos
+        e.value for e in contenedor.elementos
         if e.value.get("block_id") == str(block_id)
     )

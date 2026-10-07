@@ -15,7 +15,7 @@ from wagtail.fields import RichTextField, StreamField
 from wagtail.models import Page
 from wagtail.blocks import StreamValue
 
-from produccion.blocks import ProduccionStreamBlock, ElementosStreamBlock
+from produccion.blocks import ElementosStreamBlock
 
 TIPO_CHOICES = [
     ('imagen', 'Imagen'),
@@ -25,41 +25,9 @@ TIPO_CHOICES = [
 ]
 
 
-class AreaPage(Page):
-    titulo = models.CharField(max_length=255)
-    descripcion = RichTextField(blank=True)
-    productos = StreamField(
-        ProduccionStreamBlock(),
-        blank=True,
-        use_json_field=True,
-        help_text="Agregue una imagen, un nombre y un enlace."
-    )
-
-    content_panels = Page.content_panels + [
-        FieldPanel("titulo"),
-        FieldPanel("descripcion"),
-        FieldPanel("productos"),
-    ]
-
-
-class ProductoPage(Page):
-    titulo = models.CharField(max_length=255)
-    descripcion = RichTextField(blank=True)
-    elementos = StreamField(
-        ElementosStreamBlock(),
-        blank=True,
-        use_json_field=True,
-        help_text="Agregue imágenes a la galería del producto."
-    )
-
-    subpage_types = ["produccion.ElementoPage"]
-
-    content_panels = Page.content_panels + [
-        FieldPanel("titulo"),
-        FieldPanel("descripcion"),
-        FieldPanel("elementos"),
-    ]
-
+class ContenedorMixin:
+    """ Mixin que provee a AreaPage y ElementoPage sincronización block-página
+        y filtrado de hijos en get_context """
     def save(self, *args, **kwargs):
         if getattr(self, '_syncing_from_block', False):
             super().save(*args, **kwargs)
@@ -143,6 +111,7 @@ class ProductoPage(Page):
         titulo = block_value.get('titulo') or 'Sin título'
         thumbnail = block_value.get('thumbnail')
         alt_thumbnail = block_value.get('alt_thumbnail') or ""
+        compuesto = block_value.get("compuesto", False)
         tipo = block_value.get("tipo", "imagen")
         contenido_url = block_value.get("contenido_url") or ""
         contenido_multimedia = block_value.get("contenido_multimedia")
@@ -163,6 +132,7 @@ class ProductoPage(Page):
             alt_thumbnail=alt_thumbnail,
             titulo=titulo,
             block_id=block_id,
+            compuesto=compuesto,
             tipo=tipo,
             contenido_url=contenido_url,
             contenido_multimedia=contenido_multimedia,
@@ -174,6 +144,7 @@ class ProductoPage(Page):
     def _actualizar_elemento_si_necesario(self, elemento, block_value):
         thumbnail = block_value.get("thumbnail")
         alt_thumbnail = block_value.get("alt_thumbnail") or ""
+        compuesto = block_value.get("compuesto", False)
         tipo = block_value.get("tipo", "imagen")
         contenido_url = block_value.get("contenido_url") or ""
         contenido_multimedia = block_value.get("contenido_multimedia")
@@ -182,6 +153,10 @@ class ProductoPage(Page):
         block_tiene_thumbnail = thumbnail is not None
         elemento_tiene_thumbnail = elemento.thumbnail_id is not None
 
+        # TODO: Refactor. A grosso modo:
+        #       For campo in campos:
+        #           if elemento.campo != campo: elemento.campo = campo
+        #       elemento.save()
         necesita_actualizar = (
             block_tiene_thumbnail != elemento_tiene_thumbnail
             or (block_tiene_thumbnail and elemento.thumbnail_id != thumbnail.id)
@@ -189,6 +164,8 @@ class ProductoPage(Page):
             elemento.alt_thumbnail != alt_thumbnail
         ) or (
             elemento.titulo != block_value.get('titulo')
+        ) or (
+            elemento.compuesto != compuesto
         ) or (
             elemento.tipo != tipo
         ) or (
@@ -204,6 +181,7 @@ class ProductoPage(Page):
             elemento.thumbnail = block_value.get('thumbnail')
             elemento.alt_thumbnail = block_value.get('alt_thumbnail')
             elemento.titulo = block_value.get('titulo')
+            elemento.compuesto = compuesto
             elemento.tipo = tipo
             elemento.contenido_url = contenido_url
             elemento.contenido_multimedia = contenido_multimedia
@@ -235,6 +213,42 @@ class ProductoPage(Page):
         context["elementos"] = elementos
         return context
 
+
+class AreaPage(ContenedorMixin, Page):
+    titulo = models.CharField(max_length=255)
+    descripcion = RichTextField(blank=True)
+    elementos = StreamField(
+        ElementosStreamBlock(),
+        blank=True,
+        use_json_field=True,
+        help_text="Agregue elementos simples o compuestos."
+    )
+
+    content_panels = Page.content_panels + [
+        FieldPanel("titulo"),
+        FieldPanel("descripcion"),
+        FieldPanel("elementos"),
+    ]
+
+
+class ProductoPage(ContenedorMixin, Page):
+    titulo = models.CharField(max_length=255)
+    descripcion = RichTextField(blank=True)
+    elementos = StreamField(
+        ElementosStreamBlock(),
+        blank=True,
+        use_json_field=True,
+        help_text="Agregue imágenes a la galería del producto."
+    )
+
+    subpage_types = ["produccion.ElementoPage"]
+
+    content_panels = Page.content_panels + [
+        FieldPanel("titulo"),
+        FieldPanel("descripcion"),
+        FieldPanel("elementos"),
+    ]
+
     def get_producto_anterior(self) -> Self | None:
         prev = self.get_prev_sibling()
         return prev.specific if prev else None
@@ -244,8 +258,9 @@ class ProductoPage(Page):
         return next.specific if next else None
 
 
-class ElementoPage(Page):
+class ElementoPage(ContenedorMixin, Page):
     block_id = models.UUIDField(null=True, blank=True, editable=False)
+    compuesto = models.BooleanField(default=False)
     thumbnail = models.ForeignKey(
         "wagtailimages.Image",
         null=True,
@@ -267,6 +282,12 @@ class ElementoPage(Page):
         blank=True,
         use_json_field=True,
     )
+    elementos = StreamField(
+        ElementosStreamBlock(),
+        blank=True,
+        use_json_field=True,
+        help_text="Sub-elementos de elemento compuesto."
+    )
     tipo = models.CharField(
         max_length=10,
         choices=TIPO_CHOICES,
@@ -283,9 +304,10 @@ class ElementoPage(Page):
     )
     contenido_texto = models.TextField(blank=True, default="")
 
-    parent_page_types = ["produccion.ProductoPage"]
+    parent_page_types = ["produccion.AreaPage", "produccion.ElementoPage"]
 
     content_panels = Page.content_panels + [
+        FieldPanel("compuesto"),
         FieldPanel("tipo"),
         MultiFieldPanel(
             [FieldPanel("thumbnail"), FieldPanel("alt_thumbnail")],
@@ -301,6 +323,7 @@ class ElementoPage(Page):
         ),
         FieldPanel("titulo"),
         FieldPanel("descripcion"),
+        FieldPanel("elementos"),
         FieldPanel("comentarios"),
     ]
 
@@ -338,6 +361,7 @@ class ElementoPage(Page):
 
         bypass_sync = kwargs.pop('bypass_sync', False)
 
+        # Sincroniza esta página con el bloque del padre (página→bloque).
         if self.block_id and self.pk is not None and not self._state.adding and not bypass_sync:
             padre = self.get_parent()
             if padre and hasattr(padre.specific, 'elementos'):
@@ -375,6 +399,7 @@ class ElementoPage(Page):
                 block_value['thumbnail'] = self.thumbnail
                 block_value['alt_thumbnail'] = self.alt_thumbnail
                 block_value['titulo'] = self.titulo
+                block_value["compuesto"] = self.compuesto
                 block_value['tipo'] = self.tipo
                 block_value['contenido_url'] = self.contenido_url
                 block_value['contenido_multimedia'] = self.contenido_multimedia
@@ -386,3 +411,11 @@ class ElementoPage(Page):
             is_lazy=False
         )
         padre.save(update_fields=['elementos'], bypass_sync=True)
+
+    def get_elemento_anterior(self) -> Self | None:
+        prev = self.get_prev_sibling()
+        return prev.specific if prev else None
+
+    def get_elemento_siguiente(self) -> Self | None:
+        next = self.get_next_sibling()
+        return next.specific if next else None

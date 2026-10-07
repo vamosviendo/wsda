@@ -16,7 +16,7 @@ from wagtail.images.tests.utils import get_test_image_file
 from wagtail.models import Collection, Locale, Page, Site
 
 from home.models import HomePage
-from produccion.models import AreaPage, ProductoPage
+from produccion.models import AreaPage, ElementoPage
 from tests.remote_fixtures import RemoteProductoFixtures
 from utils.test_utils import get_elemento_page_from_block_id
 
@@ -161,12 +161,13 @@ def test_page(db, site):
 @pytest.fixture
 def elemento_factory(remote_fixtures, site):
     def _factory(
-            producto: ProductoPage, thumbnail=None, alt_thumbnail="Imagen",
-            tipo="imagen", titulo="Elemento", page_data=None
+            padre: AreaPage | ElementoPage, thumbnail=None, alt_thumbnail="Imagen",
+            tipo="imagen", titulo="Elemento", compuesto=False, page_data=None
     ):
         if os.environ.get("TEST_SERVER"):
             return remote_fixtures.crear_elemento(
-                producto.pk, tipo, titulo, alt_thumbnail,
+                padre.pk, tipo, titulo, alt_thumbnail,
+                compuesto=compuesto,
                 page_data=page_data,
                 thumbnail=thumbnail,
             )
@@ -174,6 +175,7 @@ def elemento_factory(remote_fixtures, site):
         block_id = uuid.uuid4()
         stream_data = [
             ("elemento", {
+                "compuesto": compuesto,
                 "thumbnail": thumbnail,
                 "alt_thumbnail": alt_thumbnail,
                 "tipo": tipo,
@@ -181,14 +183,14 @@ def elemento_factory(remote_fixtures, site):
                 "block_id": str(block_id),
             }),
         ]
-        producto.elementos += StreamValue(
-            producto.elementos.stream_block,
+        padre.elementos += StreamValue(
+            padre.elementos.stream_block,
             stream_data,
             is_lazy=False,
         )
-        producto.save()
+        padre.save()
 
-        page = get_elemento_page_from_block_id(producto, block_id)
+        page = get_elemento_page_from_block_id(padre, block_id)
 
         if page_data:
             for key, value in page_data.items():
@@ -215,41 +217,35 @@ def area_page(remote_fixtures, test_page):
 
 
 @pytest.fixture
-def producto_page_2(remote_fixtures, test_page, area_page, producto_page):
+def elemento_compuesto(remote_fixtures, area_page, elemento_factory):
     if os.environ.get("TEST_SERVER"):
-        return remote_fixtures.setup_producto(
-            area_page.pk, "Producto Page 2", "Segunda página de producto genérica"
+        return remote_fixtures.setup_elemento_compuesto(
+            area_page.pk, "Elemento compuesto", "Elemento compuesto genérico"
         )
-
-    return test_page(
-        parent=area_page,
-        page_type=ProductoPage,
-        title="ProductoPage2",
-        titulo="Producto Page 2",
-        descripcion="Segunda página de producto genérica",
-    )
-
-
-@pytest.fixture
-def producto_page(remote_fixtures, test_page, area_page):
-    if os.environ.get("TEST_SERVER"):
-        return remote_fixtures.setup_producto(
-            area_page.pk, "Producto Page", "Página de producto genérica"
-        )
-
-    return test_page(
-        parent=area_page,
-        page_type=ProductoPage,
-        title="ProductoPage",
-        titulo="Producto Page",
-        descripcion="Página de producto genérica",
-    )
-
-
-@pytest.fixture
-def elemento(elemento_factory, objeto_imagen, producto_page):
     return elemento_factory(
-        producto=producto_page,
+        padre=area_page,
+        compuesto=True,
+        titulo="Elemento compuesto",
+    )
+
+
+@pytest.fixture
+def elemento_compuesto_2(remote_fixtures, area_page, elemento_factory):
+    if os.environ.get("TEST_SERVER"):
+        return remote_fixtures.setup_elemento_compuesto(
+            area_page.pk, "Elemento compuesto 2", "Segundo elemento compuesto genérico"
+        )
+    return elemento_factory(
+        padre=area_page,
+        compuesto=True,
+        titulo="Elemento compuesto 2",
+    )
+
+
+@pytest.fixture
+def elemento(elemento_factory, objeto_imagen, elemento_compuesto):
+    return elemento_factory(
+        padre=elemento_compuesto,
         thumbnail=objeto_imagen,
         alt_thumbnail="Imagen de elemento",
         titulo="Elemento"
@@ -257,9 +253,9 @@ def elemento(elemento_factory, objeto_imagen, producto_page):
 
 
 @pytest.fixture
-def elemento_2(elemento_factory, objeto_imagen, producto_page):
+def elemento_2(elemento_factory, objeto_imagen, elemento_compuesto):
     return elemento_factory(
-        producto=producto_page,
+        padre=elemento_compuesto,
         thumbnail=objeto_imagen,
         alt_thumbnail="Imagen de segundo elemento",
         titulo="Segundo elemento"
@@ -267,9 +263,9 @@ def elemento_2(elemento_factory, objeto_imagen, producto_page):
 
 
 @pytest.fixture
-def elemento_3(elemento_factory, producto_page, objeto_imagen):
+def elemento_3(elemento_factory, elemento_compuesto, objeto_imagen):
     return elemento_factory(
-        producto=producto_page,
+        padre=elemento_compuesto,
         thumbnail=objeto_imagen,
         alt_thumbnail="Imagen de tercer elemento",
         titulo="Tercer elemento"
@@ -277,9 +273,19 @@ def elemento_3(elemento_factory, producto_page, objeto_imagen):
 
 
 @pytest.fixture
-def elemento_audio(elemento_factory, producto_page):
+def elemento_de_area(elemento_factory, objeto_imagen, area_page):
     return elemento_factory(
-        producto=producto_page,
+        padre=area_page,
+        thumbnail=objeto_imagen,
+        alt_thumbnail="Imagen de elemento de área",
+        titulo="Elemento de área"
+    )
+
+
+@pytest.fixture
+def elemento_audio(elemento_factory, elemento_compuesto):
+    return elemento_factory(
+        padre=elemento_compuesto,
         tipo="audio",
         titulo="Elemento de audio",
         page_data={"contenido_url": "https://soundcloud.com/test"},
@@ -287,9 +293,9 @@ def elemento_audio(elemento_factory, producto_page):
 
 
 @pytest.fixture
-def elemento_video(elemento_factory, producto_page):
+def elemento_video(elemento_factory, elemento_compuesto):
     return elemento_factory(
-        producto=producto_page,
+        padre=elemento_compuesto,
         tipo="video",
         titulo="Elemento de video",
         page_data={"contenido_url": "https://www.youtube.com/watch?v=abc"},
@@ -297,9 +303,9 @@ def elemento_video(elemento_factory, producto_page):
 
 
 @pytest.fixture
-def elemento_texto(elemento_factory, producto_page):
+def elemento_texto(elemento_factory, elemento_compuesto):
     return elemento_factory(
-        producto=producto_page,
+        padre=elemento_compuesto,
         tipo="texto",
         titulo="Elemento de texto",
         page_data={"contenido_texto": "<p>Texto original</p>"},
