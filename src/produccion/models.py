@@ -231,33 +231,6 @@ class AreaPage(ContenedorMixin, Page):
     ]
 
 
-class ProductoPage(ContenedorMixin, Page):
-    titulo = models.CharField(max_length=255)
-    descripcion = RichTextField(blank=True)
-    elementos = StreamField(
-        ElementosStreamBlock(),
-        blank=True,
-        use_json_field=True,
-        help_text="Agregue imágenes a la galería del producto."
-    )
-
-    subpage_types = ["produccion.ElementoPage"]
-
-    content_panels = Page.content_panels + [
-        FieldPanel("titulo"),
-        FieldPanel("descripcion"),
-        FieldPanel("elementos"),
-    ]
-
-    def get_producto_anterior(self) -> Self | None:
-        prev = self.get_prev_sibling()
-        return prev.specific if prev else None
-
-    def get_producto_siguiente(self) -> Self | None:
-        next = self.get_next_sibling()
-        return next.specific if next else None
-
-
 class ElementoPage(ContenedorMixin, Page):
     block_id = models.UUIDField(null=True, blank=True, editable=False)
     compuesto = models.BooleanField(default=False)
