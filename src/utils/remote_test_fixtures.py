@@ -15,7 +15,7 @@ from wagtail.models import Collection, Page, Site
 
 from home.models import HomePage
 from paginas.models import CurriculumPage
-from produccion.models import AreaPage, ProductoPage
+from produccion.models import AreaPage, ElementoPage
 from utils.remote_test_utils import _check_test_token
 
 
@@ -95,6 +95,20 @@ def _serializar(p):
     }
 
 
+def _get_contenedor(padre_pk):
+    try:
+        padre = ElementoPage.objects.get(pk=padre_pk)
+        if not padre.compuesto:
+            return JsonResponse({"error": "El padre no es compuesto"}, status=400)
+        return padre
+    except ElementoPage.DoesNotExist:
+        pass
+    try:
+        return AreaPage.objects.get(pk=padre_pk)
+    except (AreaPage.DoesNotExist, ValueError):
+        return JsonResponse({"error": "padre_pk inválido"}, status=400)
+
+
 @_safe_json
 def fixtures_homepage(request):
     _check_test_token(request)
@@ -154,72 +168,101 @@ def fixtures_area(request):
 
 
 @_safe_json
-def fixtures_producto(request):
+def fixtures_elemento_compuesto(request):
     _check_test_token(request)
-    titulo = request.POST.get("titulo", "Producto Page")
+    titulo = request.POST.get("titulo", "Elemento Compuesto")
     descripcion = request.POST.get("descripcion", "")
 
-    try:
-        area = AreaPage.objects.get(pk=request.POST.get("area_pk"))
-    except (AreaPage.DoesNotExist, ValueError):
-        return JsonResponse({"error": "area_pk inválido"}, status=400)
+    padre = _get_contenedor(request.POST.get("padre_pk"))
+    if isinstance(padre, JsonResponse):
+        return padre
 
-    producto = ProductoPage(
-        title=f"Producto test {uuid.uuid4().hex[:6]}",
-        slug=f"producto-test-{uuid.uuid4().hex[:8]}",
+    block_id = uuid.uuid4()
+    elemento = ElementoPage(
+        title=f"Elemento compuesto test {uuid.uuid4().hex[:6]}",
+        slug=f"elemento-compuesto-{uuid.uuid4().hex[:8]}",
         titulo=titulo,
         descripcion=descripcion,
+        compuesto=True,
+        block_id=block_id,
     )
-    area.add_child(instance=producto)
-    producto.save_revision().publish()
+    padre.add_child(instance=elemento)
 
-    return JsonResponse({
-        "producto": _serializar(producto),
-    })
+    block_value = {
+        "compuesto": True,
+        "thumbnail": None,
+        "alt_thumbnail": "",
+        "tipo": "imagen",
+        "titulo": titulo,
+        "block_id": str(block_id),
+    }
+    padre.elementos += StreamValue(
+        padre.elementos.stream_block,
+        [("elemento", block_value)],
+        is_lazy=False,
+    )
+    padre.save()
+
+    return JsonResponse({"elemento": _serializar(elemento)})
 
 
 @_safe_json
-def fixtures_area_productos(request):
+def fixtures_elemento(request):
     _check_test_token(request)
 
-    try:
-        area = AreaPage.objects.get(pk=request.POST.get("area_pk"))
-        producto = ProductoPage.objects.get(pk=request.POST.get("producto_pk"))
-    except (AreaPage.DoesNotExist, ProductoPage.DoesNotExist, ValueError):
-        return JsonResponse(
-            {"error": "area_pk o producto_pk inválido"},
-            status=400,
-        )
+    padre = _get_contenedor(request.POST.get("padre_pk"))
+    if isinstance(padre, JsonResponse):
+        return padre
 
-    imagen = None
-    imagen_file = request.FILES.get("imagen")
-    if imagen_file:
-        content = ContentFile(imagen_file.read(), name="producto.png")
-        imagen = Image(title="imagen de producto")
-        imagen.file.save("producto.png", content, save=False)
-        imagen.save()
+    tipo = request.POST.get("tipo", "imagen")
+    titulo = request.POST.get("titulo", "Elemento")
+    alt_thumbnail = request.POST.get("alt_thumbnail", "")
+    compuesto = request.POST.get("compuesto", "false") == "true"
 
-    producto_value = {
-        "nombre": request.POST.get("nombre", producto.titulo),
-        "descripcion": request.POST.get("descripcion", ""),
-        "imagen": imagen,
-        "link": {"link_to": "page", "page": producto},
+    block_value = {
+        "compuesto": compuesto,
+        "thumbnail": None,
+        "alt_thumbnail": alt_thumbnail,
+        "tipo": tipo,
+        "titulo": titulo,
+        "block_id": str(uuid.uuid4()),
     }
 
-    area.productos = StreamValue(
-        area.productos.stream_block,
-        [("producto", producto_value)],
+    for field_name, uploaded_file in request.FILES.items():
+        instance = _crear_modelo_desde_field(field_name, uploaded_file)
+        if instance is not None:
+            block_value[field_name] = instance
+
+    page_data_raw = request.POST.get("page_data")
+    page_data_dict = {}
+    if page_data_raw:
+        page_data_dict = json.loads(page_data_raw)
+
+    page_fields = {}
+    for key, value in page_data_dict.items():
+        if key in BLOCK_FIELDS:
+            block_value[key] = value
+        else:
+            page_fields[key] = value
+
+    padre.elementos = StreamValue(
+        padre.elementos.stream_block,
+        [("producto", block_value)],
         is_lazy=False,
     )
-    area.save_revision().publish()
+    padre.save()
 
-    return JsonResponse({
-        "url": area.url,
-        "pk": area.pk,
-        "title": area.title,
-        "titulo": area.titulo,
-        "descripcion": area.descripcion,
-    })
+    elemento = next(
+        e for e in padre.get_children().specific()
+        if str(e.block_id) == block_value["block_id"]
+    )
+
+    for key, value in page_fields.items():
+        if hasattr(elemento, key):
+            setattr(elemento, key, value)
+    elemento.save()
+
+    return JsonResponse(_serializar(elemento))
 
 
 @_safe_json

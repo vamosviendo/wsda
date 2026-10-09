@@ -2,15 +2,14 @@ from django.urls import path
 
 from utils.remote_test_fixtures import (
     fixtures_area,
-    fixtures_area_productos,
     fixtures_curriculum,
+    fixtures_elemento,
+    fixtures_elemento_compuesto,
     fixtures_homepage,
     fixtures_homepage_cleanup,
     fixtures_pagina_cleanup,
     fixtures_pagina_simple,
-    fixtures_producto,
     fixtures_producto_cleanup,
-    fixtures_producto_elemento,
 )
 from utils.remote_test_utils import (
     delete_document_smoke,
@@ -25,9 +24,8 @@ urlpatterns = [
     path("fixtures/homepage/", fixtures_homepage, name="fixtures-homepage"),
     path("fixtures/homepage/cleanup/", fixtures_homepage_cleanup, name="fixtures-homepage-cleanup"),
     path("fixtures/area/", fixtures_area, name="fixture-area"),
-    path("fixtures/area/productos/", fixtures_area_productos, name="fixture-area_productos"),
-    path("fixtures/producto/", fixtures_producto, name="fixtures-producto"),
-    path("fixtures/producto/elemento/", fixtures_producto_elemento, name="fixtures-producto-elemento"),
+    path("fixtures/elemento/", fixtures_elemento, name="fixture-elemento"),
+    path("fixtures/elemento/compuesto/", fixtures_elemento_compuesto, name="fixtures-elemento-compuesto"),
     path("fixtures/producto/cleanup/", fixtures_producto_cleanup, name="fixtures-producto-cleanup"),
     path("fixtures/pagina/", fixtures_pagina_simple, name="fixtures-pagina"),
     path("fixtures/curriculum/", fixtures_curriculum, name="fixtures-curriculum"),

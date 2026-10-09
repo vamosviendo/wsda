@@ -14,6 +14,7 @@ class Handle:
         self.titulo = data.get("titulo")
         self.descripcion = data.get("descripcion")
         self.block_id = data.get("block_id")
+        self.compuesto = data.get("compuesto")
 
 
 class RemoteProductoFixtures:
@@ -71,13 +72,13 @@ class RemoteProductoFixtures:
         self.home_pk = data["home"]["pk"]
         return Handle(data["area"])
 
-    def setup_producto(self, area_pk, titulo, descripcion):
-        data = self._post("/__test__/fixtures/producto/", {
-            "area_pk": area_pk,
+    def setup_elemento_compuesto(self, padre_pk, titulo, descripcion):
+        data = self._post("/__test__/fixtures/elemento/compuesto/", {
+            "padre_pk": padre_pk,
             "titulo": titulo,
             "descripcion": descripcion,
         })
-        return Handle(data["producto"])
+        return Handle(data["elemento"])
 
     def crear_elemento(
             self, padre_pk, tipo, titulo, alt_thumbnail="",
