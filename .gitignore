@@ -11,3 +11,4 @@ container.db.sqlite3
 tmp
 notas
 node_modules
+.opencode

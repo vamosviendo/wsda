@@ -1,4 +1,4 @@
-const { NavMenuManager, initNavMenu } = require("../wlili/static/js/wlili");
+const { NavMenuManager, initNavMenu } = require("../src/wlili/static/js/wlili");
 
 // ============================================================
 // Helpers

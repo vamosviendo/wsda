@@ -1,4 +1,4 @@
-const { init } = require("../produccion/static/js/elemento_viewer");
+const { init } = require("../src/produccion/static/js/elemento_viewer");
 
 // ============================================================
 // Helpers
