@@ -60,6 +60,7 @@
   flex: 1;
   overflow: hidden;
   line-height: 0;
+  position: relative;
 }
 
 .elemento-imagen-card img {
@@ -78,6 +79,27 @@
   font-size: 1.66rem;
   font-weight: 400;
   letter-spacing: 0.04em;
+}
+
+/* ============================================================
+   Íconos de tipo sobre thumbnails (esquina inferior derecha)
+   Repetido en elemento_page.css. TODO: agrupar reglas css comunes en un
+                                   archivo produccion.css que sea cargado por
+                                   todas las templates de la app produccion.
+   ============================================================ */
+img.tipo-icono {
+  position: absolute;
+  bottom: 0.6rem;
+  right: 0.6rem;
+  height: 2rem;
+  width: auto;
+  max-width: 4rem;
+  z-index: 2;
+  pointer-events: none;
+  background-color: rgba(255, 255, 255, 0.85);
+  border-radius: 0.4rem;
+  padding: 0.25rem 0.4rem;
+  box-sizing: border-box;
 }
 
 /* --- Responsivo --- */

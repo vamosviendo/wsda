@@ -186,6 +186,9 @@
 
 /* ============================================================
    Íconos de tipo sobre thumbnails (esquina inferior derecha)
+   Repetido en area_page.css. TODO: agrupar reglas css comunes en un
+                                    archivo produccion.css que sea cargado por
+                                    todas las templates de la app produccion.
    ============================================================ */
 img.tipo-icono {
   position: absolute;

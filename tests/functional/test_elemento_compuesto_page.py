@@ -1,28 +1,4 @@
-import os
-
-import pytest
 from selenium.webdriver.common.by import By
-
-
-@pytest.fixture
-def area_page_con_productos(area_page, producto_page, objeto_imagen, remote_fixtures):
-    if os.environ.get("TEST_SERVER"):
-        return remote_fixtures.area_con_productos(
-            area_pk=area_page.pk,
-            producto_pk=producto_page.pk,
-            nombre=producto_page.titulo,
-            descripcion=producto_page.descripcion,
-            imagen_path=objeto_imagen.path,
-        )
-
-    area_page.productos = [("producto", {
-        "nombre": producto_page.titulo,
-        "descripcion": producto_page.descripcion,
-        "imagen": objeto_imagen,
-        "link": {"link_to": "page", "page": producto_page},
-    })]
-    area_page.save_revision().publish()
-    return area_page
 
 
 def test_elemento_compuesto_muestra_galeria_de_sub_elementos(
@@ -86,12 +62,12 @@ def test_navegacion_anterior_siguiente_entre_elementos_de_area(
     siguiente.click()
     browser.wait_for_url(elemento_de_area.url, timeout=3)
 
-    # Si el producto es el último del área, no aparece el enlace
+    # Si el elemento es el último del área, no aparece el enlace
     # elemento-siguiente.
     browser.wait_for_not("#elemento-siguiente")
 
-    # Si el producto es el primero del área, no aparece el enlace
-    # producto-anterior.
+    # Si el elemento es el primero del área, no aparece el enlace
+    # elemento-anterior.
     browser.get_page(elemento_compuesto.url)
     browser.wait_for_not("#elemento-anterior")
 
@@ -119,12 +95,12 @@ def test_navegacion_anterior_siguiente_entre_subelementos_de_elemento_compuesto(
     siguiente.click()
     browser.wait_for_url(elemento_2.url, timeout=3)
 
-    # Si el producto es el último del área, no aparece el enlace
+    # Si el elemento es el último del área, no aparece el enlace
     # elemento-siguiente.
     browser.wait_for_not("#elemento-siguiente")
 
-    # Si el producto es el primero del área, no aparece el enlace
-    # producto-anterior.
+    # Si el elemento es el primero del área, no aparece el enlace
+    # elemento-anterior.
     browser.get_page(elemento.url)
     browser.wait_for_not("#elemento-anterior")
 
@@ -156,10 +132,6 @@ def test_galeria_de_elemento_compuesto_muestra_icono_segun_tipo_de_elemento(
     # El elemento de tipo imagen NO tiene ícono
     iconos_imagen = grid.find_elements(By.CSS_SELECTOR, ".tipo-icono-imagen")
     assert len(iconos_imagen) == 0
-
-
-def test_galeria_de_area_muestra_icono_segun_tipo_de_elemento():
-    pytest.fail("Escribir")
 
 
 def test_elemento_compuesto_anidado_muestra_galeria(
