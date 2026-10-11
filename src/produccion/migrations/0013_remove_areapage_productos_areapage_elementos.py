@@ -11,10 +11,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='areapage',
-            name='productos',
-        ),
         migrations.AddField(
             model_name='areapage',
             name='elementos',

@@ -6,11 +6,9 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('produccion', '0015_elementopage_elementos_alter_areapage_elementos_and_more'),
+        ('produccion', '0016_convertir_productos_a_elementos'),
     ]
 
     operations = [
-        migrations.DeleteModel(
-            name='ProductoPage',
-        ),
+        migrations.DeleteModel(name='ProductoPage'),
     ]
