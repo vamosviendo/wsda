@@ -13,34 +13,51 @@ import uuid
 from django.db import migrations
 
 
+# TODO Repetida en migration 0018. ¿Extraer a utils?
+def _existe_columna(cursor, tabla, columna):
+    """ Devuelve true si columna existe en tabla."""
+    if cursor.db.vendor == "sqlite":
+        cursor.execute(f"PRAGMA table_info({tabla})")
+        return any(row[1] == columna for row in cursor.fetchall())
+
+    cursor.execute(
+        "SELECT 1 FROM information_schema.columns WHERE table_name = %s AND column_name = %s",
+        [tabla, columna],
+    )
+    return cursor.fetchone() is not None
+
+
 def convertir(apps, schema_editor):
     ContentType = apps.get_model("contenttypes", "ContentType")
-    ct_elemento = ContentType.objects.get(
-        app_label="produccion", model="elementopage"
+    ct_elemento, _ = ContentType.objects.get_or_create(
+        app_label="produccion", model="elementopage",
     )
 
     cursor = schema_editor.connection.cursor()
+    hay_productos = _existe_columna(cursor, "produccion_areapage", "productos")
 
     # 0. Leer tarjetas de todas las áreas para rescatar su descripción e imagen.
     descripcion_tarjeta = {}    # page_id -> html de la tarjeta
     imagen_tarjeta = {}
-    cursor.execute("SELECT page_ptr_id, productos FROM produccion_areapage")
-    areas_raw = cursor.fetchall()
+    areas_raw = []
+    if hay_productos:
+        cursor.execute("SELECT page_ptr_id, productos FROM produccion_areapage")
+        areas_raw = cursor.fetchall()
 
-    for _, productos_raw in areas_raw:
-        tarjetas = json.loads(productos_raw) if productos_raw else []
-        for tarjeta in tarjetas:
-            if tarjeta.get("type") != "producto":
-                continue
-            valor = tarjeta["value"]
-            page_id = (valor.get("link") or {}).get("page")
-            if not page_id:
-                continue
-            if page_id not in descripcion_tarjeta:
-                descripcion_tarjeta[page_id] = valor.get("descripcion") or ""
-            img = valor.get("imagen") or {}
-            if page_id not in imagen_tarjeta:
-                imagen_tarjeta[page_id] = (img.get("image"), img.get("alt_text") or "")
+        for _, productos_raw in areas_raw:
+            tarjetas = json.loads(productos_raw) if productos_raw else []
+            for tarjeta in tarjetas:
+                if tarjeta.get("type") != "producto":
+                    continue
+                valor = tarjeta["value"]
+                page_id = (valor.get("link") or {}).get("page")
+                if not page_id:
+                    continue
+                if page_id not in descripcion_tarjeta:
+                    descripcion_tarjeta[page_id] = valor.get("descripcion") or ""
+                img = valor.get("imagen") or {}
+                if page_id not in imagen_tarjeta:
+                    imagen_tarjeta[page_id] = (img.get("image"), img.get("alt_text") or "")
 
     # 1. produccion_productopage -> produccion_elementopage (una fila por página)
     cursor.execute(
@@ -87,42 +104,43 @@ def convertir(apps, schema_editor):
             [ct_elemento.id, pk],
         )
 
-    # 2. Tarjetas del área (productosa) -> bloques 'elemento' del área
-    for area_page_ptr_id, productos_raw in areas_raw:
-        tarjetas = json.loads(productos_raw) if productos_raw else []
-        if not tarjetas:
-            continue
-
-        nuevos_bloques = []
-        for tarjeta in tarjetas:
-            if tarjeta.get("type") != "producto":
-                nuevos_bloques.append(tarjeta)  # no debería ocurrir; conservar tal cual
+    # 2. Tarjetas del área (productos) -> bloques 'elemento' del área
+    if hay_productos:
+        for area_page_ptr_id, productos_raw in areas_raw:
+            tarjetas = json.loads(productos_raw) if productos_raw else []
+            if not tarjetas:
                 continue
-            valor = tarjeta["value"]
-            page_id = (valor.get("link") or {}).get("page")
-            if not page_id or page_id not in block_ids:
-                continue    # link externo / página inexistente -> se saltea
-            imagen = valor.get("imagen") or {}
-            nuevos_bloques.append({
-                "type": "elemento",
-                "id": str(uuid.uuid4()),    # id interno del bloque (wagtail)
-                "value": {
-                    "compuesto": True,
-                    "thumbnail": imagen.get("image"),   # JSON crudo: pk int de la imagen
-                    "alt_thumbnail": imagen.get("alt_text") or "",
-                    "tipo": "imagen",
-                    "contenido_url": "",
-                    "contenido_multimedia": None,
-                    "contenido_texto": "",
-                    "titulo": valor.get("nombre") or "",
-                    "block_id": block_ids[page_id],     # Enlaza el bloque con la página convertida
-                },
-            })
 
-        cursor.execute(
-            "UPDATE produccion_areapage SET elementos = %s WHERE page_ptr_id = %s",
-            [json.dumps(nuevos_bloques), area_page_ptr_id],
-        )
+            nuevos_bloques = []
+            for tarjeta in tarjetas:
+                if tarjeta.get("type") != "producto":
+                    nuevos_bloques.append(tarjeta)  # no debería ocurrir; conservar tal cual
+                    continue
+                valor = tarjeta["value"]
+                page_id = (valor.get("link") or {}).get("page")
+                if not page_id or page_id not in block_ids:
+                    continue    # link externo / página inexistente -> se saltea
+                imagen = valor.get("imagen") or {}
+                nuevos_bloques.append({
+                    "type": "elemento",
+                    "id": str(uuid.uuid4()),    # id interno del bloque (wagtail)
+                    "value": {
+                        "compuesto": True,
+                        "thumbnail": imagen.get("image"),   # JSON crudo: pk int de la imagen
+                        "alt_thumbnail": imagen.get("alt_text") or "",
+                        "tipo": "imagen",
+                        "contenido_url": "",
+                        "contenido_multimedia": None,
+                        "contenido_texto": "",
+                        "titulo": valor.get("nombre") or "",
+                        "block_id": block_ids[page_id],     # Enlaza el bloque con la página convertida
+                    },
+                })
+
+            cursor.execute(
+                "UPDATE produccion_areapage SET elementos = %s WHERE page_ptr_id = %s",
+                [json.dumps(nuevos_bloques), area_page_ptr_id],
+            )
 
 
 def revertir(apps, schema_editor):

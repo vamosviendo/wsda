@@ -55,14 +55,14 @@ data-restore-mas-antiguo:
 db-restore:
 		./.vwlili/bin/ansible-playbook infra/data-restore-playbook.yaml -e "restore_media=false"
 
+media-restore:
+		./.vwlili/bin/ansible-playbook infra/data-restore-playbook.yaml -e "restore_db=false"
+
 deploy:
 		./.vwlili/bin/ansible-playbook infra/deploy-remote-playbook.yaml
 
 deploy-staging:
 		./.vwlili/bin/ansible-playbook infra/deploy-remote-playbook.yaml -e "site_env=staging"
-
-media-restore:
-		./.vwlili/bin/ansible-playbook infra/data-restore-playbook.yaml -e "restore_db=false"
 
 staging-off:
 		./.vwlili/bin/ansible-playbook infra/staging-manage-playbook.yaml -e "accion=stop"
