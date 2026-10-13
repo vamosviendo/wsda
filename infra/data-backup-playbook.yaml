@@ -1,12 +1,21 @@
+# Hacer copia de seguridad de base de datos y carpeta de medios
+#
+# Producción (comportamiento actual):
+#   ansible-playbook infra/data-backup-playbook.yaml
+# Staging:
+#   ansible-playbook infra/data-backup-playbook.yaml -e "site_env=staging"
 ---
 - name: Hacer copia de seguridad de base de datos y carpeta de medios
   hosts: all
   gather_facts: true
   vars:
+    site_env: "production"
+    site_name: "{{ 'wlili' if site_env == 'production' else 'wlili-staging' }}"
+
     backup_parent: "{{ lookup('env', 'HOME') }}/tmp/backup"
-    backup_name: "wlili"
+    backup_name: "{{ site_name }}"
     backup_path: "{{ backup_parent }}/{{ backup_name }}"
-    remote_site_path: "{{ ansible_facts['env']['HOME'] }}/sites/wlili"
+    remote_site_path: "{{ ansible_facts['env']['HOME'] }}/sites/{{ site_name }}"
 
   tasks:
     - name: Crear directorio de copia de seguridad si no existe
