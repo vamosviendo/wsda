@@ -47,7 +47,7 @@ def test_admin_publica_y_visitante_lee(
     browser.get_page()
     nav = browser.wait_for("nav")
     enlaces = nav.find_elements(By.TAG_NAME, "a")
-    enlace = next(x for x in enlaces if "acerca" in x.text.lower())
+    enlace = next(x for x in enlaces if acerca_page.url in (x.get_attribute("href") or ""))
     assert enlace is not None, "El visitante no encontró 'Acerca de' en el menú de navegación"
 
     enlace.click()

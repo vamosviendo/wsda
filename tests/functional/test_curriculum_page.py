@@ -49,7 +49,7 @@ def test_curriculum_page_visitante(browser, curriculum_page):
     nav = browser.wait_for("nav")
     enlaces = nav.find_elements(By.TAG_NAME, "a")
     enlace_curriculum = next(
-        (a for a in enlaces if "curriculum" in a.text.lower()),
+        (a for a in enlaces if curriculum_page.url in (a.get_attribute("href") or "")),
         None
     )
     assert \

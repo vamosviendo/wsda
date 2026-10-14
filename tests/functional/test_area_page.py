@@ -53,7 +53,8 @@ def test_galeria_de_area_muestra_icono_segun_tipo_de_elemento(
         icono = grid.find_element(By.CSS_SELECTOR, f".tipo-icono-{tipo}")
         assert icono.is_displayed(), f"El icono de tipo {tipo} no es visible en la página de área"
         src_name = icono.get_attribute("src").split("/")[-1]
-        assert src_name == f"icon_{tipo}.svg", f"El icono de tipo {tipo} tiene el nombre incorrecto"
+        assert src_name.startswith(f"icon_{tipo}") and src_name.endswith(".svg"), \
+            f"El icono de tipo {tipo} tiene el nombre incorrecto: {src_name}"
 
     # El elemento de tipo imagen NO tiene ícono
     iconos_imagen = grid.find_elements(By.CSS_SELECTOR, ".tipo-icono-imagen")

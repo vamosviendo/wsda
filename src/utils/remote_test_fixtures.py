@@ -1,4 +1,5 @@
 import json
+import re
 import traceback
 import uuid
 
@@ -109,6 +110,13 @@ def _get_contenedor(padre_pk):
         return JsonResponse({"error": "padre_pk inválido"}, status=400)
 
 
+def _prune_test_pages(model, slug_base):
+    """ Limpia residuos de tests previos"""
+    for previo in model.objects.filter(
+            slug__regex=rf"^{re.escape(slug_base)}-[0-9a-f]{{8}}$"):
+        previo.delete()
+
+
 @_safe_json
 def fixtures_homepage(request):
     _check_test_token(request)
@@ -156,7 +164,7 @@ def fixtures_area(request):
         title=f"Area test {uuid.uuid4().hex[:6]}",
         slug=f"area-test-{uuid.uuid4().hex[:8]}",
         titulo="Area Page",
-        descripcion="Pagina de area de prueba",
+        descripcion="Página de área genérica",
     )
     home.add_child(instance=area)
     area.save_revision().publish()
@@ -245,9 +253,9 @@ def fixtures_elemento(request):
         else:
             page_fields[key] = value
 
-    padre.elementos = StreamValue(
+    padre.elementos += StreamValue(
         padre.elementos.stream_block,
-        [("producto", block_value)],
+        [("elemento", block_value)],
         is_lazy=False,
     )
     padre.save()
@@ -283,7 +291,10 @@ def fixtures_pagina_simple(request):
         raise Http404()
 
     title = request.POST.get("title", "Página de prueba")
-    slug = f"{slugify(title)}-{uuid.uuid4().hex[:8]}"
+
+    slug_base = slugify(title)
+    _prune_test_pages(Model, slug_base)
+    slug = f"{slug_base}-{uuid.uuid4().hex[:8]}"
 
     pagina = Model(title=title, slug=slug)
 
@@ -314,7 +325,9 @@ def fixtures_curriculum(request):
 
 
     title = request.POST.get("title", "Curriculum")
-    slug = f"{slugify(title)}-{uuid.uuid4().hex[:8]}"
+    base_slug = slugify(title)
+    _prune_test_pages(CurriculumPage, base_slug)
+    slug = f"{base_slug}-{uuid.uuid4().hex[:8]}"
 
     pagina = CurriculumPage(title=title, slug=slug)
 
@@ -337,72 +350,6 @@ def fixtures_curriculum(request):
         "url": pagina.url,
         "pk": pagina.pk,
         "title": pagina.title,
-    })
-
-
-@_safe_json
-def fixtures_producto_elemento(request):
-    _check_test_token(request)
-
-    try:
-        producto = ProductoPage.objects.get(pk=request.POST.get("producto_pk"))
-    except (ProductoPage.DoesNotExist, ValueError):
-        return JsonResponse({"error": "Producto_pk inválido"}, status=400)
-
-    tipo = request.POST.get("tipo", "imagen")
-    titulo = request.POST.get("titulo", "Elemento")
-    alt_thumbnail = request.POST.get("alt_thumbnail", "")
-
-    block_value = {
-        "thumbnail": None,
-        "alt_thumbnail": alt_thumbnail,
-        "tipo": tipo,
-        "titulo": titulo,
-        "block_id": str(uuid.uuid4())
-    }
-
-    for field_name, uploaded_file in request.FILES.items():
-        instance = _crear_modelo_desde_field(field_name, uploaded_file)
-        if instance is not None:
-            block_value[field_name] = instance
-
-    page_data_raw = request.POST.get("page_data")
-    page_data_dict = {}
-    if page_data_raw:
-        page_data_dict = json.loads(page_data_raw)
-
-    page_fields = {}
-    for key, value in page_data_dict.items():
-        if key in BLOCK_FIELDS:
-            block_value[key] = value
-        else:
-            page_fields[key] = value
-
-    producto.elementos += StreamValue(
-        producto.elementos.stream_block,
-        [("elemento", block_value)],
-        is_lazy=False,
-    )
-    producto.save()
-
-    elemento = next(
-        e for e in producto.get_children().specific()
-        if str(e.block_id) == block_value["block_id"]
-    )
-
-    for key, value in page_fields.items():
-        if hasattr(elemento, key):
-            setattr(elemento, key, value)
-    elemento.save()
-
-    return JsonResponse({
-        "url": elemento.url,
-        "pk": elemento.pk,
-        "title": elemento.title,
-        "titulo": elemento.titulo,
-        "descripcion": elemento.descripcion,
-        "tipo": elemento.tipo,
-        "block_id": block_value["block_id"],
     })
 
 
