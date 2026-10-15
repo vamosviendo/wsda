@@ -63,6 +63,7 @@ def deployment_smoke(request):
 
     Session.objects.filter(session_key=session_key).delete()
 
+    default_storage.delete(media_path)  # cleanup
     return JsonResponse(
         {
             "database_write": "ok",

@@ -12,7 +12,7 @@ from django.views.decorators.http import require_POST
 from wagtail.blocks import StreamValue
 from wagtail.documents import get_document_model
 from wagtail.images import get_image_model
-from wagtail.models import Collection, Page, Site
+from wagtail.models import Collection, Page, Site, ReferenceIndex
 
 from home.models import HomePage
 from paginas.models import CurriculumPage
@@ -24,11 +24,12 @@ Image = get_image_model()
 Document = get_document_model()
 
 BLOCK_FIELDS = {"thumbnail", "alt_thumbnail", "tipo", "titulo", "block_id"}
-
 SIMPLE_PAGE_TYPES = {
     "acerca_de": "paginas.AcercaDePage",
     "contacto": "paginas.ContactPage",
 }
+TEST_IMAGE_TITLES = {"thumbnail de test", "imagen de franja"}
+TEST_DOCUMENT_TITLE_PREFIX = "documento de test "
 
 
 def _crear_home():
@@ -111,11 +112,44 @@ def _get_contenedor(padre_pk):
         return JsonResponse({"error": "padre_pk inválido"}, status=400)
 
 
+def _test_pages_candidatos():
+    return Page.objects.filter(slug__regex=r"^test-home-[0-9a-f]{8}$")
+
+
 def _prune_test_pages(model, slug_base):
     """ Limpia residuos de tests previos"""
     for previo in model.objects.filter(
             slug__regex=rf"^{re.escape(slug_base)}-[0-9a-f]{{8}}$"):
         previo.delete()
+
+
+def _prune_test_pages_remnant():
+    paginas = _test_pages_candidatos()
+    n = paginas.count()
+    for p in paginas:
+        p.delete()
+    return n
+
+
+def _test_media_candidatos():
+    imagenes = Image.objects.filter(title__in=TEST_IMAGE_TITLES)
+    documentos = Document.objects.filter(
+        title__startswith=TEST_DOCUMENT_TITLE_PREFIX
+    )
+
+    uso_img = ReferenceIndex.get_count_references_to_in_bulk(imagenes)
+    uso_doc = ReferenceIndex.get_count_references_to_in_bulk(documentos)
+
+    imagenes = [i for i in imagenes if uso_img.get(i, 0) == 0]
+    documentos = [d for d in documentos if uso_doc.get(d, 0) == 0]
+    return imagenes, documentos
+
+
+def _prune_test_media():
+    imagenes, documentos = _test_media_candidatos()
+    for obj in imagenes + documentos:
+        obj.delete()
+    return len(imagenes), len(documentos)
 
 
 @_safe_json
