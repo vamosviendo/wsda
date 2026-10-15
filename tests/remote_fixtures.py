@@ -24,6 +24,8 @@ class RemoteProductoFixtures:
         self.home_pk = None
         self.homepage_original_body = None
         self.cleanup_pks = []
+        self.imagen_pks = []
+        self.documento_pks = []
 
         # Varios intentos de conexión para evitar errores de conectividad
         retry = Retry(
@@ -65,6 +67,8 @@ class RemoteProductoFixtures:
             fobj.close()
 
         self.homepage_original_body = response.get("original_body")
+        if response.get("imagen_pk"):
+            self.imagen_pks.append(response["imagen_pk"])
         return Handle(response)
 
     def setup_area(self):
@@ -118,6 +122,8 @@ class RemoteProductoFixtures:
 
         try:
             data = self._post("/__test__/fixtures/elemento/", data, files)
+            self.imagen_pks.extend(data.get("imagenes") or [])
+            self.documento_pks.extend(data.get("documentos") or [])
             return Handle(data)
         finally:
             for f in files.values():
@@ -160,6 +166,13 @@ class RemoteProductoFixtures:
                 {"original_body": json.dumps(self.homepage_original_body)}
             )
             self.homepage_original_body = None
+            if self.imagen_pks or self.documento_pks:
+                self._post("/__test__/fixtures/media/cleanup/", {
+                    "imagen_pks": json.dumps(self.imagen_pks),
+                    "documento_pks": json.dumps(self.documento_pks),
+                })
+                self.imagen_pks = []
+                self.documento_pks = []
 
     def _cleanup_pk(self, pk):
         self._post("/__test__/fixtures/pagina/cleanup/", {"pk": pk})

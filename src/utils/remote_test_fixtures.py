@@ -21,6 +21,7 @@ from utils.remote_test_utils import _check_test_token
 
 
 Image = get_image_model()
+Document = get_document_model()
 
 BLOCK_FIELDS = {"thumbnail", "alt_thumbnail", "tipo", "titulo", "block_id"}
 
@@ -153,6 +154,7 @@ def fixtures_homepage(request):
         "url": homepage.url,
         "pk": homepage.pk,
         "original_body": original_body,
+        "imagen_pk": imagen.pk if imagen else None,
     })
 
 
@@ -236,10 +238,18 @@ def fixtures_elemento(request):
         "block_id": str(uuid.uuid4()),
     }
 
+    imagenes_creadas = []
+    documentos_creados = []
     for field_name, uploaded_file in request.FILES.items():
         instance = _crear_modelo_desde_field(field_name, uploaded_file)
         if instance is not None:
             block_value[field_name] = instance
+
+            # Registrar media creada para poder eliminarla en el cleanup
+            if isinstance(instance, Image):
+                imagenes_creadas.append(instance.pk)
+            else:
+                documentos_creados.append(instance.pk)
 
     page_data_raw = request.POST.get("page_data")
     page_data_dict = {}
@@ -270,7 +280,11 @@ def fixtures_elemento(request):
             setattr(elemento, key, value)
     elemento.save()
 
-    return JsonResponse(_serializar(elemento))
+    return JsonResponse({
+        **_serializar(elemento),
+        "imagenes": imagenes_creadas,
+        "documentos": documentos_creados,
+    })
 
 
 @_safe_json
@@ -378,6 +392,25 @@ def fixtures_pagina_cleanup(request):
     if pk:
         Page.objects.filter(pk=pk).delete()
     return JsonResponse({"status": "ok", "deleted": bool(pk)})
+
+
+@_safe_json
+def fixtures_media_cleanup(request):
+    _check_test_token(request)
+
+    imagen_pks = json.loads(request.POST.get("imagen_pks") or "[]")
+    documento_pks = json.loads(request.POST.get("documento_pks") or "[]")
+
+    if imagen_pks:
+        Image.objects.filter(pk__in=imagen_pks).delete()
+    if documento_pks:
+        Document.objects.filter(pk__in=documento_pks).delete()
+
+    return JsonResponse({
+        "status": "ok",
+        "imagenes": len(imagen_pks),
+        "documentos": len(documento_pks),
+    })
 
 
 @csrf_exempt
