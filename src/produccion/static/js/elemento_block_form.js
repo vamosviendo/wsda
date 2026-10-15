@@ -67,7 +67,7 @@
                 }
             }
         }
-    }).observer(document.body, { childList: true, subtree: true });
+    }).observe(document.body, { childList: true, subtree: true });
 
     aplicarTodos(); // estado inical (edición de páginas existentes)
 })();
