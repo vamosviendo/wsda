@@ -1,5 +1,5 @@
 /* ============================================================
-   ÁREA — grilla de productos y bloque producto individual
+   ÁREA — grilla de elementos simples y compuestos
    ============================================================ */
 
 .area-titulo {
@@ -19,14 +19,14 @@
   max-width: 60ch;
 }
 
-.productos-grid {
+.elementos-grid {
   display: flex;
   flex-direction: column;
   gap: 2rem;
 }
 
 /* --- Bloque producto individual --- */
-.producto a {
+.elemento a {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -38,66 +38,78 @@
 }
 
 /* Filas impares: texto izquierda, imagen derecha */
-.producto:nth-child(odd) a {
+.elemento:nth-child(odd) a {
   flex-direction: row;
 }
 
 /* Filas pares: imagen izquierda, texto derecha */
-.producto:nth-child(even) a {
+.elemento:nth-child(even) a {
   flex-direction: row-reverse;
 }
 
-.producto:nth-child(even) .producto-texto {
+.elemento:nth-child(even) .elemento-texto {
   text-align: center;
 }
 
-.producto-texto {
+.elemento-texto {
   flex: 1;
   text-align: center;
 }
 
-.producto-imagen {
+.elemento-imagen-card {
   flex: 1;
   overflow: hidden;
   line-height: 0;
+  position: relative;
 }
 
-.producto-imagen img {
+.elemento-imagen-card img {
   width: 100%;
   height: auto;
   object-fit: cover;
   transition: transform 0.5s ease;
 }
 
-.producto:hover .producto-imagen img {
+.elemento:hover .elemento-imagen-card img {
   transform: scale(1.04);
 }
 
-.producto h3 {
+.elemento .elemento-titulo-card {
   font-family: var(--font-display);
   font-size: 1.66rem;
   font-weight: 400;
   letter-spacing: 0.04em;
 }
 
-/* Descripción corta dentro del bloque producto (subtitle) */
-.producto-descripcion {
-  font-family: var(--font-body);
-  font-size: 0.8rem;
-  font-weight: 300;
-  color: var(--color-muted);
-  margin-top: 0.3rem;
-  line-height: 1.5;
+/* ============================================================
+   Íconos de tipo sobre thumbnails (esquina inferior derecha)
+   Repetido en elemento_page.css. TODO: agrupar reglas css comunes en un
+                                   archivo produccion.css que sea cargado por
+                                   todas las templates de la app produccion.
+   ============================================================ */
+img.tipo-icono {
+  position: absolute;
+  bottom: 0.6rem;
+  right: 0.6rem;
+  height: 2rem;
+  width: auto;
+  max-width: 4rem;
+  z-index: 2;
+  pointer-events: none;
+  background-color: rgba(255, 255, 255, 0.85);
+  border-radius: 0.4rem;
+  padding: 0.25rem 0.4rem;
+  box-sizing: border-box;
 }
 
 /* --- Responsivo --- */
 @media (max-width: 800px) {
-  .producto a,
-  .producto:nth-child(odd) a,
-  .producto:nth-child(even) a {
+  .elemento a,
+  .elemento:nth-child(odd) a,
+  .elemento:nth-child(even) a {
     flex-direction: column;
   }
 
-  .producto-texto { order: 2; }
-  .producto-imagen { order: 1; }
+  .elemento-texto { order: 2; }
+  .elemento-imagen-card { order: 1; }
 }

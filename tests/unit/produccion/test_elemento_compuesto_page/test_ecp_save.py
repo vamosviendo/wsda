@@ -10,24 +10,24 @@ from utils.test_utils import get_elemento_block_from_block_id
 Image = get_image_model()
 
 
-def add_elements_to_producto(producto, stream_data):
-    producto.elementos = StreamValue(
-        producto.elementos.stream_block,
+def add_elements_to_contenedor(contenedor, stream_data):
+    contenedor.elementos = StreamValue(
+        contenedor.elementos.stream_block,
         stream_data,
         is_lazy=False
     )
-    producto.save()
+    contenedor.save()
 
 
-def test_al_guardar_producto_con_elementos_de_imagen_se_crean_paginas_hijas(
-        producto_page, objeto_imagen, objeto_imagen_2):
+def test_al_guardar_elemento_compuesto_con_elementos_de_imagen_se_crean_paginas_hijas(
+        elemento_compuesto, objeto_imagen, objeto_imagen_2):
     stream_data = [
         ("elemento", {"thumbnail": objeto_imagen, "alt_thumbnail": "Obra 1", "titulo": "Obra número uno"}),
         ("elemento", {"thumbnail": objeto_imagen_2, "alt_thumbnail": "Obra 2", "titulo": "Obra número dos"}),
     ]
-    add_elements_to_producto(producto_page, stream_data)
+    add_elements_to_contenedor(elemento_compuesto, stream_data)
 
-    hijos = producto_page.get_children().specific()
+    hijos = elemento_compuesto.get_children().specific()
     assert len(hijos) == 2
 
     titulos = [h.titulo for h in hijos]
@@ -36,8 +36,8 @@ def test_al_guardar_producto_con_elementos_de_imagen_se_crean_paginas_hijas(
     assert thumbnails == [objeto_imagen, objeto_imagen_2]
 
 
-def test_al_guardar_producto_con_elementos_de_video_se_crean_paginas_hijas(
-        producto_page, objeto_imagen):
+def test_al_guardar_elemento_compuesto_con_elementos_de_video_se_crean_paginas_hijas(
+        elemento_compuesto, objeto_imagen):
     stream_data = [
         ("elemento", {
             "thumbnail": objeto_imagen,
@@ -47,9 +47,9 @@ def test_al_guardar_producto_con_elementos_de_video_se_crean_paginas_hijas(
             "contenido_url": "https://www.youtube.com/watch?v=abc"
         }),
     ]
-    add_elements_to_producto(producto_page, stream_data)
+    add_elements_to_contenedor(elemento_compuesto, stream_data)
 
-    elemento_page = producto_page.get_children().specific().first()
+    elemento_page = elemento_compuesto.get_children().specific().first()
     assert elemento_page.thumbnail == objeto_imagen
     assert elemento_page.alt_thumbnail == "Video"
     assert elemento_page.titulo == "Video"
@@ -57,8 +57,8 @@ def test_al_guardar_producto_con_elementos_de_video_se_crean_paginas_hijas(
     assert elemento_page.contenido_url == "https://www.youtube.com/watch?v=abc"
 
 
-def test_al_guardar_producto_con_elementos_de_audio_se_crean_paginas_hijas(
-        producto_page, objeto_imagen):
+def test_al_guardar_elemento_compuesto_con_elementos_de_audio_se_crean_paginas_hijas(
+        elemento_compuesto, objeto_imagen):
     stream_data = [
         ('elemento', {
             "thumbnail": objeto_imagen,
@@ -68,15 +68,15 @@ def test_al_guardar_producto_con_elementos_de_audio_se_crean_paginas_hijas(
             "contenido_url": "https://soundcloud.com/test"
         }),
     ]
-    add_elements_to_producto(producto_page, stream_data)
+    add_elements_to_contenedor(elemento_compuesto, stream_data)
 
-    elemento_page = producto_page.get_children().specific().first()
+    elemento_page = elemento_compuesto.get_children().specific().first()
     assert elemento_page.tipo == "audio"
     assert elemento_page.contenido_url == "https://soundcloud.com/test"
 
 
-def test_al_guardar_producto_con_elementos_de_texto_se_crean_paginas_hijas(
-        producto_page, objeto_imagen):
+def test_al_guardar_elemento_compuesto_con_elementos_de_texto_se_crean_paginas_hijas(
+        elemento_compuesto, objeto_imagen):
     stream_data = [
         ('elemento', {
             "thumbnail": objeto_imagen,
@@ -86,15 +86,15 @@ def test_al_guardar_producto_con_elementos_de_texto_se_crean_paginas_hijas(
             "contenido_texto": "<p>Contenido de texto </p>"
         }),
     ]
-    add_elements_to_producto(producto_page, stream_data)
+    add_elements_to_contenedor(elemento_compuesto, stream_data)
 
-    elemento_page = producto_page.get_children().specific().first()
+    elemento_page = elemento_compuesto.get_children().specific().first()
     assert elemento_page.tipo == "texto"
     assert elemento_page.contenido_texto == "<p>Contenido de texto </p>"
 
 
-def test_permite_guardar_producto_con_elementos_mixtos(
-        producto_page, objeto_imagen):
+def test_permite_guardar_elemento_compuesto_con_elementos_mixtos(
+        elemento_compuesto, objeto_imagen):
     stream_data = [
         ("elemento", {
             "thumbnail": objeto_imagen,
@@ -111,9 +111,9 @@ def test_permite_guardar_producto_con_elementos_mixtos(
             "contenido_texto": "<p>Contenido de texto </p>"
         }),
     ]
-    add_elements_to_producto(producto_page, stream_data)
+    add_elements_to_contenedor(elemento_compuesto, stream_data)
 
-    elementos = producto_page.get_children().specific()
+    elementos = elemento_compuesto.get_children().specific()
     assert len(elementos) == 3
 
     titulos = [x.titulo for x in elementos]
@@ -121,7 +121,7 @@ def test_permite_guardar_producto_con_elementos_mixtos(
 
 
 def test_al_modificar_titulo_en_block_se_modifica_en_elemento_page(
-        producto_page, elemento, objeto_imagen, block_elemento):
+        elemento_compuesto, elemento, objeto_imagen, block_elemento):
     assert elemento.titulo != "Título modificado"
 
     stream_data_modificado = [
@@ -131,14 +131,14 @@ def test_al_modificar_titulo_en_block_se_modifica_en_elemento_page(
             "titulo": "Título modificado"
         }),
     ]
-    add_elements_to_producto(producto_page, stream_data_modificado)
+    add_elements_to_contenedor(elemento_compuesto, stream_data_modificado)
 
     elemento.refresh_from_db()
     assert elemento.titulo == "Título modificado"
 
 
 def test_al_modificar_thumbnail_en_block_se_modifica_en_elemento_page(
-        producto_page, elemento, block_elemento, objeto_imagen_2):
+        elemento_compuesto, elemento, block_elemento, objeto_imagen_2):
     assert elemento.imagen != objeto_imagen_2
 
     stream_data_modificado = [
@@ -148,14 +148,14 @@ def test_al_modificar_thumbnail_en_block_se_modifica_en_elemento_page(
             "titulo": block_elemento["titulo"]
         }),
     ]
-    add_elements_to_producto(producto_page, stream_data_modificado)
+    add_elements_to_contenedor(elemento_compuesto, stream_data_modificado)
 
     elemento.refresh_from_db()
     assert elemento.imagen == objeto_imagen_2
 
 
 def test_al_modificar_tipo_en_block_se_modifica_en_elemento_page(
-        producto_page, elemento, block_elemento):
+        elemento_compuesto, elemento, block_elemento):
     assert elemento.tipo != "audio"
 
     stream_data_modificado = [
@@ -166,14 +166,14 @@ def test_al_modificar_tipo_en_block_se_modifica_en_elemento_page(
             "tipo": "audio",
         }),
     ]
-    add_elements_to_producto(producto_page, stream_data_modificado)
+    add_elements_to_contenedor(elemento_compuesto, stream_data_modificado)
 
     elemento.refresh_from_db()
     assert elemento.tipo == "audio"
 
 
 def test_al_modificar_contenido_url_en_block_se_modifica_en_elemento_page(
-        producto_page, elemento_video, block_elemento_video):
+        elemento_compuesto, elemento_video, block_elemento_video):
     assert elemento_video.contenido_url != "https://www.youtube.com/watch?v=xyz"
 
     stream_data_modificado = [
@@ -185,14 +185,14 @@ def test_al_modificar_contenido_url_en_block_se_modifica_en_elemento_page(
             "contenido_url": "https://www.youtube.com/watch?v=xyz",
         }),
     ]
-    add_elements_to_producto(producto_page, stream_data_modificado)
+    add_elements_to_contenedor(elemento_compuesto, stream_data_modificado)
 
     elemento_video.refresh_from_db()
     assert elemento_video.contenido_url == "https://www.youtube.com/watch?v=xyz"
 
 
 def test_al_modificar_contenido_texto_en_block_se_modifica_en_elemento_page(
-        producto_page, elemento_texto, block_elemento_texto):
+        elemento_compuesto, elemento_texto, block_elemento_texto):
     assert elemento_texto.contenido_texto != "<p>Texto modificado</p>"
 
     stream_data_modificado = [
@@ -204,41 +204,41 @@ def test_al_modificar_contenido_texto_en_block_se_modifica_en_elemento_page(
             "contenido_texto": "<p>Texto modificado</p>"
         }),
     ]
-    add_elements_to_producto(producto_page, stream_data_modificado)
+    add_elements_to_contenedor(elemento_compuesto, stream_data_modificado)
 
     elemento_texto.refresh_from_db()
     assert elemento_texto.contenido_texto == "<p>Texto modificado</p>"
 
 
 def test_al_eliminar_block_se_elimina_elemento_page(
-        producto_page, elemento, elemento_2, block_elemento):
+        elemento_compuesto, elemento, elemento_2, block_elemento):
     block_2 = get_elemento_block_from_block_id(
-        producto_page, elemento_2.block_id
+        elemento_compuesto, elemento_2.block_id
     )
 
-    assert producto_page.get_children().count() == 2
+    assert elemento_compuesto.get_children().count() == 2
 
     stream_data_reducido = [("elemento", block_2)]
 
-    add_elements_to_producto(producto_page, stream_data_reducido)
+    add_elements_to_contenedor(elemento_compuesto, stream_data_reducido)
 
-    assert producto_page.get_children().count() == 1
-    hijo = producto_page.get_children().specific().first()
+    assert elemento_compuesto.get_children().count() == 1
+    hijo = elemento_compuesto.get_children().specific().first()
     assert hijo.titulo == elemento_2.titulo
 
 
 def test_al_modificar_titulo_en_elemento_page_se_modifica_en_block(
-        producto_page, elemento, block_elemento):
+        elemento_compuesto, elemento, block_elemento):
     elemento.titulo = "Título modificado desde página"
     elemento.save()
 
-    producto_page.refresh_from_db()
-    block = producto_page.elementos[0]
+    elemento_compuesto.refresh_from_db()
+    block = elemento_compuesto.elementos[0]
     assert block.value.get("titulo") == "Título modificado desde página"
 
 
 def test_elemento_hijo_existente_sin_block_id_asigna_block_id_al_block(
-        objeto_imagen, producto_page, factory):
+        objeto_imagen, elemento_compuesto, factory):
     """
     Cuando hay un ElementoPage hijo existente sin block_id y un bloque en
     StreamField sin block_id que lo referencie, _sincronizar_elementos()
@@ -253,7 +253,7 @@ def test_elemento_hijo_existente_sin_block_id_asigna_block_id_al_block(
         titulo="Elemento existente",
         block_id=None,
     )
-    producto_page.add_child(instance=elemento_hijo)
+    elemento_compuesto.add_child(instance=elemento_hijo)
 
     # Ahora agregamos un bloque que referencia ese elemento
     stream_data = [
@@ -265,38 +265,38 @@ def test_elemento_hijo_existente_sin_block_id_asigna_block_id_al_block(
         }),
     ]
 
-    producto_page.elementos = StreamValue(
-        producto_page.elementos.stream_block,
+    elemento_compuesto.elementos = StreamValue(
+        elemento_compuesto.elementos.stream_block,
         stream_data,
         is_lazy=False
     )
-    producto_page.save()
+    elemento_compuesto.save()
 
-    bloque = producto_page.elementos[0]
+    bloque = elemento_compuesto.elementos[0]
     block_id_del_bloque = bloque.value.get("block_id")
     assert block_id_del_bloque is not None
     assert block_id_del_bloque != ""
     assert block_id_del_bloque != "  "
 
     request = factory.get("/")
-    context = producto_page.get_context(request)
+    context = elemento_compuesto.get_context(request)
     assert context["elementos"][0] is not None
     assert context["elementos"][0].titulo == "Elemento existente"
 
 
-def test_producto_sin_elementos_no_tiene_hijos(producto_page):
-    add_elements_to_producto(producto_page, [])
-    assert producto_page.get_children().count() == 0
+def test_elemento_compuesto_sin_elementos_no_tiene_hijos(elemento_compuesto):
+    add_elements_to_contenedor(elemento_compuesto, [])
+    assert elemento_compuesto.get_children().count() == 0
 
 
 def test_si_un_block_elemento_no_tiene_imagen_elemento_page_tampoco(
-        producto_page):
+        elemento_compuesto):
     stream_data = [
         ('elemento', {'thumbnail': None, 'alt_thumbnail': "Sin imagen", 'titulo': "Sin imagen"})
     ]
-    add_elements_to_producto(producto_page, stream_data)
+    add_elements_to_contenedor(elemento_compuesto, stream_data)
 
-    hijos = producto_page.get_children().specific()
+    hijos = elemento_compuesto.get_children().specific()
     assert len(hijos) == 1
     assert hijos[0].imagen is None
 
@@ -311,6 +311,7 @@ def test_block_elemento_acepta_contenido_multimedia(objeto_documento_video):
 
     assert value["contenido_multimedia"] == objeto_documento_video
 
+
 def test_block_elemento_acepta_contenido_multimedia_vacio():
     """ El campo contenido_multimedia es opcional."""
     block = ElementoBlock()
@@ -320,6 +321,37 @@ def test_block_elemento_acepta_contenido_multimedia_vacio():
     })
 
     assert value["contenido_multimedia"] is None
+
+
+def test_block_elemento_acepta_compuesto():
+    block = ElementoBlock()
+    value = block.to_python({
+        "compuesto": True,
+        "titulo": "Compuesto",
+        "block_id": "00000000-0000-0000-0000-000000000000",
+    })
+    assert value["compuesto"] is True
+    assert value["titulo"] == "Compuesto"
+
+
+def test_crear_bloque_compuesto_crea_elemento_compuesto_page(
+        elemento_compuesto, objeto_imagen):
+    block_id = uuid.uuid4()
+    stream_data = [
+        ("elemento", {
+            "compuesto": True,
+            "titulo": "Compuesto desde block",
+            "block_id": str(block_id),
+        }),
+    ]
+    add_elements_to_contenedor(elemento_compuesto, stream_data)
+
+    elemento = next(
+        e for e in elemento_compuesto.get_children().specific()
+        if str(e.block_id) == str(block_id)
+    )
+    assert elemento.compuesto is True
+
 
 def test_block_elemento_acepta_url_y_archivo_simultaneamente(objeto_documento_video):
     """ Ambos campos pueden coexistir. La precedencia se resuelve en el template,
@@ -336,8 +368,9 @@ def test_block_elemento_acepta_url_y_archivo_simultaneamente(objeto_documento_vi
     assert value["contenido_url"] == "https://www.youtube.com/watch?v=abc"
     assert value["contenido_multimedia"] == objeto_documento_video
 
+
 def test_crear_elemento_desde_block_copia_contenido_multimedia(
-        producto_page, objeto_documento_video):
+        elemento_compuesto, objeto_documento_video):
     """ Al guardar un bloque con contenido_multimedia en ProductoPage.elementos,
         se crea una ElementoPage con ese documento asignado.
     """
@@ -350,15 +383,15 @@ def test_crear_elemento_desde_block_copia_contenido_multimedia(
             "block_id": str(block_id),
         }),
     ]
-    producto_page.elementos = StreamValue(
-        producto_page.elementos.stream_block,
+    elemento_compuesto.elementos = StreamValue(
+        elemento_compuesto.elementos.stream_block,
         stream_data,
         is_lazy=False,
     )
-    producto_page.save()
+    elemento_compuesto.save()
 
     elemento = next(
-        e for e in producto_page.get_children().specific()
+        e for e in elemento_compuesto.get_children().specific()
         if str(e.block_id) == str(block_id)
     )
     assert elemento.contenido_multimedia == objeto_documento_video

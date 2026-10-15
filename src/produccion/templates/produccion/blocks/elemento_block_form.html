@@ -1,13 +1,11 @@
 {% load wagtailadmin_tags %}
 
-<div class="{{ classname }}">
+<div class="{{ classname }}" data-elemento-block>
     {% if help_text %}
-        <span>
-            <div class="help">
-                {% icon name="help" classname="default" %}
-                {{ help_text }}
-            </div>
-        </span>
+        <div class="help">
+            {% icon name="help" classname="default" %}
+            {{ help_text }}
+        </div>
     {% endif %}
 
     {% for child in children.values %}

@@ -137,6 +137,9 @@ python manage.py runserver
 - No aplicar directamente cambios al código, sino presentarlos en pantalla para su revisión. Indicar con un comentario los lugares específicos del código en los que se han hecho cambios.
 - Cuando falte información, solicitarla. Comprobar en vez de inferir o suponer. Empiria.
 - No vamos a salir del modo Plan nunca, o lo haremos en muy raras ocasiones. Los cambios siempre serán presentados, y yo, el humano, me encargaré de aplicalos luego de haberlos revisado.
+- Al presentar un código modificado, deben señalarse los cambios que se han hecho mediante comentarios. Los comentarios no deben estar al principio del módulo, clase o función cambiado sino siguiendo estos lineamientos:
+  - En caso de que se modifique una línea, el comentario que marca el cambio debe estar al costado de esa línea.
+  - En caso de que se modifique un bloque de líneas, el comentario que marca el cambio debe estar inmediatamente antes del bloque modificado.
 
 ---
 

@@ -43,6 +43,9 @@ pull:
 data-backup:
 		./.vwlili/bin/ansible-playbook infra/data-backup-playbook.yaml
 
+data-backup-staging:
+		./.vwlili/bin/ansible-playbook infra/data-backup-playbook.yaml -e "site_env=staging"
+
 data-restore:
 		./.vwlili/bin/ansible-playbook infra/data-restore-playbook.yaml
 
@@ -55,14 +58,29 @@ data-restore-mas-antiguo:
 db-restore:
 		./.vwlili/bin/ansible-playbook infra/data-restore-playbook.yaml -e "restore_media=false"
 
+data-restore-staging:
+		./.vwlili/bin/ansible-playbook infra/data-restore-playbook.yaml -e "site_env=staging"
+
+data-restore-staging-anterior:
+		./.vwlili/bin/ansible-playbook infra/data-restore-playbook.yaml -e "site_env=staging backup_version=1"
+
+data-restore-staging-mas-antiguo:
+		./.vwlili/bin/ansible-playbook infra/data-restore-playbook.yaml -e "site_env=staging backup_version=2"
+
+db-restore-staging:
+		./.vwlili/bin/ansible-playbook infra/data-restore-playbook.yaml -e "site_env=staging restore_media=false"
+
+media-restore:
+		./.vwlili/bin/ansible-playbook infra/data-restore-playbook.yaml -e "restore_db=false"
+
+media-restore-staging:
+		./.vwlili/bin/ansible-playbook infra/data-restore-playbook.yaml -e "site_env=staging restore_db=false"
+
 deploy:
 		./.vwlili/bin/ansible-playbook infra/deploy-remote-playbook.yaml
 
 deploy-staging:
 		./.vwlili/bin/ansible-playbook infra/deploy-remote-playbook.yaml -e "site_env=staging"
-
-media-restore:
-		./.vwlili/bin/ansible-playbook infra/data-restore-playbook.yaml -e "restore_db=false"
 
 staging-off:
 		./.vwlili/bin/ansible-playbook infra/staging-manage-playbook.yaml -e "accion=stop"

@@ -6,18 +6,13 @@ from selenium.webdriver.common.keys import Keys
 
 
 @pytest.fixture
-def elemento_con_datos(elemento_factory, producto_page, objeto_imagen):
+def elemento_con_datos(elemento_factory, elemento_compuesto, objeto_imagen):
     data = {
         "title": "ElementoPage",
         "slug": "elemento_page",
         "imagen": objeto_imagen,
         "alt_imagen": "Imagen de elemento",
         "titulo": "Elemento con datos",
-        "alto": 100,
-        "ancho": 50,
-        "unidad": "cm",
-        "peso": 2,
-        "unidad_peso": "kg",
         "descripcion": "<p>Descripción de elemento</p>",
         "comentarios": [
             ("comentario", "Este es un comentario de prueba"),
@@ -26,7 +21,7 @@ def elemento_con_datos(elemento_factory, producto_page, objeto_imagen):
     }
 
     return elemento_factory(
-        producto=producto_page,
+        padre=elemento_compuesto,
         thumbnail=objeto_imagen,
         alt_thumbnail="Imagen de elemento con datos",
         titulo="Elemento con datos",
@@ -35,21 +30,21 @@ def elemento_con_datos(elemento_factory, producto_page, objeto_imagen):
 
 
 @pytest.fixture
-def elemento_sin_titulo(elemento_factory, producto_page, objeto_imagen):
+def elemento_sin_titulo(elemento_factory, elemento_compuesto, objeto_imagen):
     return elemento_factory(
-        producto=producto_page,
+        padre=elemento_compuesto,
         thumbnail=objeto_imagen,
         alt_thumbnail="Imagen de elemento sin título",
         titulo="",
     )
 
 
-def test_elemento_page(browser, producto_page, elemento_con_datos):
+def test_elemento_page(browser, elemento_compuesto, elemento_con_datos):
     # Dado un elemento incluido en una página de producto
     # si desde la página de producto cliqueamos en el elemento vamos a la
     # página del elemento.
     elemento = elemento_con_datos
-    browser.get_page(producto_page.url)
+    browser.get_page(elemento_compuesto.url)
     links_elemento = browser.wait_fors(".imagen a")
     links_elemento[0].click()
     assert "error" not in browser.title.lower()
@@ -96,6 +91,22 @@ def test_elemento_page_muestra_sin_titulo(browser, elemento_sin_titulo):
     titulo = browser.wait_for("#elemento-titulo")
     assert titulo.is_displayed()
     assert titulo.text == "Sin título"
+
+
+def test_navegacion_anterior_siguiente_en_elemento_simple(
+        browser, elemento_compuesto, elemento, elemento_2):
+    # CAMBIO: la navegación anterior/siguiente también existe en simples.
+    browser.get_page(elemento.url)
+
+    siguiente = browser.wait_for("#elemento-siguiente")
+    assert siguiente.text == f"{elemento_2.titulo} →"
+    siguiente.click()
+    browser.wait_for_url(elemento_2.url, timeout=3)
+
+    anterior = browser.wait_for("#elemento-anterior")
+    assert anterior.text == f"← {elemento.titulo}"
+    anterior.click()
+    browser.wait_for_url(elemento.url, timeout=3)
 
 
 def test_visor_de_imagen_de_elemento(browser, elemento):
@@ -169,12 +180,12 @@ def test_visor_de_imagen_de_elemento(browser, elemento):
 
 
 def test_elemento_page_muestra_reproductor_de_video_local(
-        browser, producto_page, elemento_factory, objeto_documento_video):
+        browser, elemento_compuesto, elemento_factory, objeto_documento_video):
     """ Una ElementoPage de tipo video con contenido_multimedia local muestra
         un elemento <video controls> con la URL del documento.
     """
     elemento = elemento_factory(
-        producto=producto_page,
+        padre=elemento_compuesto,
         tipo="video",
         titulo="Video local",
         page_data={"contenido_multimedia": objeto_documento_video},
@@ -191,12 +202,12 @@ def test_elemento_page_muestra_reproductor_de_video_local(
 
 
 def test_elemento_page_muestra_reproductor_de_audio_local(
-        browser, producto_page, elemento_factory, objeto_documento_audio):
+        browser, elemento_compuesto, elemento_factory, objeto_documento_audio):
     """ Una ElementoPage de tipo audio con contenido_multimedia local muestra
         un elemento <audio controls> con la URL del documento.
     """
     elemento = elemento_factory(
-        producto=producto_page,
+        padre=elemento_compuesto,
         tipo="audio",
         titulo="Audio local",
         page_data={"contenido_multimedia": objeto_documento_audio},
@@ -213,12 +224,12 @@ def test_elemento_page_muestra_reproductor_de_audio_local(
 
 
 def test_contenido_multimedia_local_tiene_precedencia_sobre_url_externa(
-        browser, producto_page, elemento_factory, objeto_documento_video):
+        browser, elemento_compuesto, elemento_factory, objeto_documento_video):
     """ Si una ElementoPage tiene contenido_multimedia local y contenido_url
         externa (YouTube), se muestra el contenido local. NO se muestra el iframe.
     """
     elemento = elemento_factory(
-        producto=producto_page,
+        padre=elemento_compuesto,
         tipo="video",
         titulo="Video con local y url",
         page_data={

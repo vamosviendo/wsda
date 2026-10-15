@@ -1,33 +1,42 @@
 ---
 # Modo de uso:
 #
-# Restaurar última versión de db y media:
-# ansible-playbook infra/data-restore-playbook.yaml
+# Producción:
+#   Restaurar última versión de db y media:
+#   ansible-playbook infra/data-restore-playbook.yaml
 #
-# Restaurar versión intermadia de db y media:
-# ansible-playbook infra/data-restore-playbook.yaml -e "backup_version=1"
+#   Restaurar versión intermadia de db y media:
+#   ansible-playbook infra/data-restore-playbook.yaml -e "backup_version=1"
 #
-# Restaurar versión más antigua de db y media:
-# ansible-playbook infra/data-restore-playbook.yaml -e "backup_version=2"
+#   Restaurar versión más antigua de db y media:
+#   ansible-playbook infra/data-restore-playbook.yaml -e "backup_version=2"
 #
-# Restaurar sólo la base de datos
-# ansible-playbook infra/data-restore-playbook.yaml -e "restore_media=false"
+#   Restaurar sólo la base de datos
+#   ansible-playbook infra/data-restore-playbook.yaml -e "restore_media=false"
 #
-# Restaurar sólo la media desde wlili1
-# ansible-playbook infra/data-restore-playbook.yaml -e "backup_version=1 restore_db=false"
+#   Restaurar sólo la media desde wlili1
+#   ansible-playbook infra/data-restore-playbook.yaml -e "backup_version=1 restore_db=false"
+#
+# Staging: agregar site_env=staging
+#   ansible-playbook infra/data-restore-playbook.yaml -e "site_env=staging"
+#   ansible-playbook infra/data-restore-playbook.yaml -e "site_env=staging backup_version=1"
+#   ...
 
 - name: Restaurar backup desde local a server
   hosts: all
   gather_facts: true
   vars:
+    site_env: "production"
+    site_name: "{{ 'wlili' if site_env == 'production' else 'wlili-staging' }}"
+
     # Rutas locales
     backup_parent: "{{ lookup('env', 'HOME') }}/tmp/backup"
-    backup_name: "wlili"
+    backup_name: "{{ site_name }}"
     backup_suffix: "{{ backup_version | default('') }}"
     backup_path: "{{ backup_parent }}/{{ backup_name }}{{ backup_suffix }}"
 
     # Rutas remotas
-    remote_site_path: "{{ ansible_facts['env']['HOME'] }}/sites/wlili"
+    remote_site_path: "{{ ansible_facts['env']['HOME'] }}/sites/{{ site_name }}"
     remote_pre_restore_dir: "{{ remote_site_path }}/pre_restore"
 
     # Qué restaurar
