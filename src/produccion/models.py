@@ -4,6 +4,7 @@ import uuid
 from typing import Self
 from urllib.parse import urlparse, parse_qs
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.templatetags.static import static
 from django.utils.text import slugify
@@ -326,6 +327,11 @@ class ElementoPage(ContenedorMixin, Page):
             except EmbedException:
                 pass
         return static(f"img/default_{self.tipo}.png")
+
+    def get_template(self, request, *args, **kwargs):
+        if self.compuesto:
+            return "produccion/elemento_compuesto_page.html"
+        return "produccion/elemento_page.html"
 
     def save(self, *args, **kwargs):
         if getattr(self, '_syncing_from_block', False):

@@ -1,4 +1,11 @@
+from pytest_django import asserts
+
 from produccion.models import ElementoPage
+
+
+def test_usa_template_correcto(elemento, client):
+    response = client.get(elemento.url)
+    asserts.assertTemplateUsed(response, "produccion/elemento_page.html")
 
 
 def test_block_id_de_pagina_coincide_con_el_de_el_block(
