@@ -10,7 +10,6 @@ from utils.remote_test_fixtures import (
     fixtures_pagina_cleanup,
     fixtures_pagina_simple,
     fixtures_media_cleanup,
-    fixtures_producto_cleanup,
 )
 from utils.remote_test_utils import (
     delete_document_smoke,
@@ -28,7 +27,6 @@ urlpatterns = [
     path("fixtures/elemento/", fixtures_elemento, name="fixture-elemento"),
     path("fixtures/elemento/compuesto/", fixtures_elemento_compuesto, name="fixtures-elemento-compuesto"),
     path("fixtures/media/cleanup/", fixtures_media_cleanup, name="fixtures-media-cleanup"),
-    path("fixtures/producto/cleanup/", fixtures_producto_cleanup, name="fixtures-producto-cleanup"),
     path("fixtures/pagina/", fixtures_pagina_simple, name="fixtures-pagina"),
     path("fixtures/curriculum/", fixtures_curriculum, name="fixtures-curriculum"),
     path("fixtures/pagina/cleanup/", fixtures_pagina_cleanup, name="fixtures-pagina-cleanup"),

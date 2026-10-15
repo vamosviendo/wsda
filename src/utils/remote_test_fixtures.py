@@ -445,14 +445,3 @@ def fixtures_media_cleanup(request):
         "imagenes": len(imagen_pks),
         "documentos": len(documento_pks),
     })
-
-
-@csrf_exempt
-@require_POST
-@_safe_json
-def fixtures_producto_cleanup(request):
-    _check_test_token(request)
-    home_pk = request.POST.get("home_pk")
-    if home_pk:
-        Page.objects.filter(pk=home_pk).delete()
-    return JsonResponse({"status": "ok", "deleted": bool(home_pk)})

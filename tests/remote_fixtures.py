@@ -21,7 +21,6 @@ class RemoteProductoFixtures:
     def __init__(self, base_url, token):
         self.base_url = base_url
         self.token = token
-        self.home_pk = None
         self.homepage_original_body = None
         self.cleanup_pks = []
         self.imagen_pks = []
@@ -73,7 +72,7 @@ class RemoteProductoFixtures:
 
     def setup_area(self):
         data = self._post("/__test__/fixtures/area/", {})
-        self.home_pk = data["home"]["pk"]
+        self.cleanup_pks.append(data["home"]["pk"])
         return Handle(data["area"])
 
     def setup_elemento_compuesto(self, padre_pk, titulo, descripcion):
@@ -157,9 +156,6 @@ class RemoteProductoFixtures:
         for pk in reversed(self.cleanup_pks):
             self._cleanup_pk(pk)
         self.cleanup_pks = []
-        if self.home_pk:
-            self._post("/__test__/fixtures/producto/cleanup/", {"home_pk": self.home_pk})
-            self.home_pk = None
         if self.homepage_original_body is not None:
             self._post(
                 "/__test__/fixtures/homepage/cleanup/",
