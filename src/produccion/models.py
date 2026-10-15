@@ -333,6 +333,13 @@ class ElementoPage(ContenedorMixin, Page):
             return "produccion/elemento_compuesto_page.html"
         return "produccion/elemento_page.html"
 
+    def clean(self):
+        super().clean()
+        if not self.compuesto and self.elementos:
+            raise ValidationError(
+                {"elementos": "Un elemento simple no puede tener sub-elementos"}
+            )
+
     def save(self, *args, **kwargs):
         if getattr(self, '_syncing_from_block', False):
             super().save(*args, **kwargs)
