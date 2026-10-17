@@ -195,6 +195,11 @@ def fixtures_homepage(request):
 @_safe_json
 def fixtures_area(request):
     _check_test_token(request)
+
+    # Limpiar posibles páginas y archivos de media residuales
+    _prune_test_pages_remnant()
+    _prune_test_media()
+
     home = _crear_home()
     area = AreaPage(
         title=f"Area test {uuid.uuid4().hex[:6]}",
@@ -439,6 +444,8 @@ def fixtures_media_cleanup(request):
         Image.objects.filter(pk__in=imagen_pks).delete()
     if documento_pks:
         Document.objects.filter(pk__in=documento_pks).delete()
+
+    _prune_test_media()  # Reaseguro de eliminación de archivos residuales
 
     return JsonResponse({
         "status": "ok",
