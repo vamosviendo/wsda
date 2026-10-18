@@ -1,38 +1,15 @@
 {% extends "base.html" %}
-{% load static wagtailcore_tags %}
+{% load static %}
 
 {% block body_class %}template-elementopage{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" type="text/css" href="{% static 'css/elemento_page.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'css/elemento_page_base.css' %}">
+{% block extra_css_elemento %}{%endblock%}
 {% endblock %}
 
 {% block content %}
-  <div id="elemento-layout" class="elemento-layout">
-    {% block media %}{% endblock %}
-
-    <div id="elemento-info" class="elemento-info">
-
-      <h2 id="elemento-titulo" class="elemento-titulo">
-        {% if page.titulo %}{{ page.titulo }}{% else %}Sin título{% endif %}
-      </h2>
-
-
-      {% if page.descripcion %}
-        <div id="elemento-descripcion" class="elemento-descripcion">{{ page.descripcion|richtext }}</div>
-      {% endif %}
-
-      {% if page.comentarios %}
-        <div id="elemento-comentarios" class="elemento-comentarios">
-          {% for bloque in page.comentarios %}
-            <div class="elemento-comentario">{% include_block bloque %}</div>
-          {% endfor %}
-        </div>
-      {% endif %}
-
-    </div>
-  </div>
-
+  {% block content_specific %}{% endblock content_specific %}
   {# Navegación anterior/siguiente entre elementos hermanos. #}
   <nav class="navegacion-elementos">
     {% with anterior=page.get_elemento_anterior siguiente=page.get_elemento_siguiente %}

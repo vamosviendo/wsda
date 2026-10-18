@@ -1,7 +1,17 @@
 {% extends "produccion/elemento_page_base.html" %}
-{% load static %}
+{% load static wagtailcore_tags %}
 
-{% block media %}
+{% block extra_css_elemento %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/elemento_compuesto_page.css' %}">
+{% endblock %}
+
+{% block content_specific %}
+  <h2 id="elemento-c-titulo" class="elemento-c-titulo">{{ page.titulo }}</h2>
+
+  {% if page.descripcion %}
+    <div id="descripcion" class="pagina-descripcion">{{ page.descripcion|richtext }}</div>
+  {% endif %}
+
   <div id="elementos-grid" class="imagenes-grid">
     {% for elemento in elementos %}
       {% if elemento %}

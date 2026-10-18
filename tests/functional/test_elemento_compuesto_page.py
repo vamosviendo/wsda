@@ -9,7 +9,7 @@ def test_elemento_compuesto_muestra_galeria_de_sub_elementos(
     # Si desde la página de área cliqueamos
     # en el elemento compuesto vamos a la página del elemento compuesto.
     browser.get_page(elemento_compuesto.url)
-    titulo = browser.wait_for("#elemento-titulo")
+    titulo = browser.wait_for("#elemento-c-titulo")
     assert titulo.is_displayed()
     assert titulo.text == "Elemento compuesto"
 
