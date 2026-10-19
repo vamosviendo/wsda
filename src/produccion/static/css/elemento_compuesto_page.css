@@ -18,30 +18,30 @@
   Distinta de .producto-descripcion (el subtitle de cada
   bloque producto en area_page).
 */
-.pagina-descripcion {
+.elemento-c-descripcion {
   font-size: 1.2rem;
   margin-bottom: 2rem;
   max-width: 60ch;
 }
 
-.imagenes-grid {
+.elemento-c-grid {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-start;
   gap: 1.2rem;
 }
 
-.imagen {
+.elemento-c-card {
   position: relative;
   overflow: hidden;
   line-height: 0;
 }
 
-.imagen a {
+.elemento-c-card a {
   display: block;
 }
 
-.imagen img {
+.elemento-c-card img {
   max-height: 50vh;
   width: auto;
   height: auto;
@@ -49,7 +49,7 @@
   transition: transform 0.5s ease, opacity 0.3s ease;
 }
 
-.imagen:hover img {
+.elemento-c-card:hover img {
   transform: scale(1.04);
   opacity: 0.92;
 }
@@ -57,24 +57,24 @@
 /* ============================================================
    ELEMENTO COMPUESTO — galería de sub-elementos
    ============================================================ */
-#elementos-grid.imagenes-grid {
+#elemento-c-grid.elemento-c-grid {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-start;
   gap: 1.2rem;
 }
 
-.imagenes-grid .imagen {
+.elemento-c-grid .elemento-c-card {
   position: relative;
   overflow: hidden;
   line-height: 0;
 }
 
-.imagenes-grid .imagen a {
+.elemento-c-grid .elemento-c-card a {
   display: block;
 }
 
-.imagenes-grid .imagen img {
+.elemento-c-grid .elemento-c-card img {
   max-height: 50vh;
   width: auto;
   height: auto;
@@ -82,7 +82,7 @@
   transition: transform 0.5s ease, opacity 0.3s ease;
 }
 
-.imagenes-grid .imagen:hover img {
+.elemento-c-grid .elemento-c-card:hover img {
   transform: scale(1.04);
   opacity: 0.92;
 }

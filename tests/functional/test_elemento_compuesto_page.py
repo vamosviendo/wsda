@@ -14,7 +14,7 @@ def test_elemento_compuesto_muestra_galeria_de_sub_elementos(
     assert titulo.text == "Elemento compuesto"
 
     # Muestra galería con thumbnails de sub-elementos
-    grid = browser.wait_for("#elementos-grid")
+    grid = browser.wait_for("#elemento-c-grid")
     imgs = grid.find_elements(By.TAG_NAME, "img")
     assert len(imgs) == 3
 
@@ -32,7 +32,7 @@ def test_elemento_compuesto_muestra_galeria_de_sub_elementos(
 def test_desde_elemento_compuesto_se_navega_a_sub_elemento(
         browser, elemento_compuesto, elemento):
     browser.get_page(elemento_compuesto.url)
-    grid = browser.wait_for("#elementos-grid")
+    grid = browser.wait_for("#elemento-c-grid")
     grid.find_elements(By.TAG_NAME, "a")[0].click()
     assert "error" not in browser.title.lower()
     assert "not found" not in browser.title.lower()
@@ -120,7 +120,7 @@ def test_galeria_de_elemento_compuesto_muestra_icono_segun_tipo_de_elemento(
     )
 
     browser.get_page(elemento_compuesto.url)
-    grid = browser.wait_for("#elementos-grid")
+    grid = browser.wait_for("#elemento-c-grid")
 
     # Verificar que cada elemento tiene su ícono según tipo
     for tipo in ("video", "audio", "texto"):
@@ -149,10 +149,10 @@ def test_elemento_compuesto_anidado_muestra_galeria(
 
     # El elemento compuesto raíz muestra al sub-elemento compuesto en su galería
     browser.get_page(elemento_compuesto.url)
-    grid = browser.wait_for("#elementos-grid")
+    grid = browser.wait_for("#elemento-c-grid")
     assert sub_compuesto.url in grid.find_element(By.TAG_NAME, "a").get_attribute("href")
 
     # Y el sub-elemento compuesto muestra su propio sub-elemento.
     browser.get_page(sub_compuesto.url)
-    grid2 = browser.wait_for("#elementos-grid")
+    grid2 = browser.wait_for("#elemento-c-grid")
     assert sub_elemento.url in grid2.find_element(By.TAG_NAME, "a").get_attribute("href")

@@ -9,13 +9,13 @@
   <h2 id="elemento-c-titulo" class="elemento-c-titulo">{{ page.titulo }}</h2>
 
   {% if page.descripcion %}
-    <div id="descripcion" class="pagina-descripcion">{{ page.descripcion|richtext }}</div>
+    <div id="elemento-c-descripcion" class="elemento-c-descripcion">{{ page.descripcion|richtext }}</div>
   {% endif %}
 
-  <div id="elementos-grid" class="imagenes-grid">
+  <div id="elemento-c-grid" class="elemento-c-grid">
     {% for elemento in elementos %}
       {% if elemento %}
-      <div class="imagen">
+      <div class="elemento-c-card">
         <a href="{{ elemento.url }}">
           {% if elemento.tipo == 'video' %}
             <img class="tipo-icono tipo-icono-video"

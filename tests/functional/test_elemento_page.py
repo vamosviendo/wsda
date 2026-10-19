@@ -45,7 +45,7 @@ def test_elemento_page(browser, elemento_compuesto, elemento_con_datos):
     # página del elemento.
     elemento = elemento_con_datos
     browser.get_page(elemento_compuesto.url)
-    links_elemento = browser.wait_fors(".imagen a")
+    links_elemento = browser.wait_fors(".elemento-c-card a")
     links_elemento[0].click()
     assert "error" not in browser.title.lower()
     assert "not found" not in browser.title.lower()
