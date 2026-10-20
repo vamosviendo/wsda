@@ -13,11 +13,6 @@
   margin-bottom: 2rem;
 }
 
-/*
-  Descripción introductoria de la página de producto.
-  Distinta de .producto-descripcion (el subtitle de cada
-  bloque producto en area_page).
-*/
 .elemento-c-descripcion {
   font-size: 1.2rem;
   margin-bottom: 2rem;

@@ -44,13 +44,6 @@
   padding-bottom: 0.5rem;
 }
 
-.elemento-dimensiones,
-.elemento-peso {
-  font-size: 1rem;
-  color: var(--color-text);
-  letter-spacing: 0.04em;
-}
-
 .elemento-descripcion {
   font-size: 1.2rem;
   line-height: 1.75;
