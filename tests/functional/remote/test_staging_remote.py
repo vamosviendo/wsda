@@ -112,10 +112,19 @@ def test_staging_puede_escribir_db_y_media(live_server_url):
     assert data["media_read"] == "ok"
 
     media_url = urljoin(live_server_url, data["media_url"])
-    media_response = requests.get(media_url, timeout=10)
+    try:    # Garantizar cleanup si falla la verificación
+        media_response = requests.get(media_url, timeout=10)
 
-    assert media_response.status_code == 200
-    assert media_response.content == data["expected_media_content"].encode()
+        assert media_response.status_code == 200
+        assert media_response.content == data["expected_media_content"].encode()
+    finally:
+        cleanup = requests.post(
+            urljoin(live_server_url, "/__test__/deployment-smoke/cleanup/"),
+            headers={"X-Test-Token": token},
+            data={"path": data["media_path"]},
+            timeout=10,
+        )
+        assert cleanup.status_code == 200
 
 
 def test_puede_procesar_upload_de_video_grande(

@@ -1,4 +1,5 @@
 import os
+import re
 import uuid
 
 from django.contrib.auth import get_user_model
@@ -51,6 +52,7 @@ def deployment_smoke(request):
         actual_media_content = media_file.read().decode("utf-8")
 
     if actual_media_content != expected_media_content:
+        default_storage.delete(media_path)  # cleanup
         return JsonResponse(
             {
                 "database_write": "ok",
@@ -63,7 +65,6 @@ def deployment_smoke(request):
 
     Session.objects.filter(session_key=session_key).delete()
 
-    default_storage.delete(media_path)  # cleanup
     return JsonResponse(
         {
             "database_write": "ok",
@@ -71,9 +72,28 @@ def deployment_smoke(request):
             "media_write": "ok",
             "media_read": "ok",
             "media_url": default_storage.url(media_path),
+            "media_path": media_path,
             "expected_media_content": expected_media_content,
         }
     )
+
+
+@csrf_exempt
+@require_POST
+def deployment_smoke_cleanup(request):
+    """ Elimina un archivo creado por deployment_smoke. Endpoint de testing. """
+    _check_test_token(request)
+
+    media_path = request.POST.get("path", "")
+
+    # Sólo permite borrar el patrón exacto del smoke test
+    if not re.fullmatch(
+        r"smoke-tests/deployment-smoke-[0-9a-f]{32}\.txt", media_path
+    ):
+        return JsonResponse({"error": "path inválido"}, status=400)
+
+    default_storage.delete(media_path)
+    return JsonResponse({"deleted": True, "path": media_path})
 
 
 @csrf_exempt

@@ -14,12 +14,14 @@ from utils.remote_test_fixtures import (
 from utils.remote_test_utils import (
     delete_document_smoke,
     deployment_smoke,
+    deployment_smoke_cleanup,
     remote_test_admin,
 )
 
 urlpatterns = [
     path("admin-user/", remote_test_admin, name="remote-test-admin"),
     path("deployment-smoke/", deployment_smoke, name="deployment-smoke"),
+    path("deployment-smoke/cleanup/", deployment_smoke_cleanup, name="deployment-smoke-cleanup"),
     path("delete-document/", delete_document_smoke, name="delete-document-smoke"),
     path("fixtures/homepage/", fixtures_homepage, name="fixtures-homepage"),
     path("fixtures/homepage/cleanup/", fixtures_homepage_cleanup, name="fixtures-homepage-cleanup"),
