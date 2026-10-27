@@ -16,3 +16,4 @@
       community.docker.docker_container:
         name: "{{ container_name }}"
         state: "{{ 'started' if accion == 'start' else 'stopped' }}"
+        restart_policy: "unless-stopped"

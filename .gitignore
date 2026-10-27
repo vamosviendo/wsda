@@ -12,3 +12,4 @@ tmp
 notas
 node_modules
 .opencode
+.syncinclude

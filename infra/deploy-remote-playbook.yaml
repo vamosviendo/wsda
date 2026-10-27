@@ -167,7 +167,7 @@
           - "{{ site_path }}/media:/src/media:rw"
         networks:
           - name: "{{ network_name }}"
-        restart_policy: always
+        restart_policy: "unless-stopped"
 
     - name: Ejecutar container production
       when: site_env == 'production'
