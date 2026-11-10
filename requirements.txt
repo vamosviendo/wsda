@@ -1,7 +1,19 @@
-Django>=6,<6.1
+Django==6.1.3
 django-sass==1.1.0
-django-migrations-ci==0.13
-wagtail==7.3
-wagtail-link-block>=1.1.7
+wagtail==8.0.1
+wagtail-link-block==1.2
 gunicorn==25.1.0
-whitenoise==6.11.0
+whitenoise==6.12.0
+
+# Pines del stack wagtail 8.0
+django-filter==26.2
+django-modelcluster==6.5
+django-permissionedforms==0.1
+django-ninja==1.8.0
+django-taggit==6.1.0
+django-tasks==0.12.0
+django-treebeard==5.3.1
+djangorestframework==3.18.3
+draftjs-exporter==7.3.1
+Pillow==12.3.0
+Willow[heif]==1.12.0
