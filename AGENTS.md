@@ -155,6 +155,17 @@ class MySnippet(models.Model):
         return "My Snippet"
 ```
 
+### CSS y estáticos
+
+- Estilos globales: `src/wlili/static/css/{base,header,footer}.css`,
+  enlazados en `src/wlili/templates/base.html`.
+- Estilos por página: `src/<app>/static/css/*.css`, cargados con
+  `{% block extra_css %}`.
+- Tokens de diseño: CSS custom properties definidas en `base.css`.
+- `src/static/` es `STATIC_ROOT`: se genera con `collectstatic` y está
+  ignorado. No editar a mano.
+- No hay build de Sass. No agregar SCSS sin un plan de migración explícito.
+
 ## Key Files
 
 | Path | Description |
